@@ -597,8 +597,12 @@ configure_common_args() {
 --enable-avfilter
 --enable-avformat
 --enable-avutil
+--enable-bzlib
+--enable-iconv
+--enable-network
 --enable-swresample
 --enable-swscale
+--enable-zlib
 EOF
 
   if [[ "$LINKAGE" == "static" ]]; then
@@ -680,6 +684,13 @@ build_slice() {
 
   if [[ "$platform" == *"simulator" ]]; then
     configure_args+=("--enable-cross-compile")
+  fi
+
+  if [[ "$platform" != "watchos" && "$platform" != "watchos-simulator" ]]; then
+    configure_args+=(
+      "--enable-audiotoolbox"
+      "--enable-videotoolbox"
+    )
   fi
 
   if [[ "$VERBOSE" == "true" ]]; then

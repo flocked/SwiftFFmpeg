@@ -46,7 +46,17 @@ let package = Package(
         .target(name: "FFmpegWatchOS", condition: .when(platforms: [.watchOS])),
         .target(name: "FFmpegVisionOS", condition: .when(platforms: [.visionOS])),
       ],
-      publicHeadersPath: "."
+      publicHeadersPath: ".",
+      linkerSettings: [
+        .linkedFramework("AudioToolbox", .when(platforms: [.macOS, .iOS, .tvOS, .visionOS])),
+        .linkedFramework("CoreFoundation"),
+        .linkedFramework("CoreMedia"),
+        .linkedFramework("CoreVideo"),
+        .linkedFramework("VideoToolbox", .when(platforms: [.macOS, .iOS, .tvOS, .visionOS])),
+        .linkedLibrary("bz2"),
+        .linkedLibrary("iconv"),
+        .linkedLibrary("z"),
+      ]
     ),
     .target(
       name: "SwiftFFmpeg",
