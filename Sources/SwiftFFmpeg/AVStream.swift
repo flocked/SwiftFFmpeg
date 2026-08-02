@@ -6,6 +6,7 @@
 //
 
 import CFFmpeg
+import Foundation
 
 // MARK: - AVDiscard
 
@@ -79,9 +80,21 @@ public final class AVStream {
     public var startTime: Int64 {
         native.pointee.start_time
     }
+
+    /// The presentation time of the first frame in seconds, or `nil` if it is unknown.
+    public var startTimeSeconds: TimeInterval? {
+        guard startTime != AVTimestamp.noPTS else { return nil }
+        return Double(startTime) * timebase.toDouble
+    }
     
     public var duration: Int64 {
         native.pointee.duration
+    }
+
+    /// The stream duration in seconds, or `nil` if it is unknown.
+    public var durationSeconds: TimeInterval? {
+        guard duration != AVTimestamp.noPTS else { return nil }
+        return Double(duration) * timebase.toDouble
     }
     
     /// Number of frames in this stream if known or 0.
@@ -126,6 +139,12 @@ public final class AVStream {
         get { native.pointee.avg_frame_rate }
         set { native.pointee.avg_frame_rate = newValue }
     }
+
+    /// The average frame rate as frames per second, or `nil` if it is unknown.
+    public var averageFrameRateValue: Double? {
+        guard averageFramerate.num != 0, averageFramerate.den != 0 else { return nil }
+        return averageFramerate.toDouble
+    }
     
     /// Real base framerate of the stream.
     /// This is the lowest framerate with which all timestamps can be represented accurately
@@ -134,6 +153,12 @@ public final class AVStream {
     /// then realFramerate will be 50/1.
     public var realFramerate: AVRational {
         native.pointee.r_frame_rate
+    }
+
+    /// The real base frame rate as frames per second, or `nil` if it is unknown.
+    public var realFrameRateValue: Double? {
+        guard realFramerate.num != 0, realFramerate.den != 0 else { return nil }
+        return realFramerate.toDouble
     }
     
     /// Codec parameters associated with this stream.
@@ -154,4 +179,11 @@ public final class AVStream {
         get { AVStreamDisposition(rawValue: native.pointee.disposition) }
         set { native.pointee.disposition = newValue.rawValue }
     }
+    
+    /// The stream language metadata, usually an ISO 639 language code such as `eng`, or `nil` if unavailable.
+    public var language: String? { metadata["language"] }
+    /// The stream title metadata, or `nil` if unavailable.
+    public var title: String? { metadata["title"] }
+    /// The stream handler name metadata, or `nil` if unavailable.
+    public var handlerName: String? { metadata["handler_name"] }
 }
