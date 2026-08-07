@@ -19,7 +19,6 @@ public struct AVOption {
     /// The offset relative to the context structure where the option value is stored.
     /// It should be 0 for named constants.
     public let offset: Int
-    public let type: Kind
     /// The default value for scalar options.
     public let defaultValue: Any?
     /// The minimum valid value for the option.
@@ -30,54 +29,54 @@ public struct AVOption {
     /// The logical unit to which the option belongs.
     /// Non-constant options and corresponding named constants share the same unit.
     public let unit: String?
-    public let typeAlt: KindAlt
+    public let type: Kind
 
     init(native: CFFmpeg.AVOption) {
         self.name = String(cString: native.name)
         self.help = String(cString: native.help)
         self.unit = String(cString: native.unit)
         self.offset = Int(native.offset)
-        self.type = Kind(native: native.type)
         self.min = native.min
         self.max = native.max
         self.flags = Flag(rawValue: native.flags)
-        self.typeAlt = KindAlt(rawValue: native.type.rawValue)
-        switch type {
-        case .pixelFormat:
-            self.defaultValue = AVPixelFormat(rawValue: Int32(native.default_val.i64))
-        case .sampleFormat:
-            self.defaultValue = AVSampleFormat(rawValue: Int32(native.default_val.i64))
-        case .flags:
-            self.defaultValue = AVOption.Flag(rawValue: Int32(native.default_val.i64))
-        case .int:
-            self.defaultValue = Int32(native.default_val.i64)
-        case .int64, .const, .duration, .channelLayout:
-            self.defaultValue = native.default_val.i64
-        case .uint:
-            self.defaultValue = UInt32(native.default_val.i64)
-        case .uint64:
-            self.defaultValue = UInt64(native.default_val.i64)
-        case .double:
-            self.defaultValue = native.default_val.dbl
-        case .float:
-            self.defaultValue = Float(native.default_val.dbl)
-        case .bool:
-            self.defaultValue = native.default_val.i64 != 0
-        case .string:
-            self.defaultValue = String(cString: native.default_val.str)
-        case .rational, .videoRate:
-            self.defaultValue =  native.default_val.q
-        case .binary:
+        self.type = Kind(native: native.type)
+        if !type.isArray {
+            switch type.element {
+            case .pixelFormat:
+                self.defaultValue = AVPixelFormat(rawValue: Int32(native.default_val.i64))
+            case .sampleFormat:
+                self.defaultValue = AVSampleFormat(rawValue: Int32(native.default_val.i64))
+            case .flags:
+                self.defaultValue = AVOption.Flag(rawValue: Int32(native.default_val.i64))
+            case .int:
+                self.defaultValue = Int32(native.default_val.i64)
+            case .int64, .const, .duration, .channelLayout:
+                self.defaultValue = native.default_val.i64
+            case .uInt:
+                self.defaultValue = UInt32(native.default_val.i64)
+            case .uInt64:
+                self.defaultValue = UInt64(native.default_val.i64)
+            case .double:
+                self.defaultValue = native.default_val.dbl
+            case .float:
+                self.defaultValue = Float(native.default_val.dbl)
+            case .bool:
+                self.defaultValue = native.default_val.i64 != 0
+            case .string:
+                self.defaultValue = String(cString: native.default_val.str)
+            case .rational, .videoRate:
+                self.defaultValue =  native.default_val.q
+            case .binary:
+                self.defaultValue = nil
+            case .dict:
+                self.defaultValue = nil
+            case .color:
+                self.defaultValue = String(cString: native.default_val.str)
+            case .imageSize:
+                self.defaultValue = String(cString: native.default_val.str)
+            }
+        } else {
             self.defaultValue = nil
-        case .dict:
-            self.defaultValue = nil
-        case .color:
-            self.defaultValue = String(cString: native.default_val.str)
-        case .imageSize:
-            self.defaultValue = String(cString: native.default_val.str)
-        case .flagArray:
-            self.defaultValue = native.default_val.i64
-                
         }
     }
 }
@@ -127,10 +126,14 @@ extension AVOption: CustomStringConvertible {
             str += "help: \"\(help)\", "
         }
         str += "offset: \(offset), type: \(type), "
-        if defaultValue is String {
-            str += "default: \"\(defaultValue)\", "
+        if let defaultValue = defaultValue {
+            if defaultValue is String {
+                str += "default: \"\(defaultValue)\", "
+            } else {
+                str += "default: \(defaultValue), "
+            }
         } else {
-            str += "default: \(defaultValue), "
+            str += "default: -, "
         }
         str += "min: \(min), max: \(max), flags: \(flags), "
         if let unit = unit {
@@ -146,6 +149,7 @@ extension AVOption: CustomStringConvertible {
 // MARK: - AVOption.Kind
 
 public extension AVOption {
+    /*
     /// https://github.com/FFmpeg/FFmpeg/blob/master/libavutil/opt.h#L221
     enum Kind: UInt32, CustomStringConvertible {
         case flags = 1
@@ -213,8 +217,9 @@ public extension AVOption {
             }
         }
     }
+     */
     
-    struct KindAlt: RawRepresentable, Hashable, CustomStringConvertible {
+    struct Kind: RawRepresentable, Hashable, CustomStringConvertible {
         public let rawValue: UInt32
 
         private static let arrayFlag: UInt32 = 1 << 16
@@ -225,6 +230,10 @@ public extension AVOption {
         
         public var element: Element {
             Element(rawValue: rawValue & ~Self.arrayFlag)!
+        }
+        
+        var native: CFFmpeg.AVOptionType {
+            .init(rawValue: rawValue)
         }
         
         public static let flags = Self(.flags)
@@ -250,6 +259,10 @@ public extension AVOption {
         
         public static func array(_ element: Element) -> Self {
             .init(element, isArray: true)
+        }
+        
+        init(native: CFFmpeg.AVOptionType) {
+            self.rawValue = native.rawValue
         }
 
         public init(rawValue: UInt32) {
@@ -604,11 +617,11 @@ public extension AVOptionSupport {
     }
     
     func uintValues(for key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [UInt32] {
-        try array(for: key, type: .uint, initial: 0, searchFlags: searchFlags)
+        try array(for: key, type: .uInt, initial: 0, searchFlags: searchFlags)
     }
     
     func uint64Values(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [UInt64] {
-        try array(for: key, type: .uint64, initial: 0, searchFlags: searchFlags)
+        try array(for: key, type: .uInt64, initial: 0, searchFlags: searchFlags)
     }
     
     func doubleValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [Double] {
@@ -624,7 +637,7 @@ public extension AVOptionSupport {
     }
     
     func flagsArray(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [AVOption.Flag] {
-        try array(as: Int32.self, for: key, type: .flagArray, initial: 0,  searchFlags: searchFlags).map({ AVOption.Flag(rawValue: $0) })
+        try array(as: Int32.self, for: key, type: .array(.flags), initial: 0,  searchFlags: searchFlags).map({ AVOption.Flag(rawValue: $0) })
     }
     
     func imageSizes(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [AVImageSize] {
@@ -857,73 +870,73 @@ public extension AVOptionSupport {
     }
     
     func set(durations values: [Int64], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-        try set(values, for: key, startElement: startElement, type: .duration, searchFlags: searchFlags)
+        try set(values, for: key, startElement: startElement, type: .array(.duration), searchFlags: searchFlags)
     }
     
      func set(_ values: [Double], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-         try set(values, for: key, startElement: startElement, type: .double, searchFlags: searchFlags)
+         try set(values, for: key, startElement: startElement, type: .array(.double), searchFlags: searchFlags)
     }
     
     func set(_ values: [Float], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-        try set(values, for: key, startElement: startElement, type: .float, searchFlags: searchFlags)
+        try set(values, for: key, startElement: startElement, type: .array(.float), searchFlags: searchFlags)
    }
     
     func set(_ values: [AVImageSize], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-        try set(values.flatMap(\.nativeValues), for: key, startElement: startElement, type: .imageSize, storageCountPerElement: 2, searchFlags: searchFlags)
+        try set(values.flatMap(\.nativeValues), for: key, startElement: startElement, type: .array(.imageSize), storageCountPerElement: 2, searchFlags: searchFlags)
     }
     
     func set(_ values: [AVPixelFormat], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-        try set(values, for: key, startElement: startElement, type: .pixelFormat, searchFlags: searchFlags)
+        try set(values, for: key, startElement: startElement, type: .array(.pixelFormat), searchFlags: searchFlags)
    }
         
     func set(_ values: [AVChannelLayout], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-        try set(values, for: key, startElement: startElement, type: .channelLayout, searchFlags: searchFlags)
+        try set(values, for: key, startElement: startElement, type: .array(.channelLayout), searchFlags: searchFlags)
    }
     
     func set(videoRates: [AVRational], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-        try set(videoRates, for: key, startElement: startElement, type: .videoRate, searchFlags: searchFlags)
+        try set(videoRates, for: key, startElement: startElement, type: .array(.videoRate), searchFlags: searchFlags)
    }
     
     func set(_ values: [AVRational], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-        try set(values, for: key, startElement: startElement, type: .rational, searchFlags: searchFlags)
+        try set(values, for: key, startElement: startElement, type: .array(.rational), searchFlags: searchFlags)
    }
     
     func set(_ values: [UInt32], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-        try set(values, for: key, startElement: startElement, type: .uint, searchFlags: searchFlags)
+        try set(values, for: key, startElement: startElement, type: .array(.uInt), searchFlags: searchFlags)
    }
     
     func set(_ values: [UInt64], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-        try set(values, for: key, startElement: startElement, type: .uint64, searchFlags: searchFlags)
+        try set(values, for: key, startElement: startElement, type: .array(.uInt64), searchFlags: searchFlags)
    }
     
     func set(_ values: [Int32], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-        try set(values, for: key, startElement: startElement, type: .int, searchFlags: searchFlags)
+        try set(values, for: key, startElement: startElement, type: .array(.int), searchFlags: searchFlags)
    }
     
     func set(_ values: [Int64], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-        try set(values, for: key, startElement: startElement, type: .int64, searchFlags: searchFlags)
+        try set(values, for: key, startElement: startElement, type: .array(.int64), searchFlags: searchFlags)
    }
     
     func set(_ values: [Bool], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-        try set(values.map({ Int32($0 ? 1 : 0) }), for: key, startElement: startElement, type: .bool, searchFlags: searchFlags)
+        try set(values.map({ Int32($0 ? 1 : 0) }), for: key, startElement: startElement, type: .array(.bool), searchFlags: searchFlags)
    }
         
     func set(_ sampleFormats: [AVSampleFormat], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-        try set(sampleFormats, for: key, startElement: startElement, type: .sampleFormat, searchFlags: searchFlags)
+        try set(sampleFormats, for: key, startElement: startElement, type: .array(.sampleFormat), searchFlags: searchFlags)
    }
     
     func set(_ values: [String], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         let cStrings = values.map { strdup($0) }
         defer { cStrings.forEach { free($0) } }
-        try set(cStrings, for: key, startElement: startElement, type: .string, searchFlags: searchFlags)
+        try set(cStrings, for: key, startElement: startElement, type: .array(.string), searchFlags: searchFlags)
     }
     
     func set(flags: [AVOption.Flag], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-        try set(flags.map(\.rawValue), for: key, startElement: startElement, type: .flags, searchFlags: searchFlags)
+        try set(flags.map(\.rawValue), for: key, startElement: startElement, type: .array(.flags), searchFlags: searchFlags)
     }
     
     func set(_ colors: [AVColor], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-        try set(colors.flatMap(\.rgbaBytes), for: key, startElement: startElement, type: .color, storageCountPerElement: 4, searchFlags: searchFlags)
+        try set(colors.flatMap(\.rgbaBytes), for: key, startElement: startElement, type: .array(.color), storageCountPerElement: 4, searchFlags: searchFlags)
     }
     
     private func set<Element>(_ values: [Element], for key: String, startElement: UInt32, type: AVOption.Kind, storageCountPerElement: Int = 1, searchFlags: AVOption.SearchFlag) throws {
