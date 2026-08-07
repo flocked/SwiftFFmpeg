@@ -39,7 +39,7 @@ public enum AVLog {
 
 public extension AVLog {
     /// Log level
-    struct Level: OptionSet {
+    struct Level: OptionSet, Hashable, CustomStringConvertible, CustomDebugStringConvertible {
         /// Print no output.
         public static let quiet = Level(rawValue: AV_LOG_QUIET)
         /// Something went really wrong and we will crash now.
@@ -68,5 +68,25 @@ public extension AVLog {
         public init(rawValue: Int32) {
             self.rawValue = rawValue
         }
+        
+        public var description: String {
+            "[\(elements().map { Self.names[$0]?.swift ?? "\($0.rawValue)" }.joined(separator: ", "))]"
+        }
+
+        public var debugDescription: String {
+            "[\(elements().map { Self.names[$0]?.native ?? "\($0.rawValue)" }.joined(separator: ", "))]"
+        }
+        
+        private static let names: [Self: (swift: String, native: String)] = [
+            .quiet: ("quiet", "AV_LOG_QUIET"),
+            .panic: ("panic", "AV_LOG_PANIC"),
+            .fatal: ("fatal", "AV_LOG_FATAL"),
+            .error: ("error", "AV_LOG_ERROR"),
+            .warning: ("warning", "AV_LOG_WARNING"),
+            .info: ("info", "AV_LOG_INFO"),
+            .verbose: ("verbose", "AV_LOG_VERBOSE"),
+            .debug: ("debug", "AV_LOG_DEBUG"),
+            .trace: ("trace", "AV_LOG_TRACE"),
+        ]
     }
 }
