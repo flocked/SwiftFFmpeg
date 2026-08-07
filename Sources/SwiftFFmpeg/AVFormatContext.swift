@@ -317,14 +317,26 @@ public extension AVFormatContext {
         set { native.pointee.iformat = newValue?.native }
     }
 
-    /// Position of the first frame of the component, in `AVTimestamp.timebase` fractional seconds.
+    /// The start time in `AVTimestamp.timebase` units, or `AVTimestamp.noPTS` if unknown.
     var startTime: Int64 {
         native.pointee.start_time
     }
 
-    /// Duration of the stream, in `AVTimestamp.timebase` fractional seconds.
+    /// The duration in `AVTimestamp.timebase` units, or `AVTimestamp.noPTS` if unknown.
     var duration: Int64 {
         native.pointee.duration
+    }
+    
+    /// The start time in seconds, or `nil` if unknown.
+    var startTimeSeconds: Double? {
+        guard startTime != AVTimestamp.noPTS else { return nil }
+        return Double(startTime) / Double(AVTimestamp.timebase)
+    }
+
+    /// The duration in seconds, or `nil` if unknown.
+    var durationSeconds: Double? {
+        guard duration != AVTimestamp.noPTS else { return nil }
+        return Double(duration) / Double(AVTimestamp.timebase)
     }
 
     /// Total stream bitrate in bit/s, 0 if not available.
@@ -456,8 +468,14 @@ public extension AVFormatContext {
     ///     is automatically converted from `AVTimestamp.timebase` units to the stream specific timebase.
     ///   - flags: flags which select direction and seeking mode
     /// - Throws: AVError
-    func seekFrame(to timestamp: Int64, streamIndex: Int, flags: SeekFlag) throws {
+    func seekFrame(to timestamp: Int64, streamIndex: Int = -1, flags: SeekFlag = .backward) throws {
         try throwIfFail(av_seek_frame(native, Int32(streamIndex), timestamp, flags.rawValue))
+    }
+    
+    /// Seeks to the keyframe at the given timestamp in seconds.
+    func seekFrame(toSeconds seconds: Double, streamIndex: Int = -1, flags: SeekFlag = .backward) throws {
+        let timestamp = streamIndex >= 0 ? Int64(seconds / streams[streamIndex].timebase.toDouble) :  Int64(seconds * Double(AVTimestamp.timebase))
+        try seekFrame(to: timestamp, streamIndex: streamIndex, flags: flags)
     }
 
     /// Discard all internally buffered data. This can be useful when dealing with
@@ -630,7 +648,7 @@ public extension AVFormatContext {
     }
 }
 
-extension AVFormatContext: AVClassSupport, AVOptionSupport {
+extension AVFormatContext: AVClassSupport {
     public static let `class` = AVClass(native: avformat_get_class())
 
     public func withUnsafeObjectPointer<T>(_ body: (UnsafeMutableRawPointer) throws -> T) rethrows -> T {

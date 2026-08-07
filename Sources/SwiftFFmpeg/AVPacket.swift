@@ -9,8 +9,6 @@ import CFFmpeg
 
 // MARK: - AVPacket
 
-typealias CAVPacket = CFFmpeg.AVPacket
-
 /// This structure stores compressed data. It is typically exported by demuxers
 /// and then passed as input to decoders, or received as output from encoders and
 /// then passed to muxers.
@@ -28,9 +26,9 @@ typealias CAVPacket = CFFmpeg.AVPacket
 ///
 /// The side data is always allocated with `AVIO.malloc(size:)`, copied by `ref(from:)` and freed `unref()`.
 public final class AVPacket {
-    var native: UnsafeMutablePointer<CAVPacket>!
+    var native: UnsafeMutablePointer<CFFmpeg.AVPacket>!
 
-    init(native: UnsafeMutablePointer<CAVPacket>) {
+    init(native: UnsafeMutablePointer<CFFmpeg.AVPacket>) {
         self.native = native
     }
 

@@ -12,6 +12,7 @@ import Darwin
 #else
 import Glibc
 #endif
+import Foundation
 
 public struct AVError: Error, Equatable {
     public var code: Int32
@@ -30,7 +31,6 @@ public struct AVError: Error, Equatable {
     }
 }
 
-import Foundation
 public extension AVError {
     /// Resource temporarily unavailable
     static let tryAgain = AVError(code: swift_AVERROR(EAGAIN))
@@ -103,7 +103,12 @@ public extension AVError {
     
     /// A posix error for the specified posix error code.
     static func posix(_ code: POSIXError.Code) -> AVError {
-        AVError(code: swift_AVUNERROR(code.rawValue))
+        posix(code.rawValue)
+    }
+    
+    /// A posix error for the specified posix error code.
+    static func posix(_ code: Int32) -> AVError {
+        AVError(code: swift_AVUNERROR(code))
     }
 }
 
@@ -130,6 +135,6 @@ func abortIfFail(_ condition: @autoclosure () -> Int32) {
 }
 
 func abort(_ message: String) -> Never {
-    AVLog.log(level: .fatal, message: message)
+    AVLog.log(message, at: .fatal)
     fatalError(message)
 }

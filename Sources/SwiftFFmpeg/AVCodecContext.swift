@@ -15,11 +15,7 @@ import Glibc
 
 public typealias AVGetFormatHandler = (AVCodecContext, [AVPixelFormat]) -> AVPixelFormat
 
-typealias CodecContextBoxValue = (
-    opaque: UnsafeMutableRawPointer?,
-    getFormat: AVGetFormatHandler?
-)
-typealias CodecContextBox = Box<CodecContextBoxValue>
+typealias CodecContextBox = Box<(opaque: UnsafeMutableRawPointer?, getFormat: AVGetFormatHandler?)>
 
 // MARK: - AVCodecContext
 
@@ -51,9 +47,8 @@ public final class AVCodecContext {
     }
 
     deinit {
-        if owned {
-            avcodec_free_context(&native)
-        }
+        guard owned else { return }
+        avcodec_free_context(&native)
     }
 
     /// The codec's media type.
@@ -576,7 +571,7 @@ public extension AVCodecContext {
                     .takeUnretainedValue()
                     .value
                     .getFormat!
-                    let list = Array(fmts, until: AVPixelFormat.none) ?? []
+                    let list = Array(fmts, until: .none) ?? []
                     return handler(AVCodecContext(native: ctx!), list)
                 }
             }
@@ -700,7 +695,7 @@ public extension AVCodecContext {
     }
 }
 
-extension AVCodecContext: AVClassSupport, AVOptionSupport {
+extension AVCodecContext: AVClassSupport {
     public static let `class` = AVClass(native: avcodec_get_class())
 
     public func withUnsafeObjectPointer<T>(_ body: (UnsafeMutableRawPointer) throws -> T) rethrows -> T {

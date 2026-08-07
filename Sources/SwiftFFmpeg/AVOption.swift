@@ -6,60 +6,64 @@
 //
 
 import CFFmpeg
+import Foundation
 
 // MARK: - AVOption
 
 typealias CAVOption = CFFmpeg.AVOption
 
+public struct AVOptionAlt {
+    public let defaultBoolValue: Bool?
+    public let defaultStringValue: String?
+}
+
 public struct AVOption {
-    public var name: String
+    public let name: String
     /// The short English help text about the option.
-    public var help: String?
+    public let help: String?
     /// The offset relative to the context structure where the option value is stored.
     /// It should be 0 for named constants.
-    public var offset: Int
-    public var type: Kind
+    public let offset: Int
+    public let type: Kind
     /// The default value for scalar options.
-    public var defaultValue: Any
+    public let defaultValue: Any
     /// The minimum valid value for the option.
-    public var min: Double
+    public let min: Double
     /// The maximum valid value for the option.
-    public var max: Double
-    public var flags: Flag
+    public let max: Double
+    public let flags: Flag
     /// The logical unit to which the option belongs.
     /// Non-constant options and corresponding named constants share the same unit.
-    public var unit: String?
+    public let unit: String?
 
-    init(cOption: CAVOption) {
-        self.name = String(cString: cOption.name)
-        self.help = String(cString: cOption.help)
-        self.offset = Int(cOption.offset)
-        let typeRawValue = cOption.type.rawValue
+    init(native: CAVOption) {
+        self.name = String(cString: native.name)
+        self.help = String(cString: native.help)
+        self.offset = Int(native.offset)
+        let typeRawValue = native.type.rawValue
         if let kind = Kind(rawValue: typeRawValue) {
             self.type = kind
         } else if typeRawValue & Kind.flagArray.rawValue != 0 {
             self.type = .flagArray
         } else {
-            fatalError("Unknown option type: \(cOption.type)")
+            fatalError("Unknown option type: \(native.type)")
         }
-        self.min = cOption.min
-        self.max = cOption.max
-        self.flags = Flag(rawValue: cOption.flags)
-        self.unit = String(cString: cOption.unit)
-
+        self.min = native.min
+        self.max = native.max
+        self.flags = Flag(rawValue: native.flags)
+        self.unit = String(cString: native.unit)
         switch type {
         case .flags, .int, .int64, .uint64, .uint, .const, .pixelFormat, .sampleFormat, .duration, .channelLayout, .flagArray:
-            self.defaultValue = cOption.default_val.i64
+            self.defaultValue = native.default_val.i64
         case .double, .float, .rational:
-            self.defaultValue = cOption.default_val.dbl
+            self.defaultValue = native.default_val.dbl
         case .bool:
-            self.defaultValue = cOption.default_val.i64 != 0 ? "true" : "false"
+            self.defaultValue = native.default_val.i64 != 0 ? "true" : "false"
         case .string, .imageSize, .videoRate, .color:
-            self.defaultValue = String(cString: cOption.default_val.str) ?? "nil"
+            self.defaultValue = String(cString: native.default_val.str) ?? "nil"
         case .binary:
             self.defaultValue = 0
         case .dict:
-            // Cannot set defaults for these types
             self.defaultValue = ""
         }
     }
@@ -92,7 +96,7 @@ extension AVOption: CustomStringConvertible {
 
 public extension AVOption {
     /// https://github.com/FFmpeg/FFmpeg/blob/master/libavutil/opt.h#L221
-    enum Kind: UInt32 {
+    enum Kind: UInt32, CustomStringConvertible {
         case flags = 1
         case int
         case int64
@@ -117,29 +121,31 @@ public extension AVOption {
         case channelLayout
         case uint
         case flagArray = 65536
-    }
-}
-
-extension AVOption.Kind: CustomStringConvertible {
-    public var description: String {
-        switch self {
-        case .flags: "flags"
-        case .int, .int64, .uint64, .uint: "integer"
-        case .double, .float: "float"
-        case .string: "string"
-        case .rational: "rational number"
-        case .binary: "hexadecimal string"
-        case .dict: "dictionary"
-        case .const: "const"
-        case .imageSize: "image size"
-        case .pixelFormat: "pixel format"
-        case .sampleFormat: "sample format"
-        case .videoRate: "video rate"
-        case .duration: "duration"
-        case .color: "color"
-        case .channelLayout: "channel layout"
-        case .bool: "bool"
-        case .flagArray: "flag array"
+        
+        public var description: String {
+            switch self {
+            case .flags: "flags"
+            case .int: "Int32"
+            case .int64: "Int64"
+            case .uint: "UInt32"
+            case .uint64: "UInt64"
+            case .float: "Float"
+            case .double: "Double"
+            case .string: "String"
+            case .rational: "AVRational"
+            case .binary: "Data"
+            case .dict: "[String: String]"
+            case .const: "Constant"
+            case .imageSize: "image size"
+            case .pixelFormat: "AVPixelFormat"
+            case .sampleFormat: "AVSampleFormat"
+            case .videoRate: "AVRational (video rate)"
+            case .duration: "Int64 (duration)"
+            case .color: "color"
+            case .channelLayout: "AVChannelLayout"
+            case .bool: "Bool"
+            case .flagArray: "flag array"
+            }
         }
     }
 }
@@ -153,8 +159,11 @@ public extension AVOption {
         public static let encoding = Flag(rawValue: AV_OPT_FLAG_ENCODING_PARAM)
         /// A generic parameter which can be set by the user for demuxing or decoding.
         public static let decoding = Flag(rawValue: AV_OPT_FLAG_DECODING_PARAM)
+        /// Audio.
         public static let audio = Flag(rawValue: AV_OPT_FLAG_AUDIO_PARAM)
+        /// Video.
         public static let video = Flag(rawValue: AV_OPT_FLAG_VIDEO_PARAM)
+        /// Subtitle.
         public static let subtitle = Flag(rawValue: AV_OPT_FLAG_SUBTITLE_PARAM)
         /// The option is intended for exporting values to the caller.
         public static let export = Flag(rawValue: AV_OPT_FLAG_EXPORT)
@@ -224,7 +233,9 @@ public extension AVOption {
 
 // MARK: - AVOptionSupport
 
+/// A type that exposes an FFmpeg object pointer for ``AVOption`` access.
 public protocol AVOptionSupport {
+    /// Calls the given closure with the underlying FFmpeg object pointer.
     func withUnsafeObjectPointer<T>(_ body: (UnsafeMutableRawPointer) throws -> T) rethrows -> T
 }
 
@@ -235,7 +246,7 @@ public extension AVOptionSupport {
             var list = [AVOption]()
             var prev: UnsafePointer<CAVOption>?
             while let option = av_opt_next(ptr, prev) {
-                list.append(AVOption(cOption: option.pointee))
+                list.append(AVOption(native: option.pointee))
                 prev = option
             }
             return list
@@ -253,8 +264,7 @@ public extension AVOptionSupport {
     ///   - searchFlags: The flags passed to av_opt_find2.
     /// - Returns: The string value associated with the specified key.
     /// - Throws: AVError
-    func string(
-        forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> String {
+    func string(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> String {
         try withUnsafeObjectPointer { ptr in
             var value: UnsafeMutablePointer<UInt8>!
             defer { av_free(value) }
@@ -277,6 +287,10 @@ public extension AVOptionSupport {
             try throwIfFail(av_opt_get_int(ptr, key, searchFlags.rawValue, &value))
             return T(value)
         }
+    }
+    
+    func flags(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> AVOption.Flag {
+        try AVOption.Flag(rawValue: integer(forKey: key, searchFlags: searchFlags))
     }
 
     /// Returns the double value associated with the specified key.
@@ -318,13 +332,12 @@ public extension AVOptionSupport {
     ///   - searchFlags: The flags passed to av_opt_find2.
     /// - Returns: The image size associated with the specified key.
     /// - Throws: AVError
-    func size(
-        forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> (width: Int, height: Int) {
+    func imageSize(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> AVImageSize {
         try withUnsafeObjectPointer { ptr in
             var width: Int32 = 0
             var height: Int32 = 0
             try throwIfFail(av_opt_get_image_size(ptr, key, searchFlags.rawValue, &width, &height))
-            return (Int(width), Int(height))
+            return AVImageSize(width: Int(width), height: Int(height))
         }
     }
 
@@ -398,18 +411,17 @@ public extension AVOptionSupport {
             var dict: OpaquePointer?
             defer { av_dict_free(&dict) }
             try throwIfFail(av_opt_get_dict_val(ptr, key, searchFlags.rawValue, &dict))
-            guard let dict else { return [:] }
-            return dict.avDict
+            return dict?.avDict ?? [:]
         }
     }
     
-    private func array<T>(as type: T.Type = T.self, forKey key: String, valueType: AVOption.Kind, initialValue: T, searchFlags: AVOption.SearchFlag) throws -> [T] {
+    private func array<T>(as type: T.Type = T.self, forKey key: String, valueType: AVOption.Kind, initialValue: T, storageElementsPerValue: Int = 1, searchFlags: AVOption.SearchFlag) throws -> [T] {
         let totalCount = try withUnsafeObjectPointer { ptr in
             var count: UInt32 = 0
             try throwIfFail(av_opt_get_array_size(ptr, key, searchFlags.rawValue, &count))
             return count
         }
-        var values = Array(repeating: initialValue, count: Int(totalCount))
+        var values = Array(repeating: initialValue, count: Int(totalCount) * storageElementsPerValue)
         try values.withUnsafeMutableBufferPointer { buffer in
             try withUnsafeObjectPointer { ptr in
                 try throwIfFail(av_opt_get_array(ptr, key, searchFlags.rawValue, 0, totalCount, CFFmpeg.AVOptionType(valueType.rawValue), buffer.baseAddress))
@@ -434,34 +446,28 @@ public extension AVOptionSupport {
         try array(forKey: key, valueType: .uint64, initialValue: 0,  searchFlags: searchFlags)
     }
     
-    func doubles(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [Double] {
+    func doubleValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [Double] {
         try array(forKey: key, valueType: .double, initialValue: 0,  searchFlags: searchFlags)
     }
     
-    func bools(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [Bool] {
+    func boolValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [Bool] {
         try array(as: Int32.self, forKey: key, valueType: .bool, initialValue: 0, searchFlags: searchFlags).map({ $0 != 0 })
     }
     
-    func floats(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [Float] {
+    func floatValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [Float] {
         try array(forKey: key, valueType: .float, initialValue: 0,  searchFlags: searchFlags)
     }
     
-    func flags(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [Int64] {
-        try array(forKey: key, valueType: .flags, initialValue: 0,  searchFlags: searchFlags)
+    func flagArray(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [AVOption.Flag] {
+        try array(as: Int32.self, forKey: key, valueType: .flagArray, initialValue: 0,  searchFlags: searchFlags).map({ .init(rawValue: $0) })
     }
     
-    func imageSizes(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [(width: Int32, height: Int32)] {
-        let values: [Int32] = try array(forKey: key, valueType: .imageSize, initialValue: 0, searchFlags: searchFlags)
-        var result: [(width: Int32, height: Int32)] = []
-        result.reserveCapacity(values.count / 2)
-        var index = 0
-        while index + 1 < values.count {
-            result.append((width: values[index], height: values[index + 1]))
-            index += 2
+    func imageSizes(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [AVImageSize] {
+        let values: [Int32] = try array(forKey: key, valueType: .imageSize, initialValue: 0, storageElementsPerValue: 2, searchFlags: searchFlags)
+        return stride(from: 0, to: values.count, by: 2).map {
+            AVImageSize(width: Int(values[$0]), height: Int(values[$0 + 1]))
         }
-        return result
     }
-    
     
     func sampleFormats(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [AVSampleFormat] {
         try array(forKey: key, valueType: .sampleFormat, initialValue: AV_SAMPLE_FMT_NONE, searchFlags: searchFlags).map(AVSampleFormat.init(native:))
@@ -526,11 +532,14 @@ public extension AVOptionSupport {
     ///   - key: The key with which to associate the value.
     ///   - searchFlags: The flags passed to `av_opt_find2`.
     /// - Throws: AVError
-    func set<T: FixedWidthInteger>(
-        _ value: T, forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
+    func set<T: FixedWidthInteger>(_ value: T, forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
         try withUnsafeObjectPointer { ptr in
             try throwIfFail(av_opt_set_int(ptr, key, Int64(value), searchFlags.rawValue))
         }
+    }
+    
+    func set(_ flags: AVOption.Flag, forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
+        try set(flags.rawValue, forKey: key, searchFlags: searchFlags)
     }
 
     /// Sets the value of the specified key to the double value.
@@ -566,25 +575,39 @@ public extension AVOptionSupport {
     ///   - key: The key with which to associate the value.
     ///   - searchFlags: The flags passed to `av_opt_find2`.
     /// - Throws: AVError
-    func set(_ value: UnsafeBufferPointer<UInt8>, forKey key: String,
-        searchFlags: AVOption.SearchFlag = .children) throws {
+    func set(_ value: UnsafeBufferPointer<UInt8>, forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
         try withUnsafeObjectPointer { ptr in
             try throwIfFail(av_opt_set_bin(ptr, key, value.baseAddress, Int32(value.count), searchFlags.rawValue))
+        }
+    }
+    
+    func set(_ value: [UInt8], forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
+        try value.withUnsafeBufferPointer { buffer in
+            try set(buffer, forKey: key, searchFlags: searchFlags)
+        }
+    }
+    
+    func set(_ value: Data, forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
+        try value.withUnsafeBytes { bytes in
+            let buffer = bytes.bindMemory(to: UInt8.self)
+            try set(
+                UnsafeBufferPointer(start: buffer.baseAddress, count: buffer.count),
+                forKey: key,
+                searchFlags: searchFlags
+            )
         }
     }
 
     /// Sets the value of the specified key to the image size.
     ///
     /// - Parameters:
-    ///   - value: The image size.
+    ///   - imageSize: The image size.
     ///   - key: The key with which to associate the value.
     ///   - searchFlags: The flags passed to `av_opt_find2`.
     /// - Throws: AVError
-    func set(_ size: (width: Int, height: Int), forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
+    func set(_ imageSize: AVImageSize, forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
         try withUnsafeObjectPointer { ptr in
-            try throwIfFail(av_opt_set_image_size(
-                    ptr, key, Int32(size.width), Int32(size.height), searchFlags.rawValue
-                ))
+            try throwIfFail(av_opt_set_image_size(ptr, key, Int32(imageSize.width), Int32(imageSize.height), searchFlags.rawValue))
         }
     }
 
@@ -673,116 +696,80 @@ public extension AVOptionSupport {
     }
     
     func set(durations values: [Int64], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-        try values.withUnsafeBufferPointer { buffer in
-            try set(forKey: key, startElement: startElement, elementCount: UInt32(buffer.count), valueType: .duration, value: buffer.baseAddress, searchFlags: searchFlags)
-        }
+        try set(values, for: key, startElement: startElement, type: .duration, searchFlags: searchFlags)
     }
     
      func set(_ values: [Double], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-        try values.withUnsafeBufferPointer { buffer in
-            try set(forKey: key, startElement: startElement, elementCount: UInt32(buffer.count), valueType: .double, value: buffer.baseAddress, searchFlags: searchFlags)
-        }
+         try set(values, for: key, startElement: startElement, type: .double, searchFlags: searchFlags)
     }
     
     func set(_ values: [Float], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-       try values.withUnsafeBufferPointer { buffer in
-           try set(forKey: key, startElement: startElement, elementCount: UInt32(buffer.count), valueType: .float, value: buffer.baseAddress, searchFlags: searchFlags)
-       }
+        try set(values, for: key, startElement: startElement, type: .float, searchFlags: searchFlags)
    }
     
-    func set(_ values: [(width: Int32, height: Int32)], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-        var nativeValues: [Int32] = []
-        nativeValues.reserveCapacity(values.count * 2)
-
-        for value in values {
-            nativeValues.append(value.width)
-            nativeValues.append(value.height)
-        }
-
-        try nativeValues.withUnsafeBufferPointer { buffer in
-            try set(forKey: key, startElement: startElement, elementCount: UInt32(buffer.count), valueType: .imageSize, value: buffer.baseAddress, searchFlags: searchFlags)
-        }
+    func set(_ values: [AVImageSize], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
+        try set(values.flatMap(\.nativeValues), for: key, startElement: startElement, type: .imageSize, storageCountPerElement: 2, searchFlags: searchFlags)
     }
     
     func set(_ values: [AVPixelFormat], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-       try values.withUnsafeBufferPointer { buffer in
-           try set(forKey: key, startElement: startElement, elementCount: UInt32(buffer.count), valueType: .pixelFormat, value: buffer.baseAddress, searchFlags: searchFlags)
-       }
+        try set(values, for: key, startElement: startElement, type: .pixelFormat, searchFlags: searchFlags)
    }
         
     func set(_ values: [AVChannelLayout], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-       try values.withUnsafeBufferPointer { buffer in
-           try set(forKey: key, startElement: startElement, elementCount: UInt32(buffer.count), valueType: .channelLayout, value: buffer.baseAddress, searchFlags: searchFlags)
-       }
+        try set(values, for: key, startElement: startElement, type: .channelLayout, searchFlags: searchFlags)
    }
     
-    func set(videoRates values: [AVRational], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-       try values.withUnsafeBufferPointer { buffer in
-           try set(forKey: key, startElement: startElement, elementCount: UInt32(buffer.count), valueType: .videoRate, value: buffer.baseAddress, searchFlags: searchFlags)
-       }
+    func set(videoRates: [AVRational], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
+        try set(videoRates, for: key, startElement: startElement, type: .videoRate, searchFlags: searchFlags)
    }
     
     func set(_ values: [AVRational], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-       try values.withUnsafeBufferPointer { buffer in
-           try set(forKey: key, startElement: startElement, elementCount: UInt32(buffer.count), valueType: .rational, value: buffer.baseAddress, searchFlags: searchFlags)
-       }
+        try set(values, for: key, startElement: startElement, type: .rational, searchFlags: searchFlags)
    }
     
     func set(_ values: [UInt32], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-       try values.withUnsafeBufferPointer { buffer in
-           try set(forKey: key, startElement: startElement, elementCount: UInt32(buffer.count), valueType: .uint, value: buffer.baseAddress, searchFlags: searchFlags)
-       }
+        try set(values, for: key, startElement: startElement, type: .uint, searchFlags: searchFlags)
    }
     
     func set(_ values: [UInt64], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-       try values.withUnsafeBufferPointer { buffer in
-           try set(forKey: key, startElement: startElement, elementCount: UInt32(buffer.count), valueType: .uint64, value: buffer.baseAddress, searchFlags: searchFlags)
-       }
+        try set(values, for: key, startElement: startElement, type: .uint64, searchFlags: searchFlags)
    }
     
     func set(_ values: [Int32], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-       try values.withUnsafeBufferPointer { buffer in
-           try set(forKey: key, startElement: startElement, elementCount: UInt32(buffer.count), valueType: .int, value: buffer.baseAddress, searchFlags: searchFlags)
-       }
+        try set(values, for: key, startElement: startElement, type: .int, searchFlags: searchFlags)
    }
     
     func set(_ values: [Int64], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-       try values.withUnsafeBufferPointer { buffer in
-           try set(forKey: key, startElement: startElement, elementCount: UInt32(buffer.count), valueType: .int64, value: buffer.baseAddress, searchFlags: searchFlags)
-       }
+        try set(values, for: key, startElement: startElement, type: .int64, searchFlags: searchFlags)
    }
     
     func set(_ values: [Bool], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-       try values.map({ Int32($0 ? 1 : 0) }).withUnsafeBufferPointer { buffer in
-           try set(forKey: key, startElement: startElement, elementCount: UInt32(buffer.count), valueType: .bool, value: buffer.baseAddress, searchFlags: searchFlags)
-       }
+        try set(values.map({ Int32($0 ? 1 : 0) }), for: key, startElement: startElement, type: .bool, searchFlags: searchFlags)
    }
         
-    func set(_ values: [AVSampleFormat], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-       try values.map({$0.native}).withUnsafeBufferPointer { buffer in
-           try set(forKey: key, startElement: startElement, elementCount: UInt32(buffer.count), valueType: .sampleFormat, value: buffer.baseAddress, searchFlags: searchFlags)
-       }
+    func set(_ sampleFormats: [AVSampleFormat], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
+        try set(sampleFormats, for: key, startElement: startElement, type: .sampleFormat, searchFlags: searchFlags)
    }
     
     func set(_ values: [String], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         let cStrings = values.map { strdup($0) }
-        defer {
-            cStrings.forEach { free($0) }
-        }
-        try cStrings.withUnsafeBufferPointer { buffer in
-            try set(forKey: key, startElement: startElement, elementCount: UInt32(buffer.count), valueType: .string, value: buffer.baseAddress, searchFlags: searchFlags)
-        }
+        defer { cStrings.forEach { free($0) } }
+        try set(cStrings, for: key, startElement: startElement, type: .string, searchFlags: searchFlags)
     }
     
-    func set(flags values: [Int64], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
+    func set(flags: [AVOption.Flag], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
+        try set(flags.map(\.rawValue), for: key, startElement: startElement, type: .flags, searchFlags: searchFlags)
+    }
+    
+    func set(_ colors: [AVColor], forKey key: String, startElement: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
+        try set(colors.flatMap(\.rgbaBytes), for: key, startElement: startElement, type: .color, storageCountPerElement: 4, searchFlags: searchFlags)
+    }
+    
+    private func set<Element>(_ values: [Element], for key: String, startElement: UInt32, type: AVOption.Kind, storageCountPerElement: Int = 1, searchFlags: AVOption.SearchFlag) throws {
         try values.withUnsafeBufferPointer { buffer in
-            try set(forKey: key, startElement: startElement, elementCount: UInt32(buffer.count), valueType: .flags, value: buffer.baseAddress, searchFlags: searchFlags)
-        }
-    }
-    
-    private func set(forKey key: String, startElement: UInt32, elementCount: UInt32, valueType: AVOption.Kind, value: UnsafeRawPointer?, searchFlags: AVOption.SearchFlag) throws {
-        try withUnsafeObjectPointer { ptr in
-            try throwIfFail(av_opt_set_array(ptr, key, searchFlags.rawValue, startElement, elementCount, CFFmpeg.AVOptionType(valueType.rawValue), value))
+            try withUnsafeObjectPointer { ptr in
+                try throwIfFail(av_opt_set_array(ptr, key, searchFlags.rawValue, startElement, UInt32(buffer.count / storageCountPerElement), CFFmpeg.AVOptionType(type.rawValue), buffer.baseAddress))
+            }
         }
     }
 }

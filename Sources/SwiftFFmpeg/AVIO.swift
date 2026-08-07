@@ -242,25 +242,53 @@ public final class AVIOContext {
     try throwIfFail(avio_pause(native, 0))
   }
 
-  /// Seek to a given timestamp relative to some component stream.
-  ///
-  /// - Note: Only meaningful if using a network streaming protocol (e.g. MMS.).
-  ///
-  /// - Parameters:
-  ///   - timestamp: timestamp in `AVStream.timebase` units or if there is no stream specified
-  ///     then in `AVTimestamp.timebase` units.
-  ///   - trackIndex: The stream index that the timestamp is relative to.
-  ///     If `trackIndex` is -1 the timestamp should be in `AVTimestamp.timebase` units from
-  ///     the beginning of the presentation.
-  ///     If a `trackIndex` >= 0 is used and the protocol does not support seeking based on
-  ///     component tracks, the call will fail.
-  ///   - flags: Optional combination of `SeekFlag.backward`, `SeekFlag.byte` and `SeekFlag.any`.
-  ///     The protocol may silently ignore `SeekFlag.backward` and `SeekFlag.any`, but `SeekFlag.byte`
-  ///     will fail if used and not supported.
-  /// - Throws: AVError
-  public func seek(to timestamp: Int64, streamIndex: Int64, flags: AVFormatContext.SeekFlag) throws -> Int {
-    try throwIfFail(avio_seek_time(native, Int32(streamIndex), timestamp, flags.rawValue))
-  }
+    /**
+     Seeks to a timestamp relative to a component stream.
+
+     - Note: This is only meaningful for network streaming protocols, such as MMS.
+
+     - Parameters:
+       - timestamp: The timestamp in `AVStream.timebase` units, or in `AVTimestamp.timebase` units when `streamIndex` is `-1`.
+       - streamIndex: The stream index the timestamp is relative to, or `-1` to seek from the beginning of the presentation.
+       - flags: Flags that select direction and seeking mode.
+     - Returns: The resulting byte position, or another protocol-specific seek result.
+     - Throws: `AVError` if seeking fails.
+     */
+    public func seek(to timestamp: Int64, streamIndex: Int = -1, flags: AVFormatContext.SeekFlag = []) throws -> Int {
+        try throwIfFail(avio_seek_time(native, Int32(streamIndex), timestamp, flags.rawValue))
+    }
+
+    /**
+     Seeks to a presentation timestamp in seconds.
+
+     - Note: This is only meaningful for network streaming protocols, such as MMS.
+
+     - Parameters:
+       - seconds: The timestamp in seconds from the beginning of the presentation.
+       - flags: Flags that select direction and seeking mode.
+     - Returns: The resulting byte position, or another protocol-specific seek result.
+     - Throws: `AVError` if seeking fails.
+     */
+    public func seek(toSeconds seconds: Double, flags: AVFormatContext.SeekFlag = []) throws -> Int {
+        try seek(to: Int64(seconds * Double(AVTimestamp.timebase)), streamIndex: -1, flags: flags)
+    }
+
+    /**
+     Seeks to a stream-relative timestamp in seconds.
+
+     - Note: This is only meaningful for network streaming protocols, such as MMS.
+
+     - Parameters:
+       - seconds: The timestamp in seconds relative to the stream timebase.
+       - streamIndex: The stream index the timestamp is relative to.
+       - timebase: The timebase used by the stream.
+       - flags: Flags that select direction and seeking mode.
+     - Returns: The resulting byte position, or another protocol-specific seek result.
+     - Throws: `AVError` if seeking fails.
+     */
+    public func seek(toSeconds seconds: Double, streamIndex: Int, timebase: AVRational, flags: AVFormatContext.SeekFlag = []) throws -> Int {
+        try seek(to: Int64(seconds / timebase.toDouble), streamIndex: streamIndex, flags: flags)
+    }
 
   /// Accept and allocate a client context on a server context.
   ///
