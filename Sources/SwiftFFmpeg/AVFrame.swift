@@ -352,6 +352,15 @@ public extension AVFrame {
         get { Int(native.pointee.height) }
         set { native.pointee.height = Int32(newValue) }
     }
+    
+    /// The size of the picture, in pixels.
+    var imageSize: AVImageSize {
+        get { .init(width: Int(native.pointee.width), height: Int(native.pointee.height)) }
+        set {
+            native.pointee.width = Int32(newValue.width)
+            native.pointee.height = Int32(newValue.height)
+        }
+    }
 
     /// Frame flags,
     var flags: Flag {

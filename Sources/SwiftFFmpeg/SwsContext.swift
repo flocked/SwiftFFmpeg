@@ -195,7 +195,7 @@ extension SwsContext.Flag: CustomStringConvertible, CustomDebugStringConvertible
   ]
 }
 
-extension SwsContext: AVClassSupport, AVOptionSupport {
+extension SwsContext: AVClassSupport {
   public static let `class` = AVClass(native: sws_get_class())
 
   public func withUnsafeObjectPointer<T>(_ body: (UnsafeMutableRawPointer) throws -> T) rethrows -> T {

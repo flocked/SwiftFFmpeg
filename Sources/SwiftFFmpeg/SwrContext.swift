@@ -164,7 +164,7 @@ public final class SwrContext {
   }
 }
 
-extension SwrContext: AVClassSupport, AVOptionSupport {
+extension SwrContext: AVClassSupport {
   public static let `class` = AVClass(native: swr_get_class())
 
   public func withUnsafeObjectPointer<T>(_ body: (UnsafeMutableRawPointer) throws -> T) rethrows -> T {

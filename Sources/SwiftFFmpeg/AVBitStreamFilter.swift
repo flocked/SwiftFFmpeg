@@ -39,8 +39,7 @@ public struct AVBitStreamFilter {
   ///
   /// May be empty, in that case the filter works with any codec id.
   public var supportedCodecIds: [AVCodecID] {
-    Array(native.pointee.codec_ids, until: AV_CODEC_ID_NONE)?
-      .map({ AVCodecID(native: $0) }) ?? []
+    Array(native.pointee.codec_ids, until: AV_CODEC_ID_NONE)?.map({ AVCodecID(native: $0) }) ?? []
   }
 
   /// Get all registered bitstream filters.
@@ -159,7 +158,7 @@ public final class AVBitStreamFilterContext {
   }
 }
 
-extension AVBitStreamFilterContext: AVClassSupport, AVOptionSupport {
+extension AVBitStreamFilterContext: AVClassSupport {
   public static let `class` = AVClass(native: av_bsf_get_class())
 
   public func withUnsafeObjectPointer<T>(_ body: (UnsafeMutableRawPointer) throws -> T) rethrows -> T {

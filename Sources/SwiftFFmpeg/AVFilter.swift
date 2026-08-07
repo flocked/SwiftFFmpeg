@@ -302,7 +302,7 @@ public final class AVFilterContext {
   }
 }
 
-extension AVFilterContext: AVClassSupport, AVOptionSupport {
+extension AVFilterContext: AVClassSupport {
   public static let `class` = AVClass(native: avfilter_get_class())
 
   public func withUnsafeObjectPointer<T>(_ body: (UnsafeMutableRawPointer) throws -> T) rethrows -> T {

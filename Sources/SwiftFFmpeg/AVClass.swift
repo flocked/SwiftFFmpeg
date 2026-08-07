@@ -31,7 +31,7 @@ public struct AVClass {
         self.category = Category(rawValue: native.pointee.category.rawValue)!
         self.version = native.pointee.version
         self.options = Array(native.pointee.option, until: { $0.name == nil })?.map(
-            AVOption.init(cOption:)
+            AVOption.init(native:)
         )
         var childClasses: [AVClass] = []
         if let iterate = native.pointee.child_class_iterate {
@@ -126,8 +126,8 @@ public extension AVClass {
 
 // MARK: - AVClassSupport
 
-public protocol AVClassSupport {
+/// A type that exposes FFmpeg class metadata and supports AVOption access.
+public protocol AVClassSupport: AVOptionSupport {
+    /// The FFmpeg class metadata for this type.
     static var `class`: AVClass { get }
-
-    func withUnsafeObjectPointer<T>(_ body: (UnsafeMutableRawPointer) throws -> T) rethrows -> T
 }
