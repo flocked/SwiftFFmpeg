@@ -134,9 +134,7 @@ public final class SwrContext {
   ///   will output
   /// - Throws: AVError
   public func getOutSamples(_ sampleCount: Int64) throws -> Int {
-    let ret = swr_get_out_samples(native, Int32(sampleCount))
-    try throwIfFail(ret)
-    return Int(ret)
+    try throwIfFail(swr_get_out_samples(native, Int32(sampleCount)))
   }
 
   /// Convert audio.
@@ -162,9 +160,7 @@ public final class SwrContext {
     src: UnsafeMutablePointer<UnsafePointer<UInt8>?>,
     srcCount: Int
   ) throws -> Int {
-    let ret = swr_convert(native, dst, Int32(dstCount), src, Int32(srcCount))
-    try throwIfFail(ret)
-    return Int(ret)
+    try throwIfFail(swr_convert(native, dst, Int32(dstCount), src, Int32(srcCount)))
   }
 }
 

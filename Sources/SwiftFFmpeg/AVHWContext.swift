@@ -373,7 +373,7 @@ public final class AVHWFramesContext {
         if av_hwframe_transfer_get_formats(nativeBuffer, direction.native, &ptr, 0) != 0 {
             return nil
         }
-        return values(ptr, until: .none)
+        return Array(ptr, until: .none)
     }
 }
 

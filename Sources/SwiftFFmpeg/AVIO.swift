@@ -156,27 +156,21 @@ public final class AVIOContext {
   ///
   /// - Throws: AVError
   public func seek(to offset: Int64, whence: SeekWhence) throws -> Int {
-    let ret = avio_seek(native, offset, whence.rawValue)
-    try throwIfFail(Int32(ret))
-    return Int(ret)
+    try throwIfFail(avio_seek(native, offset, whence.rawValue))
   }
 
   /// Skip given number of bytes forward.
   ///
   /// - Throws: AVError
   public func skip(to offset: Int64) throws -> Int {
-    let ret = avio_skip(native, offset)
-    try throwIfFail(Int32(ret))
-    return Int(ret)
+    try throwIfFail(avio_skip(native, offset))
   }
 
   /// Returns the file position indicator for the file stream.
   ///
   /// - Throws: AVError
   public func tell() throws -> Int {
-    let ret = avio_tell(native)
-    try throwIfFail(Int32(ret))
-    return Int(ret)
+    try throwIfFail(avio_tell(native))
   }
 
   /// Get the filesize.
@@ -213,9 +207,7 @@ public final class AVIOContext {
   /// - Returns: The total number of bytes read into the buffer.
   /// - Throws: AVError
   public func read(_ buffer: UnsafeMutablePointer<UInt8>, size: Int) throws -> Int {
-    let ret = avio_read(native, buffer, Int32(size))
-    try throwIfFail(ret)
-    return Int(ret)
+    try throwIfFail(avio_read(native, buffer, Int32(size)))
   }
 
   /// Read size bytes from `AVIOContext` into buffer. Unlike `read(_:size:)`, this is allowed to
@@ -229,9 +221,7 @@ public final class AVIOContext {
   /// - Returns: number of bytes read
   /// - Throws: AVError
   public func partialRead(_ buffer: UnsafeMutablePointer<UInt8>, size: Int) throws -> Int {
-    let ret = avio_read_partial(native, buffer, Int32(size))
-    try throwIfFail(ret)
-    return Int(ret)
+    try throwIfFail(avio_read_partial(native, buffer, Int32(size)))
   }
 
   /// Pause playing.
@@ -269,9 +259,7 @@ public final class AVIOContext {
   ///     will fail if used and not supported.
   /// - Throws: AVError
   public func seek(to timestamp: Int64, streamIndex: Int64, flags: AVFormatContext.SeekFlag) throws -> Int {
-    let ret = avio_seek_time(native, Int32(streamIndex), timestamp, flags.rawValue)
-    try throwIfFail(Int32(ret))
-    return Int(ret)
+    try throwIfFail(avio_seek_time(native, Int32(streamIndex), timestamp, flags.rawValue))
   }
 
   /// Accept and allocate a client context on a server context.

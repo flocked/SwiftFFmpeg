@@ -315,6 +315,15 @@ public final class AVFrame {
     public func planeBuffer(at plane: Int) -> AVBuffer? {
         av_frame_get_plane_buffer(native, Int32(plane)).map(AVBuffer.init(native:))
     }
+
+    /**
+     The chroma sample size for the frame dimensions, or `nil` if the pixel format has no descriptor.
+
+     This describes chroma sample dimensions only; use the frame linesizes and data pointers for memory layout.
+     */
+    public var chromaSize: (width: Int, height: Int)? {
+        pixelFormat.descriptor?.chromaSize(forLumaSize: (width, height))
+    }
 }
 
 // MARK: - Video
@@ -452,13 +461,13 @@ public extension AVFrame {
 
 extension AVFrame.Flag: CustomStringConvertible, CustomDebugStringConvertible {
     public var description: String {
-        "[\(elements().map({ Self.names[$0]?.0 ?? "\($0.rawValue)" }).joined(separator: ", "))]"
+        "[\(elements().map { Self.names[$0]?.0 ?? "\($0.rawValue)" }.joined(separator: ", "))]"
     }
-    
+
     public var debugDescription: String {
-        "[\(elements().map({ Self.names[$0]?.1 ?? "\($0.rawValue)" }).joined(separator: ", "))]"
+        "[\(elements().map { Self.names[$0]?.1 ?? "\($0.rawValue)" }.joined(separator: ", "))]"
     }
-    
+
     private static let names = [
         Self.corrupt: ("corrupt", "AV_FRAME_FLAG_CORRUPT"),
         .discard: ("discard", "AV_FRAME_FLAG_DISCARD"),

@@ -7,8 +7,6 @@
 
 import CFFmpeg
 
-// MARK: - AVPixelFormat
-
 public typealias AVPixelFormat = CFFmpeg.AVPixelFormat
 
 public extension AVPixelFormat {
@@ -688,38 +686,59 @@ public extension AVPixelFormat {
     var planeCount: Int {
         max(Int(av_pix_fmt_count_planes(self)), 0)
     }
-    
-    var numberOfComponents: Int? {
-        desc.map({Int($0.pointee.nb_components)})
-    }
-    
-    var log2ChromaW: Int? {
-        desc.map({Int($0.pointee.log2_chroma_w)})
-    }
-    
-    var log2ChromaH: Int? {
-        desc.map({Int($0.pointee.log2_chroma_h)})
-    }
-        
-    /*
-     public var log2ChromaW: Int {
-       Int(native.pointee.log2_chroma_w)
-     }
 
-     /// Amount to shift the luma height right to find the chroma height.
-     /// For YV12 this is 1 for example.
-     /// chroma_height= AV_CEIL_RSHIFT(luma_height, log2_chroma_h)
-     /// The note above is needed to ensure rounding up.
-     /// This value only refers to the chroma components.
-     public var log2ChromaH: Int {
-       Int(native.pointee.log2_chroma_h)
-     }
+    /// The number of components each pixel has.
+    var numberOfComponents: Int? {
+        desc.map { Int($0.pointee.nb_components) }
+    }
+
+    /**
+     The number of bits per pixel used.
+
+     Note that this is not the same as the number of bits per sample. he returned number of bits refers to the number of bits actually used for storing the pixel information, that is padding bits are not counted.
      */
-    
+    var bitsPerPixel: Int32? {
+        desc.map { av_get_bits_per_pixel($0) }
+    }
+
+    /// The number of bits per pixel, including any padding or unused bits.
+    var bitsPerPixelPadded: Int32? {
+        desc.map { av_get_padded_bits_per_pixel($0) }
+    }
+
+    /// Alternative names.
+    var alias: [String] {
+        String(cString: desc?.pointee.alias)?.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) } ?? []
+    }
+
+    /**
+     Amount to shift the luma width right to find the chroma width.
+     For YV12 this is 1 for example.
+
+     chroma_width = AV_CEIL_RSHIFT(luma_width, log2_chroma_w)
+     The note above is needed to ensure rounding up.
+     This value only refers to the chroma components.
+      */
+    var log2ChromaW: Int? {
+        desc.map { Int($0.pointee.log2_chroma_w) }
+    }
+
+    /**
+     Amount to shift the luma height right to find the chroma height.
+
+     For YV12 this is 1 for example.
+     chroma_height= AV_CEIL_RSHIFT(luma_height, log2_chroma_h)
+     The note above is needed to ensure rounding up.
+     This value only refers to the chroma components.
+      */
+    var log2ChromaH: Int? {
+        desc.map { Int($0.pointee.log2_chroma_h) }
+    }
+
     var desc: UnsafePointer<AVPixFmtDescriptor>? {
         av_pix_fmt_desc_get(self)
     }
-    
+
     /*
      public var numberOfComponents: Int {
        Int(native.pointee.nb_components)
@@ -737,11 +756,14 @@ public extension AVPixelFormat {
 /// Chromaticity coordinates of the source primaries.
 /// These values match the ones defined by ISO/IEC 23001-8_2013 § 7.1.
 public enum AVColorPrimaries: UInt32 {
+    /// Reserved.
     case RESERVED0
     /// also ITU-R BT1361 / IEC 61966-2-4 / SMPTE RP177 Annex B
     case BT709
-    case UNSPECIFIED
-    case RESERVED
+    /// Unspecified.
+    case unspecified
+    /// Reserved.
+    case reserved
     /// also FCC Title 47 Code of Federal Regulations 73.682 (a)(20)
     case BT470M
     /// also ITU-R BT601-6 625 / ITU-R BT1358 625 / ITU-R BT1700 625 PAL & SECAM

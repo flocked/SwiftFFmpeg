@@ -116,11 +116,9 @@ public final class SwsContext {
     dst: UnsafePointer<UnsafeMutablePointer<UInt8>?>,
     dstStride: UnsafePointer<Int32>
   ) throws -> Int {
-    let ret = sws_scale(
-      native, src, srcStride, Int32(srcSliceY), Int32(srcSliceHeight), dst, dstStride
-    )
-    try throwIfFail(ret)
-    return Int(ret)
+    try throwIfFail(sws_scale(
+        native, src, srcStride, Int32(srcSliceY), Int32(srcSliceHeight), dst, dstStride
+      ))
   }
 }
 

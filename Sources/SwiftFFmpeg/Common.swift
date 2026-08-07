@@ -9,7 +9,7 @@ import CFFmpeg
 
 // MARK: - AVMediaType
 
-public enum AVMediaType: Int32 {
+public enum AVMediaType: Int32, CustomStringConvertible {
     /// Unknown (usually treated as ``data``).
     case unknown = -1
     /// Video.
@@ -33,16 +33,18 @@ public enum AVMediaType: Int32 {
         }
         self = type
     }
-}
-
-// MARK: - AVMediaType + CustomStringConvertible
-
-extension AVMediaType: CustomStringConvertible {
+    
     public var description: String {
-        String(cString: av_get_media_type_string(native)) ?? "unknown"
+        switch self {
+        case .video: "video"
+        case .audio: "audio"
+        case .data: "data"
+        case .subtitle: "subtitle"
+        case .attachment: "attachment"
+        case .unknown: "unknown"
+        }
     }
 }
-
 public enum FFmpeg {
     /// Do global initialization of network libraries.
     /// This is optional, and not recommended anymore.

@@ -179,8 +179,8 @@ extension AVCodecParameters {
     
     /// The field order of the video frame.
     public var fieldOrder: AVFieldOrder {
-        get { native.pointee.field_order }
-        set { native.pointee.field_order = newValue }
+        get { .init(native: native.pointee.field_order) }
+        set { native.pointee.field_order = newValue.native }
     }
     
     /// The color range of the video frame.

@@ -264,7 +264,6 @@ public final class AVCodecContext {
         defer { av_dict_free(&pm) }
 
         try throwIfFail(avcodec_open2(native, codec?.native ?? self.codec?.native, &pm))
-
         dumpUnrecognizedOptions(pm)
     }
 
@@ -577,7 +576,7 @@ public extension AVCodecContext {
                     .takeUnretainedValue()
                     .value
                     .getFormat!
-                    let list = values(fmts, until: AVPixelFormat.none) ?? []
+                    let list = Array(fmts, until: AVPixelFormat.none) ?? []
                     return handler(AVCodecContext(native: ctx!), list)
                 }
             }

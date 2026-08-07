@@ -161,7 +161,7 @@ public struct AVCodecID: RawRepresentable, CustomStringConvertible, Hashable {
         }
     }
     
-    /// All codec IDs known to libavcodec.
+    /// All codecs known to libavcodec.
     public static var all: [AVCodecID] {
         var result: [AVCodecID] = []
         var previous: UnsafePointer<CFFmpeg.AVCodecDescriptor>?

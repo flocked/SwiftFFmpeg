@@ -40,7 +40,7 @@ private func decode_write(
       tmpFrame = frame
     }
 
-    let buffer = try AVImage.makePixelBuffer(from: tmpFrame)
+    let buffer = try tmpFrame.makePixelBuffer()
     defer { buffer.deallocate() }
     fwrite(buffer.baseAddress, 1, buffer.count, file)
 

@@ -7,141 +7,6 @@
 
 import CFFmpeg
 
-/*
- public typealias AVCodecID = CFFmpeg.AVCodecID
-
- extension AVCodecID {
-   public static let none = AV_CODEC_ID_NONE
-
-   // MARK: - Video Codecs
-
-   public static let MPEG1VIDEO = AV_CODEC_ID_MPEG1VIDEO
-   /// preferred ID for MPEG-1/2 video decoding
-   public static let MPEG2VIDEO = AV_CODEC_ID_MPEG2VIDEO
-   public static let H261 = AV_CODEC_ID_H261
-   public static let H263 = AV_CODEC_ID_H263
-   public static let MPEG4 = AV_CODEC_ID_MPEG4
-   public static let H264 = AV_CODEC_ID_H264
-   public static let VP3 = AV_CODEC_ID_VP3
-   public static let PNG = AV_CODEC_ID_PNG
-   public static let PGM = AV_CODEC_ID_PGM
-   public static let BMP = AV_CODEC_ID_BMP
-   public static let JPEG2000 = AV_CODEC_ID_JPEG2000
-   public static let VP5 = AV_CODEC_ID_VP5
-   public static let VP6 = AV_CODEC_ID_VP6
-   public static let TIFF = AV_CODEC_ID_TIFF
-   public static let GIF = AV_CODEC_ID_GIF
-   public static let VP8 = AV_CODEC_ID_VP8
-   public static let VP9 = AV_CODEC_ID_VP9
-   public static let WEBP = AV_CODEC_ID_WEBP
-   public static let HEVC = AV_CODEC_ID_HEVC
-   public static let VP7 = AV_CODEC_ID_VP7
-   public static let APNG = AV_CODEC_ID_APNG
-   public static let AV1 = AV_CODEC_ID_AV1
-   public static let SVG = AV_CODEC_ID_SVG
-
-   // MARK: - various PCM "codecs"
-
-   /// A dummy id pointing at the start of audio codecs
-   public static let FIRST_AUDIO = AV_CODEC_ID_FIRST_AUDIO
-   public static let PCM_S16LE = AV_CODEC_ID_PCM_S16LE
-   public static let PCM_S16BE = AV_CODEC_ID_PCM_S16BE
-   public static let PCM_U16LE = AV_CODEC_ID_PCM_U16LE
-   public static let PCM_U16BE = AV_CODEC_ID_PCM_U16BE
-   public static let PCM_S8 = AV_CODEC_ID_PCM_S8
-   public static let PCM_U8 = AV_CODEC_ID_PCM_U8
-   public static let PCM_MULAW = AV_CODEC_ID_PCM_MULAW
-   public static let PCM_ALAW = AV_CODEC_ID_PCM_ALAW
-   public static let PCM_S32LE = AV_CODEC_ID_PCM_S32LE
-   public static let PCM_S32BE = AV_CODEC_ID_PCM_S32BE
-   public static let PCM_U32LE = AV_CODEC_ID_PCM_U32LE
-   public static let PCM_U32BE = AV_CODEC_ID_PCM_U32BE
-   public static let PCM_S24LE = AV_CODEC_ID_PCM_S24LE
-   public static let PCM_S24BE = AV_CODEC_ID_PCM_S24BE
-   public static let PCM_U24LE = AV_CODEC_ID_PCM_U24LE
-   public static let PCM_U24BE = AV_CODEC_ID_PCM_U24BE
-   public static let PCM_S24DAUD = AV_CODEC_ID_PCM_S24DAUD
-   public static let PCM_ZORK = AV_CODEC_ID_PCM_ZORK
-   public static let PCM_S16LE_PLANAR = AV_CODEC_ID_PCM_S16LE_PLANAR
-   public static let PCM_DVD = AV_CODEC_ID_PCM_DVD
-   public static let PCM_F32BE = AV_CODEC_ID_PCM_F32BE
-   public static let PCM_F32LE = AV_CODEC_ID_PCM_F32LE
-   public static let PCM_F64BE = AV_CODEC_ID_PCM_F64BE
-   public static let PCM_F64LE = AV_CODEC_ID_PCM_F64LE
-   public static let PCM_BLURAY = AV_CODEC_ID_PCM_BLURAY
-   public static let PCM_LXF = AV_CODEC_ID_PCM_LXF
-   public static let S302M = AV_CODEC_ID_S302M
-   public static let PCM_S8_PLANAR = AV_CODEC_ID_PCM_S8_PLANAR
-   public static let PCM_S24LE_PLANAR = AV_CODEC_ID_PCM_S24LE_PLANAR
-   public static let PCM_S32LE_PLANAR = AV_CODEC_ID_PCM_S32LE_PLANAR
-   public static let PCM_S16BE_PLANAR = AV_CODEC_ID_PCM_S16BE_PLANAR
-
-   public static let PCM_S64LE = AV_CODEC_ID_PCM_S64LE
-   public static let PCM_S64BE = AV_CODEC_ID_PCM_S64BE
-   public static let PCM_F16LE = AV_CODEC_ID_PCM_F16LE
-   public static let PCM_F24LE = AV_CODEC_ID_PCM_F24LE
-
-   // MARK: - AMR
-
-   public static let AMR_NB = AV_CODEC_ID_AMR_NB
-   public static let AMR_WB = AV_CODEC_ID_AMR_WB
-
-   // MARK: - Audio Codecs
-
-   public static let MP2 = AV_CODEC_ID_MP2
-   /// preferred ID for decoding MPEG audio layer 1, 2 or 3
-   public static let MP3 = AV_CODEC_ID_MP3
-   public static let AAC = AV_CODEC_ID_AAC
-   public static let FLAC = AV_CODEC_ID_FLAC
-   public static let APE = AV_CODEC_ID_APE
-   public static let MP1 = AV_CODEC_ID_MP1
-
-   // MARK: - Subtitle Codecs
-
-   public static let HDMV_PGS_SUBTITLE = AV_CODEC_ID_HDMV_PGS_SUBTITLE
-   public static let DVB_TELETEXT = AV_CODEC_ID_DVB_TELETEXT
-   public static let SRT = AV_CODEC_ID_SRT
-   public static let MICRODVD = AV_CODEC_ID_MICRODVD
-   public static let DST = AV_CODEC_ID_DST
-   public static let FIRST_SUBTITLE = AV_CODEC_ID_FIRST_SUBTITLE
-   public static let DVD_SUBTITLE = AV_CODEC_ID_DVD_SUBTITLE
-   public static let DVB_SUBTITLE = AV_CODEC_ID_DVB_SUBTITLE
-   public static let TEXT = AV_CODEC_ID_TEXT
-   public static let XSUB = AV_CODEC_ID_XSUB
-   public static let SSA = AV_CODEC_ID_SSA
-   public static let MOV_TEXT = AV_CODEC_ID_MOV_TEXT
-   public static let EIA_608 = AV_CODEC_ID_EIA_608
-   public static let JACOSUB = AV_CODEC_ID_JACOSUB
-   public static let SAMI = AV_CODEC_ID_SAMI
-   public static let REALTEXT = AV_CODEC_ID_REALTEXT
-   public static let STL = AV_CODEC_ID_STL
-   public static let SUBVIEWER1 = AV_CODEC_ID_SUBVIEWER1
-   public static let SUBVIEWER = AV_CODEC_ID_SUBVIEWER
-   public static let SUBRIP = AV_CODEC_ID_SUBRIP
-   public static let WEBVTT = AV_CODEC_ID_WEBVTT
-   public static let MPL2 = AV_CODEC_ID_MPL2
-   public static let VPLAYER = AV_CODEC_ID_VPLAYER
-   public static let PJS = AV_CODEC_ID_PJS
-   public static let ASS = AV_CODEC_ID_ASS
-   public static let HDMV_TEXT_SUBTITLE = AV_CODEC_ID_HDMV_TEXT_SUBTITLE
-   /// The name of the codec.
-   public var name: String {
-     String(cString: avcodec_get_name(self))
-   }
-
-   /// The media type of the codec.
-   public var mediaType: AVMediaType {
-     AVMediaType(native: avcodec_get_type(self))
-   }
- }
-
- extension AVCodecID: @retroactive CustomStringConvertible {
-   public var description: String {
-     name
-   }
- }
- */
-
 // MARK: - AVCodec
 
 typealias CAVCodec = CFFmpeg.AVCodec
@@ -181,13 +46,6 @@ public struct AVCodec {
         avcodec_find_encoder_by_name(name).map { AVCodec(native: $0) }
     }
 
-    /// Returns a name for the specified profile, if available.
-    ///
-    /// Unlike the member function `getProfileName(...)`, which searches a list of profiles supported by a specific decoder or encoder implementation, this class function searches the list of profiles from the `codecID`'s `AVCodecDescriptor`
-    public static func profileName(codecID: AVCodecID, profile: Int32) -> String? {
-        avcodec_profile_name(codecID.native, profile).map { String(cString: $0) }
-    }
-
     /// The codec's name.
     public var name: String {
         String(cString: native.pointee.name)
@@ -196,6 +54,16 @@ public struct AVCodec {
     /// The codec's descriptive name, meant to be more human readable than name.
     public var longName: String {
         String(cString: native.pointee.long_name)
+    }
+    
+    /// The external wrapper backing this codec implementation, or `nil` for native libavcodec codecs.
+    public var wrapperName: String? {
+        String(cString: native.pointee.wrapper_name)
+    }
+    
+    /// The class describing this codec implementation's private options, or `nil` if none exists.
+    public var privateClass: AVClass? {
+        native.pointee.priv_class.map { AVClass(native: $0) }
     }
     
     /// Return a name for the specified profile, if available.
@@ -317,6 +185,16 @@ public struct AVCodec {
             list.append(AVCodec(native: ptr.mutable))
         }
         return list
+    }
+    
+    /// All registered encoders.
+    public static var supportedEncoders: [AVCodec] {
+        supportedCodecs.filter(\.isEncoder)
+    }
+
+    /// All registered decoders.
+    public static var supportedDecoders: [AVCodec] {
+        supportedCodecs.filter(\.isDecoder)
     }
 }
 
