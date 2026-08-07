@@ -124,7 +124,7 @@ public extension AVOption {
         
         public var description: String {
             switch self {
-            case .flags: "flags"
+            case .flags: "AVOption.Flag"
             case .int: "Int32"
             case .int64: "Int64"
             case .uint: "UInt32"
@@ -136,15 +136,15 @@ public extension AVOption {
             case .binary: "Data"
             case .dict: "[String: String]"
             case .const: "Constant"
-            case .imageSize: "image size"
+            case .imageSize: "AVImageSize"
             case .pixelFormat: "AVPixelFormat"
             case .sampleFormat: "AVSampleFormat"
             case .videoRate: "AVRational (video rate)"
             case .duration: "Int64 (duration)"
-            case .color: "color"
+            case .color: "AVColor"
             case .channelLayout: "AVChannelLayout"
             case .bool: "Bool"
-            case .flagArray: "flag array"
+            case .flagArray: "[AVOption.Flag]"
             }
         }
     }
