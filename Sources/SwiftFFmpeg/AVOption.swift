@@ -43,19 +43,19 @@ public struct AVOption {
         if !type.isArray {
             switch type.element {
             case .pixelFormat:
-                self.defaultValue = AVPixelFormat(rawValue: Int32(native.default_val.i64))
+                self.defaultValue = AVPixelFormat(rawValue: Int32(clamping: native.default_val.i64))
             case .sampleFormat:
-                self.defaultValue = AVSampleFormat(rawValue: Int32(native.default_val.i64))
+                self.defaultValue = AVSampleFormat(rawValue: Int32(clamping: native.default_val.i64))
             case .flags:
-                self.defaultValue = AVOption.Flag(rawValue: Int32(native.default_val.i64))
+                self.defaultValue = AVOption.Flag(rawValue: Int32(clamping: native.default_val.i64))
             case .int:
-                self.defaultValue = Int32(native.default_val.i64)
+                self.defaultValue = Int32(clamping: native.default_val.i64)
             case .int64, .const, .duration, .channelLayout:
                 self.defaultValue = native.default_val.i64
             case .uInt:
-                self.defaultValue = UInt32(native.default_val.i64)
+                self.defaultValue = UInt32(clamping: native.default_val.i64)
             case .uInt64:
-                self.defaultValue = UInt64(native.default_val.i64)
+                self.defaultValue = UInt64(clamping: native.default_val.i64)
             case .double:
                 self.defaultValue = native.default_val.dbl
             case .float:
