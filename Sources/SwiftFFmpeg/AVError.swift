@@ -30,6 +30,7 @@ public struct AVError: Error, Equatable {
     }
 }
 
+import Foundation
 public extension AVError {
     /// Resource temporarily unavailable
     static let tryAgain = AVError(code: swift_AVERROR(EAGAIN))
@@ -56,7 +57,7 @@ public extension AVError {
     static let demuxerNotFound = AVError(code: swift_AVERROR_DEMUXER_NOT_FOUND)
     /// Encoder not found
     static let encoderNotFound = AVError(code: swift_AVERROR_ENCODER_NOT_FOUND)
-    /// End of file
+    /// End of file.
     static let eof = AVError(code: swift_AVERROR_EOF)
     /// Immediate exit was requested; the called function should not be restarted
     static let exit = AVError(code: swift_AVERROR_EXIT)
@@ -76,8 +77,7 @@ public extension AVError {
     static let protocolNotFound = AVError(code: swift_AVERROR_PROTOCOL_NOT_FOUND)
     /// Stream not found
     static let streamNotFound = AVError(code: swift_AVERROR_STREAM_NOT_FOUND)
-    /// This is semantically identical to `bug`. It has been introduced in Libav after our `bug` and
-    /// with a modified value.
+    /// This is semantically identical to ``bug``. It has been introduced in Libav after our `bug` and with a modified value.
     static let bug2 = AVError(code: swift_AVERROR_BUG2)
     /// Unknown error, typically from an external library
     static let unknown = AVError(code: swift_AVERROR_UNKNOWN)
@@ -88,13 +88,23 @@ public extension AVError {
     /// Output changed between calls. Reconfiguration is required. (can be OR-ed with `inputChanged`)
     static let outputChanged = AVError(code: swift_AVERROR_OUTPUT_CHANGED)
 
-    /* HTTP & RTSP errors */
+    /// Server returned 400 Bad Request.
     static let httpBadRequest = AVError(code: swift_AVERROR_HTTP_BAD_REQUEST)
+    /// Server returned 401 Unauthorized (authorization failed).
     static let httpUnauthorized = AVError(code: swift_AVERROR_HTTP_UNAUTHORIZED)
+    /// Server returned 403 Forbidden (access denied).
     static let httpForbidden = AVError(code: swift_AVERROR_HTTP_FORBIDDEN)
+    /// Server returned 404 Not Found.
     static let httpNotFound = AVError(code: swift_AVERROR_HTTP_NOT_FOUND)
+    /// Server returned 4XX Client Error, other than 400, 401, 402, 403, 404.
     static let httpOther4xx = AVError(code: swift_AVERROR_HTTP_OTHER_4XX)
+    /// Server returned 5XX Server Error reply.
     static let httpServerError = AVError(code: swift_AVERROR_HTTP_SERVER_ERROR)
+    
+    /// A posix error for the specified posix error code.
+    static func posix(_ code: POSIXError.Code) -> AVError {
+        AVError(code: swift_AVUNERROR(code.rawValue))
+    }
 }
 
 func throwIfFail(_ condition: @autoclosure () -> Int32) throws {
