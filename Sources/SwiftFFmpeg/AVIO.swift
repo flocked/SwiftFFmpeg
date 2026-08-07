@@ -382,17 +382,17 @@ extension AVIOContext {
 
 extension AVIOContext.Flag: CustomStringConvertible {
   public var description: String {
-    var str = "["
-    if contains(.read) { str += "read, " }
-    if contains(.write) { str += "write, " }
-    if contains(.readWrite) { str += "readWrite, " }
-    if contains(.nonBlock) { str += "nonBlock, " }
-    if contains(.direct) { str += "direct, " }
-    if str.suffix(2) == ", " {
-      str.removeLast(2)
+    "[\(elements().map(\.string).joined(separator: ", "))]"
+  }
+
+  private var string: String {
+    switch self {
+    case .read: "read"
+    case .write: "write"
+    case .nonBlock: "nonBlock"
+    case .direct: "direct"
+    default: "\(rawValue)"
     }
-    str += "]"
-    return str
   }
 }
 

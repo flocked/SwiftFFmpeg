@@ -104,21 +104,22 @@ extension AVInputFormat {
 
 extension AVInputFormat.Flag: CustomStringConvertible {
   public var description: String {
-    var str = "["
-    if contains(.noFile) { str += "noFile, " }
-    if contains(.needNumber) { str += "needNumber, " }
-    if contains(.showIDs) { str += "showIDs, " }
-    if contains(.genericIndex) { str += "genericIndex, " }
-    if contains(.tsDiscont) { str += "tsDiscont, " }
-    if contains(.noBinSearch) { str += "noBinSearch, " }
-    if contains(.noGenSearch) { str += "noGenSearch, " }
-    if contains(.noByteSeek) { str += "noByteSeek, " }
-    if contains(.seekToPTS) { str += "seekToPTS, " }
-    if str.suffix(2) == ", " {
-      str.removeLast(2)
+    "[\(elements().map(\.string).joined(separator: ", "))]"
+  }
+
+  private var string: String {
+    switch self {
+    case .noFile: "noFile"
+    case .needNumber: "needNumber"
+    case .showIDs: "showIDs"
+    case .genericIndex: "genericIndex"
+    case .tsDiscont: "tsDiscont"
+    case .noBinSearch: "noBinSearch"
+    case .noGenSearch: "noGenSearch"
+    case .noByteSeek: "noByteSeek"
+    case .seekToPTS: "seekToPTS"
+    default: "\(rawValue)"
     }
-    str += "]"
-    return str
   }
 }
 
@@ -249,21 +250,22 @@ extension AVOutputFormat {
 
 extension AVOutputFormat.Flag: CustomStringConvertible {
   public var description: String {
-    var str = "["
-    if contains(.noFile) { str += "noFile, " }
-    if contains(.needNumber) { str += "needNumber, " }
-    if contains(.globalHeader) { str += "globalHeader, " }
-    if contains(.noTimestamps) { str += "noTimestamps, " }
-    if contains(.variableFPS) { str += "variableFPS, " }
-    if contains(.noDimensions) { str += "noDimensions, " }
-    if contains(.noStreams) { str += "noStreams, " }
-    if contains(.tsNonstrict) { str += "tsNonstrict, " }
-    if contains(.tsNegative) { str += "tsNegative, " }
-    if str.suffix(2) == ", " {
-      str.removeLast(2)
+    "[\(elements().map(\.string).joined(separator: ", "))]"
+  }
+
+  private var string: String {
+    switch self {
+    case .noFile: "noFile"
+    case .needNumber: "needNumber"
+    case .globalHeader: "globalHeader"
+    case .noTimestamps: "noTimestamps"
+    case .variableFPS: "variableFPS"
+    case .noDimensions: "noDimensions"
+    case .noStreams: "noStreams"
+    case .tsNonstrict: "tsNonstrict"
+    case .tsNegative: "tsNegative"
+    default: "\(rawValue)"
     }
-    str += "]"
-    return str
   }
 }
 

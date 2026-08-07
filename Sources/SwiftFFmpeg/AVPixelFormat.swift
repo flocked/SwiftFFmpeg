@@ -525,6 +525,8 @@ public enum AVColorPrimaries: UInt32 {
   case SMPTE432
   /// EBU Tech. 3213-E / JEDEC P22 phosphors
   case JEDEC_P22 // EBU3213
+  /// Panasonic V-Gamut color primaries.
+  case V_GAMUT = 256
 
   var native: CFFmpeg.AVColorPrimaries {
     CFFmpeg.AVColorPrimaries(rawValue)
@@ -593,6 +595,8 @@ public enum AVColorTransferCharacteristic: UInt32 {
   case SMPTEST428_1 // SMPTE428
   /// ARIB STD-B67, known as "Hybrid log-gamma"
   case ARIB_STD_B67
+  /// Panasonic V-Log transfer characteristics.
+  case V_LOG = 256
 
   var native: CFFmpeg.AVColorTransferCharacteristic {
     CFFmpeg.AVColorTransferCharacteristic(rawValue)
@@ -655,6 +659,12 @@ public enum AVColorSpace: UInt32 {
   case CHROMA_DERIVED_CL
   /// ITU-R BT.2100-0, ICtCp
   case ICTCP
+  /// SMPTE ST 2128, IPT-C2.
+  case IPT_C2
+  /// YCgCo-R, even addition of bits.
+  case YCGCO_RE
+  /// YCgCo-R, odd addition of bits.
+  case YCGCO_RO
 
   var native: CFFmpeg.AVColorSpace {
     CFFmpeg.AVColorSpace(rawValue)
@@ -683,8 +693,6 @@ public enum AVColorSpace: UInt32 {
     String(cString: av_color_space_name(native))
   }
 }
-
-// MARK: - AVColorRange
 
 /// MPEG vs JPEG YUV range.
 public enum AVColorRange: UInt32 {

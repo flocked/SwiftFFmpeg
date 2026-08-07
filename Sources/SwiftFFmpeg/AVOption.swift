@@ -34,14 +34,21 @@ public struct AVOption {
     self.name = String(cString: cOption.name)
     self.help = String(cString: cOption.help)
     self.offset = Int(cOption.offset)
-    self.type = Kind(rawValue: cOption.type.rawValue)!
+    let typeRawValue = cOption.type.rawValue
+    if let kind = Kind(rawValue: typeRawValue) {
+      self.type = kind
+    } else if typeRawValue & Kind.flagArray.rawValue != 0 {
+      self.type = .flagArray
+    } else {
+      fatalError("Unknown option type: \(cOption.type)")
+    }
     self.min = cOption.min
     self.max = cOption.max
     self.flags = Flag(rawValue: cOption.flags)
     self.unit = String(cString: cOption.unit)
 
     switch type {
-    case .flags, .int, .int64, .uint64, .const, .pixelFormat, .sampleFormat, .duration, .channelLayout:
+    case .flags, .int, .int64, .uint64, .uint, .const, .pixelFormat, .sampleFormat, .duration, .channelLayout, .flagArray:
       self.defaultValue = cOption.default_val.i64
     case .double, .float, .rational:
       self.defaultValue = cOption.default_val.dbl
@@ -86,7 +93,7 @@ extension AVOption: CustomStringConvertible {
 extension AVOption {
   // https://github.com/FFmpeg/FFmpeg/blob/master/libavutil/opt.h#L221
   public enum Kind: UInt32 {
-    case flags
+    case flags = 1
     case int
     case int64
     case double
@@ -106,8 +113,10 @@ extension AVOption {
     case videoRate
     case duration
     case color
-    case channelLayout
     case bool
+    case channelLayout
+    case uint
+    case flagArray = 65536
   }
 }
 
@@ -116,7 +125,7 @@ extension AVOption.Kind: CustomStringConvertible {
     switch self {
     case .flags:
       return "flags"
-    case .int, .int64, .uint64:
+    case .int, .int64, .uint64, .uint:
       return "integer"
     case .double, .float:
       return "float"
@@ -146,6 +155,8 @@ extension AVOption.Kind: CustomStringConvertible {
       return "channel layout"
     case .bool:
       return "bool"
+    case .flagArray:
+      return "flag array"
     }
   }
 }
@@ -182,21 +193,23 @@ extension AVOption {
 
 extension AVOption.Flag: CustomStringConvertible {
   public var description: String {
-    var str = "["
-    if contains(.encoding) { str += "encoding, " }
-    if contains(.decoding) { str += "decoding, " }
-    if contains(.audio) { str += "audio, " }
-    if contains(.video) { str += "video, " }
-    if contains(.subtitle) { str += "subtitle, " }
-    if contains(.export) { str += "export, " }
-    if contains(.bsf) { str += "bsf, " }
-    if contains(.filtering) { str += "filtering, " }
-    if contains(.deprecated) { str += "deprecated, " }
-    if str.suffix(2) == ", " {
-      str.removeLast(2)
+    "[\(elements().map(\.string).joined(separator: ", "))]"
+  }
+
+  private var string: String {
+    switch self {
+    case .encoding: "encoding"
+    case .decoding: "decoding"
+    case .audio: "audio"
+    case .video: "video"
+    case .subtitle: "subtitle"
+    case .export: "export"
+    case .readonly: "readonly"
+    case .bsf: "bsf"
+    case .filtering: "filtering"
+    case .deprecated: "deprecated"
+    default: "\(rawValue)"
     }
-    str += "]"
-    return str
   }
 }
 

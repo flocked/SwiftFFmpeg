@@ -444,16 +444,17 @@ extension AVFrame {
 
 extension AVFrame.Flag: CustomStringConvertible {
   public var description: String {
-    var str = "["
-    if contains(.corrupt) { str += "corrupt, " }
-    if contains(.key) { str += "key, " }
-    if contains(.discard) { str += "discard, " }
-    if contains(.interlaced) { str += "interlaced, " }
-    if contains(.topFieldFirst) { str += "topFieldFirst, " }
-    if str.suffix(2) == ", " {
-      str.removeLast(2)
+    "[\(elements().map(\.string).joined(separator: ", "))]"
+  }
+
+  private var string: String {
+    switch self {
+    case .corrupt: "corrupt"
+    case .key: "key"
+    case .discard: "discard"
+    case .interlaced: "interlaced"
+    case .topFieldFirst: "topFieldFirst"
+    default: "\(rawValue)"
     }
-    str += "]"
-    return str
   }
 }

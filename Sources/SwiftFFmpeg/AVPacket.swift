@@ -186,17 +186,18 @@ extension AVPacket {
 
 extension AVPacket.Flag: CustomStringConvertible {
   public var description: String {
-    var str = "["
-    if contains(.key) { str += "key, " }
-    if contains(.corrupt) { str += "corrupt, " }
-    if contains(.discard) { str += "discard, " }
-    if contains(.trusted) { str += "trusted, " }
-    if contains(.disposable) { str += "disposable, " }
-    if str.suffix(2) == ", " {
-      str.removeLast(2)
+    "[\(elements().map(\.string).joined(separator: ", "))]"
+  }
+
+  private var string: String {
+    switch self {
+    case .key: "key"
+    case .corrupt: "corrupt"
+    case .discard: "discard"
+    case .trusted: "trusted"
+    case .disposable: "disposable"
+    default: "\(rawValue)"
     }
-    str += "]"
-    return str
   }
 }
 
@@ -393,6 +394,15 @@ public enum AVPacketSideDataType: UInt32 {
   /// Raw LCEVC payload data, as a uint8_t array, with NAL emulation
   /// bytes intact.
   case lcevc
+
+  /// Reference display widths, distances, and stereo pairs for 3D presentation.
+  case threeDReferenceDisplays
+
+  /// The last received RTCP sender report information.
+  case rtcpSR
+
+  /// Extensible image file format metadata.
+  case exif
 
   var native: CFFmpeg.AVPacketSideDataType {
     CFFmpeg.AVPacketSideDataType(rawValue)

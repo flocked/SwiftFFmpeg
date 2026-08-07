@@ -45,6 +45,7 @@ extension AVClass {
     case bitStreamFilter
     case swscaler
     case swresampler
+    case hwDevice
     case deviceVideoOutput = 40
     case deviceVideoInput
     case deviceAudioOutput
@@ -91,6 +92,8 @@ extension AVClass.Category: CustomStringConvertible {
       return "swscaler"
     case .swresampler:
       return "swresampler"
+    case .hwDevice:
+      return "hwDevice"
     case .deviceVideoOutput:
       return "deviceVideoOutput"
     case .deviceVideoInput:

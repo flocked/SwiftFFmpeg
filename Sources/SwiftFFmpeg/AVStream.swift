@@ -80,7 +80,7 @@ public final class AVStream {
     public var startTime: Int64 {
         native.pointee.start_time
     }
-
+    
     /// The presentation time of the first frame in seconds, or `nil` if it is unknown.
     public var startTimeSeconds: TimeInterval? {
         guard startTime != AVTimestamp.noPTS else { return nil }
@@ -90,7 +90,7 @@ public final class AVStream {
     public var duration: Int64 {
         native.pointee.duration
     }
-
+    
     /// The stream duration in seconds, or `nil` if it is unknown.
     public var durationSeconds: TimeInterval? {
         guard duration != AVTimestamp.noPTS else { return nil }
@@ -130,6 +130,11 @@ public final class AVStream {
         set { native.pointee.metadata = newValue.avDict }
     }
     
+    /// Returns the metadata value for the specified key.
+    public func metadata(for key: AVMetadataKey) -> String? {
+        metadata[key.rawValue]
+    }
+    
     /// Average framerate.
     ///
     /// - demuxing: May be set by libavformat when creating the stream or in
@@ -139,7 +144,7 @@ public final class AVStream {
         get { native.pointee.avg_frame_rate }
         set { native.pointee.avg_frame_rate = newValue }
     }
-
+    
     /// The average frame rate as frames per second, or `nil` if it is unknown.
     public var averageFrameRateValue: Double? {
         guard averageFramerate.num != 0, averageFramerate.den != 0 else { return nil }
@@ -154,7 +159,7 @@ public final class AVStream {
     public var realFramerate: AVRational {
         native.pointee.r_frame_rate
     }
-
+    
     /// The real base frame rate as frames per second, or `nil` if it is unknown.
     public var realFrameRateValue: Double? {
         guard realFramerate.num != 0, realFramerate.den != 0 else { return nil }
@@ -186,4 +191,35 @@ public final class AVStream {
     public var title: String? { metadata["title"] }
     /// The stream handler name metadata, or `nil` if unavailable.
     public var handlerName: String? { metadata["handler_name"] }
+}
+
+import Foundation
+
+extension AVStream {
+    public func matches(locale: Locale) -> Bool {
+        guard let languageCode = metadata["language"]?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(), !languageCode.isEmpty, languageCode != "und" else {
+            return false
+        }
+        guard let localeLanguageCode = locale.languageCode?.lowercased() else {
+            return false
+        }
+        guard let streamLanguageName = Self.referenceLocale.localizedString(forLanguageCode: languageCode)?.lowercased(), let localeLanguageName = Self.referenceLocale.localizedString(forLanguageCode: localeLanguageCode)?.lowercased() else {
+            return false
+        }
+        return streamLanguageName == localeLanguageName
+    }
+    private static let referenceLocale = Locale(identifier: "en")
+}
+
+
+extension AVFormatContext {
+    /// Returns streams whose language metadata matches the specified locale.
+    public func streams(matching locale: Locale) -> [AVStream] {
+        streams.filter { $0.matches(locale: locale) }
+    }
+    
+    /// Returns streams of the specified media type whose language metadata matches the specified locale.
+    public func streams(matching locale: Locale, mediaType: AVMediaType) -> [AVStream] {
+        streams.filter { $0.mediaType == mediaType && $0.matches(locale: locale) }
+    }
 }

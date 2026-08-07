@@ -395,27 +395,28 @@ extension AVCodec {
 
 extension AVCodec.Cap: CustomStringConvertible {
   public var description: String {
-    var str = "["
-    if contains(.drawHorizBand) { str += "drawHorizBand, " }
-    if contains(.dr1) { str += "dr1, " }
-    if contains(.delay) { str += "delay, " }
-    if contains(.smallLastFrame) { str += "smallLastFrame, " }
-    if contains(.experimental) { str += "experimental, " }
-    if contains(.channelConf) { str += "channelConf, " }
-    if contains(.frameThreads) { str += "frameThreads, " }
-    if contains(.sliceThreads) { str += "sliceThreads, " }
-    if contains(.paramChange) { str += "paramChange, " }
-    if contains(.otherThreads) { str += "otherThreads, " }
-    if contains(.variableFrameSize) { str += "variableFrameSize, " }
-    if contains(.avoidProbing) { str += "avoidProbing, " }
-    if contains(.hardware) { str += "hardware, " }
-    if contains(.hybrid) { str += "hybrid, " }
-    if contains(.encoderReorderedOpaque) { str += "encoderReorderedOpaque, " }
-    if str.suffix(2) == ", " {
-      str.removeLast(2)
+    "[\(elements().map(\.string).joined(separator: ", "))]"
+  }
+
+  private var string: String {
+    switch self {
+    case .drawHorizBand: "drawHorizBand"
+    case .dr1: "dr1"
+    case .delay: "delay"
+    case .smallLastFrame: "smallLastFrame"
+    case .experimental: "experimental"
+    case .channelConf: "channelConf"
+    case .frameThreads: "frameThreads"
+    case .sliceThreads: "sliceThreads"
+    case .paramChange: "paramChange"
+    case .otherThreads: "otherThreads"
+    case .variableFrameSize: "variableFrameSize"
+    case .avoidProbing: "avoidProbing"
+    case .hardware: "hardware"
+    case .hybrid: "hybrid"
+    case .encoderReorderedOpaque: "encoderReorderedOpaque"
+    default: "\(rawValue)"
     }
-    str += "]"
-    return str
   }
 }
 

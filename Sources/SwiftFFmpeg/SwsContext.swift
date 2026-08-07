@@ -170,28 +170,29 @@ extension SwsContext {
 extension SwsContext.Flag: CustomStringConvertible {
 
   public var description: String {
-    var str = "["
-    if contains(.fastBilinear) { str += "fastBilinear, " }
-    if contains(.bilinear) { str += "bilinear, " }
-    if contains(.bicubic) { str += "bicubic, " }
-    if contains(.x) { str += "x, " }
-    if contains(.point) { str += "point, " }
-    if contains(.area) { str += "area, " }
-    if contains(.bicublin) { str += "bicublin, " }
-    if contains(.gauss) { str += "gauss, " }
-    if contains(.sinc) { str += "sinc, " }
-    if contains(.lanczos) { str += "lanczos, " }
-    if contains(.spline) { str += "spLine, " }
-    if contains(.printInfo) { str += "printInfo, " }
-    if contains(.fullChromaInt) { str += "fullChromaInt, " }
-    if contains(.fullChromaInp) { str += "fullChromaInp, " }
-    if contains(.accurateRnd) { str += "accurateRnd, " }
-    if contains(.bitexact) { str += "bitexact, " }
-    if str.suffix(2) == ", " {
-      str.removeLast(2)
+    "[\(elements().map(\.string).joined(separator: ", "))]"
+  }
+
+  private var string: String {
+    switch self {
+    case .fastBilinear: "fastBilinear"
+    case .bilinear: "bilinear"
+    case .bicubic: "bicubic"
+    case .x: "x"
+    case .point: "point"
+    case .area: "area"
+    case .bicublin: "bicublin"
+    case .gauss: "gauss"
+    case .sinc: "sinc"
+    case .lanczos: "lanczos"
+    case .spline: "spline"
+    case .printInfo: "printInfo"
+    case .fullChromaInt: "fullChromaInt"
+    case .fullChromaInp: "fullChromaInp"
+    case .accurateRnd: "accurateRnd"
+    case .bitexact: "bitexact"
+    default: "\(rawValue)"
     }
-    str += "]"
-    return str
   }
 }
 

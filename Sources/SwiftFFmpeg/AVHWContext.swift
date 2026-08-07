@@ -32,6 +32,14 @@ public enum AVHWDeviceType: UInt32 {
   case openCL
   /// Use MediaCodec (Android) hardware acceleration.
   case mediaCodec
+  /// Use Vulkan hardware acceleration.
+  case vulkan
+  /// Use D3D12VA (Direct3D 12 Video Acceleration) hardware acceleration.
+  case d3d12va
+  /// Use AMF (Advanced Media Framework) hardware acceleration.
+  case amf
+  /// Use OpenHarmony Codec hardware acceleration.
+  case ohCodec
 
   var native: CFFmpeg.AVHWDeviceType {
     CFFmpeg.AVHWDeviceType(rawValue)
@@ -146,25 +154,26 @@ extension AVCodecHWConfig {
     public static let adHoc = Method(rawValue: Int32(AV_CODEC_HW_CONFIG_METHOD_AD_HOC))
 
     public let rawValue: Int32
-
+    
     public init(rawValue: Int32) { self.rawValue = rawValue }
   }
 }
 
 extension AVCodecHWConfig.Method: CustomStringConvertible {
 
-  public var description: String {
-    var str = "["
-    if contains(.hwDeviceContext) { str += "hwDeviceContext, " }
-    if contains(.hwFramesContext) { str += "hwFramesContext, " }
-    if contains(.internal) { str += "`internal`, " }
-    if contains(.adHoc) { str += "adHoc, " }
-    if str.suffix(2) == ", " {
-      str.removeLast(2)
+    public var description: String {
+        "[\(elements().map(\.string).joined(separator: ", "))]"
     }
-    str += "]"
-    return str
-  }
+    
+    private var string: String {
+        switch self {
+        case .adHoc: "adHoc"
+        case .internal: "internal"
+        case .hwFramesContext: "hwFramesContext"
+        case .hwDeviceContext: "hwDeviceContext"
+        default: "\(rawValue)"
+        }
+    }
 }
 
 // MARK: - AVHWDeviceContext

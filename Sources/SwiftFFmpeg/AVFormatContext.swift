@@ -6,6 +6,7 @@
 //
 
 import CFFmpeg
+import Foundation
 
 // MARK: - AVFormatContext
 
@@ -35,10 +36,16 @@ public final class AVFormatContext {
   ) throws {
     var pm: OpaquePointer? = options?.avDict
     defer { av_dict_free(&pm) }
-
     try throwIfFail(avformat_open_input(&native, url, format?.native, &pm))
-
     dumpUnrecognizedOptions(pm)
+  }
+    
+  public convenience init(
+    url: URL,
+    format: AVInputFormat? = nil,
+    options: [String: String]? = nil
+  ) throws {
+    try self.init(url: url.isFileURL ? url.path : url.absoluteString, format: format, options: options)
   }
 
   /// Allocate an `AVFormatContext` for an output format.
@@ -112,6 +119,14 @@ public final class AVFormatContext {
     }
     return list
   }
+    
+    /// The streams grouped by language.
+    public var streamsByLanguage: [String: [AVStream]] {
+        streams.reduce(into: [:]) { dic, stream in
+            guard let language = stream.language, !language.isEmpty else { return }
+            dic[language, default: []].append(stream)
+        }
+    }
 
   /// The flags used to modify the (de)muxer behaviour.
   ///
@@ -263,26 +278,27 @@ extension AVFormatContext {
 
 extension AVFormatContext.Flag: CustomStringConvertible {
   public var description: String {
-    var str = "["
-    if contains(.genPTS) { str += "genPTS, " }
-    if contains(.ignIdx) { str += "ignIdx, " }
-    if contains(.nonBlock) { str += "nonBlock, " }
-    if contains(.ignDTS) { str += "ignDTS, " }
-    if contains(.noFillIn) { str += "noFillIn, " }
-    if contains(.noParse) { str += "noParse, " }
-    if contains(.noBuffer) { str += "noBuffer, " }
-    if contains(.customIO) { str += "customIO, " }
-    if contains(.discardCorrupt) { str += "discardCorrupt, " }
-    if contains(.flushPackets) { str += "flushPackets, " }
-    if contains(.bitexact) { str += "bitexact, " }
-    if contains(.sortDTS) { str += "sortDTS, " }
-    if contains(.fastSeek) { str += "fastSeek, " }
-    if contains(.autoBSF) { str += "autoBSF, " }
-    if str.suffix(2) == ", " {
-      str.removeLast(2)
+    "[\(elements().map(\.string).joined(separator: ", "))]"
+  }
+
+  private var string: String {
+    switch self {
+    case .genPTS: "genPTS"
+    case .ignIdx: "ignIdx"
+    case .nonBlock: "nonBlock"
+    case .ignDTS: "ignDTS"
+    case .noFillIn: "noFillIn"
+    case .noParse: "noParse"
+    case .noBuffer: "noBuffer"
+    case .customIO: "customIO"
+    case .discardCorrupt: "discardCorrupt"
+    case .flushPackets: "flushPackets"
+    case .bitexact: "bitexact"
+    case .sortDTS: "sortDTS"
+    case .fastSeek: "fastSeek"
+    case .autoBSF: "autoBSF"
+    default: "\(rawValue)"
     }
-    str += "]"
-    return str
   }
 }
 

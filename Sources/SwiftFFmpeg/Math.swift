@@ -69,6 +69,8 @@ public enum AVRounding: UInt32 {
   case up = 3
   /// Round to nearest and halfway cases away from zero.
   case nearInf = 5
+  /// Pass `Int64.min` and `Int64.max` through unchanged when rescaling.
+  case passMinMax = 8192
 }
 
 public enum AVMath {

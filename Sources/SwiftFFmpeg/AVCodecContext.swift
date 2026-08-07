@@ -296,6 +296,7 @@ public final class AVCodecContext {
   public func receiveFrame(_ frame: AVFrame) throws {
     try throwIfFail(avcodec_receive_frame(native, frame.native))
   }
+    
 
   /// Supply a raw video or audio frame to the encoder.
   ///
@@ -391,29 +392,30 @@ extension AVCodecContext {
 
 extension AVCodecContext.Flag: CustomStringConvertible {
   public var description: String {
-    var str = "["
-    if contains(.unaligned) { str += "unaligned, " }
-    if contains(.qscale) { str += "qscale, " }
-    if contains(.p4mv) { str += "p4mv, " }
-    if contains(.outputCorrupted) { str += "outputCorrupted, " }
-    if contains(.qpel) { str += "qpel, " }
-    if contains(.pass1) { str += "pass1, " }
-    if contains(.pass2) { str += "pass2, " }
-    if contains(.loopFilter) { str += "loopFilter, " }
-    if contains(.gray) { str += "gray, " }
-    if contains(.psnr) { str += "psnr, " }
-    if contains(.interlacedDCT) { str += "interlacedDCT, " }
-    if contains(.lowDelay) { str += "lowDelay, " }
-    if contains(.globalHeader) { str += "globalHeader, " }
-    if contains(.bitexact) { str += "bitexact, " }
-    if contains(.acPred) { str += "acPred, " }
-    if contains(.interlacedME) { str += "interlacedME, " }
-    if contains(.closedGOP) { str += "closedGOP, " }
-    if str.suffix(2) == ", " {
-      str.removeLast(2)
+    "[\(elements().map(\.string).joined(separator: ", "))]"
+  }
+
+  private var string: String {
+    switch self {
+    case .unaligned: "unaligned"
+    case .qscale: "qscale"
+    case .p4mv: "p4mv"
+    case .outputCorrupted: "outputCorrupted"
+    case .qpel: "qpel"
+    case .pass1: "pass1"
+    case .pass2: "pass2"
+    case .loopFilter: "loopFilter"
+    case .gray: "gray"
+    case .psnr: "psnr"
+    case .interlacedDCT: "interlacedDCT"
+    case .lowDelay: "lowDelay"
+    case .globalHeader: "globalHeader"
+    case .bitexact: "bitexact"
+    case .acPred: "acPred"
+    case .interlacedME: "interlacedME"
+    case .closedGOP: "closedGOP"
+    default: "\(rawValue)"
     }
-    str += "]"
-    return str
   }
 }
 
@@ -451,21 +453,22 @@ extension AVCodecContext {
 
 extension AVCodecContext.Flag2: CustomStringConvertible {
   public var description: String {
-    var str = "["
-    if contains(.fast) { str += "fast, " }
-    if contains(.noOutput) { str += "noOutput, " }
-    if contains(.localHeader) { str += "localHeader, " }
-    if contains(.chunks) { str += "chunks, " }
-    if contains(.ignoreCrop) { str += "ignoreCrop, " }
-    if contains(.showAll) { str += "showAll, " }
-    if contains(.exportMVS) { str += "exportMVS, " }
-    if contains(.skipManual) { str += "skipManual, " }
-    if contains(.roFlushNoop) { str += "roFlushNoop, " }
-    if str.suffix(2) == ", " {
-      str.removeLast(2)
+    "[\(elements().map(\.string).joined(separator: ", "))]"
+  }
+
+  private var string: String {
+    switch self {
+    case .fast: "fast"
+    case .noOutput: "noOutput"
+    case .localHeader: "localHeader"
+    case .chunks: "chunks"
+    case .ignoreCrop: "ignoreCrop"
+    case .showAll: "showAll"
+    case .exportMVS: "exportMVS"
+    case .skipManual: "skipManual"
+    case .roFlushNoop: "roFlushNoop"
+    default: "\(rawValue)"
     }
-    str += "]"
-    return str
   }
 }
 

@@ -8,21 +8,18 @@
 import CFFmpeg
 
 extension UnsafePointer {
-
   var mutable: UnsafeMutablePointer<Pointee> {
     UnsafeMutablePointer(mutating: self)
   }
 }
 
 extension UnsafeBufferPointer {
-
   var mutable: UnsafeMutableBufferPointer<Element> {
     UnsafeMutableBufferPointer(mutating: self)
   }
 }
 
 extension UnsafeBufferPointer where Element == UInt8 {
-
   public var md5: String {
     let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: 16)
     defer {
@@ -38,7 +35,6 @@ extension UnsafeBufferPointer where Element == UInt8 {
 }
 
 extension String {
-
   init?(cString: UnsafePointer<CChar>?) {
     guard let cString = cString else {
       return nil
@@ -55,4 +51,22 @@ extension Dictionary where Key == String, Value == String {
     }
     return pm
   }
+}
+
+extension OptionSet where RawValue: FixedWidthInteger, Element == Self {
+    func elements() -> [Element] {
+        Array(_elements())
+    }
+    
+    private func _elements() -> AnySequence<Element> {
+        var remainingBits = rawValue
+        return AnySequence {
+            AnyIterator {
+                guard remainingBits != 0 else { return nil }
+                let lowestBit = remainingBits & ~(remainingBits - 1)
+                remainingBits &= ~lowestBit
+                return Self(rawValue: lowestBit)
+            }
+        }
+    }
 }

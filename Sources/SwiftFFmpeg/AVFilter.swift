@@ -156,18 +156,18 @@ extension AVFilter {
 
 extension AVFilter.Flag: CustomStringConvertible {
   public var description: String {
-    var str = "["
-    if contains(.dynamicInputs) { str += "dynamicInputs, " }
-    if contains(.dynamicOutputs) { str += "dynamicOutputs, " }
-    if contains(.sliceThreads) { str += "sliceThreads, " }
-    if contains(.supportTimelineGeneric) { str += "supportTimelineGeneric, " }
-    if contains(.supportTimelineInternal) { str += "supportTimelineInternal, " }
-    if contains(.supportTimeline) { str += "supportTimeline, " }
-    if str.suffix(2) == ", " {
-      str.removeLast(2)
+    "[\(elements().map(\.string).joined(separator: ", "))]"
+  }
+
+  private var string: String {
+    switch self {
+    case .dynamicInputs: "dynamicInputs"
+    case .dynamicOutputs: "dynamicOutputs"
+    case .sliceThreads: "sliceThreads"
+    case .supportTimelineGeneric: "supportTimelineGeneric"
+    case .supportTimelineInternal: "supportTimelineInternal"
+    default: "\(rawValue)"
     }
-    str += "]"
-    return str
   }
 }
 
@@ -329,15 +329,16 @@ public struct AVBufferSourceFlag: OptionSet {
 
 extension AVBufferSourceFlag: CustomStringConvertible {
   public var description: String {
-    var str = "["
-    if contains(.noCheckFormat) { str += "noCheckFormat, " }
-    if contains(.push) { str += "push, " }
-    if contains(.keepReference) { str += "keepReference, " }
-    if str.suffix(2) == ", " {
-      str.removeLast(2)
+    "[\(elements().map(\.string).joined(separator: ", "))]"
+  }
+
+  private var string: String {
+    switch self {
+    case .noCheckFormat: "noCheckFormat"
+    case .push: "push"
+    case .keepReference: "keepReference"
+    default: "\(rawValue)"
     }
-    str += "]"
-    return str
   }
 }
 
@@ -381,14 +382,15 @@ public struct AVBufferSinkFlag: OptionSet {
 
 extension AVBufferSinkFlag: CustomStringConvertible {
   public var description: String {
-    var str = "["
-    if contains(.peek) { str += "peek, " }
-    if contains(.noRequest) { str += "noRequest, " }
-    if str.suffix(2) == ", " {
-      str.removeLast(2)
+    "[\(elements().map(\.string).joined(separator: ", "))]"
+  }
+
+  private var string: String {
+    switch self {
+    case .peek: "peek"
+    case .noRequest: "noRequest"
+    default: "\(rawValue)"
     }
-    str += "]"
-    return str
   }
 }
 
@@ -643,7 +645,7 @@ extension AVFilterGraph: CustomStringConvertible {
   public var description: String {
     let cstr = avfilter_graph_dump(native, nil)
     defer { av_free(cstr) }
-    return String(cString: cstr)!
+    return String(cString: cstr!)
   }
 }
 
