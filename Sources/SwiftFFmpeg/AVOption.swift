@@ -76,9 +76,6 @@ public struct AVOption {
         case .imageSize:
             self.defaultValue = String(cString: native.default_val.str)
         case .flagArray:
-            if let def = native.default_val.arr.pointee.def {
-                let components = String(cString: def).components(separatedBy: String(cString: [native.default_val.arr.pointee.sep]))
-            }
             self.defaultValue = native.default_val.i64
                 
         }
