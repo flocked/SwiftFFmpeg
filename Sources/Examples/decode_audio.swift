@@ -59,7 +59,7 @@ func decode_audio() throws {
   }
   defer { fclose(outFile) }
 
-  let codec = AVCodec.findDecoderById(.MP2)!
+    let codec = AVCodec.decoder(for: .mp2)!
   let codecCtx = AVCodecContext(codec: codec)
   try codecCtx.openCodec()
 

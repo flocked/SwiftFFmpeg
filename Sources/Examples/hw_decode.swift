@@ -79,7 +79,7 @@ func hw_decode() throws {
   let streamIndex = fmtCtx.findBestStream(type: .video)!
   let stream = fmtCtx.streams[streamIndex]
 
-  let decoder = AVCodec.findDecoderById(stream.codecParameters.codecId)!
+    let decoder = AVCodec.decoder(for: stream.codecParameters.codecId)!
   var i = 0
   var hwPixFmt = AVPixelFormat.none
   while true {

@@ -123,40 +123,23 @@ extension AVOption {
 extension AVOption.Kind: CustomStringConvertible {
   public var description: String {
     switch self {
-    case .flags:
-      return "flags"
-    case .int, .int64, .uint64, .uint:
-      return "integer"
-    case .double, .float:
-      return "float"
-    case .string:
-      return "string"
-    case .rational:
-      return "rational number"
-    case .binary:
-      return "hexadecimal string"
-    case .dict:
-      return "dictionary"
-    case .const:
-      return "const"
-    case .imageSize:
-      return "image size"
-    case .pixelFormat:
-      return "pixel format"
-    case .sampleFormat:
-      return "sample format"
-    case .videoRate:
-      return "video rate"
-    case .duration:
-      return "duration"
-    case .color:
-      return "color"
-    case .channelLayout:
-      return "channel layout"
-    case .bool:
-      return "bool"
-    case .flagArray:
-      return "flag array"
+    case .flags: "flags"
+    case .int, .int64, .uint64, .uint: "integer"
+    case .double, .float: "float"
+    case .string: "string"
+    case .rational: "rational number"
+    case .binary: "hexadecimal string"
+    case .dict: "dictionary"
+    case .const: "const"
+    case .imageSize: "image size"
+    case .pixelFormat: "pixel format"
+    case .sampleFormat: "sample format"
+    case .videoRate: "video rate"
+    case .duration: "duration"
+    case .color: "color"
+    case .channelLayout: "channel layout"
+    case .bool: "bool"
+    case .flagArray: "flag array"
     }
   }
 }
@@ -165,7 +148,7 @@ extension AVOption.Kind: CustomStringConvertible {
 
 extension AVOption {
   // https://github.com/FFmpeg/FFmpeg/blob/master/libavutil/opt.h#L221
-  public struct Flag: OptionSet {
+  public struct Flag: OptionSet, Hashable {
     /// A generic parameter which can be set by the user for muxing or encoding.
     public static let encoding = Flag(rawValue: AV_OPT_FLAG_ENCODING_PARAM)
     /// A generic parameter which can be set by the user for demuxing or decoding.
@@ -191,26 +174,27 @@ extension AVOption {
   }
 }
 
-extension AVOption.Flag: CustomStringConvertible {
+extension AVOption.Flag: CustomStringConvertible, CustomDebugStringConvertible {
   public var description: String {
-    "[\(elements().map(\.string).joined(separator: ", "))]"
+    "[\(elements().map { Self.names[$0]?.swift ?? "\($0.rawValue)" }.joined(separator: ", "))]"
   }
 
-  private var string: String {
-    switch self {
-    case .encoding: "encoding"
-    case .decoding: "decoding"
-    case .audio: "audio"
-    case .video: "video"
-    case .subtitle: "subtitle"
-    case .export: "export"
-    case .readonly: "readonly"
-    case .bsf: "bsf"
-    case .filtering: "filtering"
-    case .deprecated: "deprecated"
-    default: "\(rawValue)"
-    }
+  public var debugDescription: String {
+    "[\(elements().map { Self.names[$0]?.native ?? "\($0.rawValue)" }.joined(separator: ", "))]"
   }
+
+  private static let names: [Self: (swift: String, native: String)] = [
+    .encoding: ("encoding", "AV_OPT_FLAG_ENCODING_PARAM"),
+    .decoding: ("decoding", "AV_OPT_FLAG_DECODING_PARAM"),
+    .audio: ("audio", "AV_OPT_FLAG_AUDIO_PARAM"),
+    .video: ("video", "AV_OPT_FLAG_VIDEO_PARAM"),
+    .subtitle: ("subtitle", "AV_OPT_FLAG_SUBTITLE_PARAM"),
+    .export: ("export", "AV_OPT_FLAG_EXPORT"),
+    .readonly: ("readonly", "AV_OPT_FLAG_READONLY"),
+    .bsf: ("bsf", "AV_OPT_FLAG_BSF_PARAM"),
+    .filtering: ("filtering", "AV_OPT_FLAG_FILTERING_PARAM"),
+    .deprecated: ("deprecated", "AV_OPT_FLAG_DEPRECATED"),
+  ]
 }
 
 // MARK: - AVOptionSearchFlag
@@ -233,9 +217,6 @@ extension AVOption {
     public init(rawValue: Int32) { self.rawValue = rawValue }
   }
 }
-
-@available(*, deprecated, renamed: "AVOption.SearchFlag")
-public typealias AVOptionSearchFlag = AVOption.SearchFlag
 
 // MARK: - AVOptionSupport
 

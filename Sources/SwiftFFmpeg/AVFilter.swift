@@ -117,7 +117,7 @@ extension AVFilter: CustomStringConvertible {
 // MARK: - AVFilter.Flag
 
 extension AVFilter {
-  public struct Flag: OptionSet {
+  public struct Flag: OptionSet, Hashable {
     /// The number of the filter inputs is not determined just by `AVFilter.inputs`.
     /// The filter might add additional inputs during initialization depending on the
     /// options supplied to it.
@@ -154,21 +154,22 @@ extension AVFilter {
   }
 }
 
-extension AVFilter.Flag: CustomStringConvertible {
+extension AVFilter.Flag: CustomStringConvertible, CustomDebugStringConvertible {
   public var description: String {
-    "[\(elements().map(\.string).joined(separator: ", "))]"
+    "[\(elements().map { Self.names[$0]?.swift ?? "\($0.rawValue)" }.joined(separator: ", "))]"
   }
 
-  private var string: String {
-    switch self {
-    case .dynamicInputs: "dynamicInputs"
-    case .dynamicOutputs: "dynamicOutputs"
-    case .sliceThreads: "sliceThreads"
-    case .supportTimelineGeneric: "supportTimelineGeneric"
-    case .supportTimelineInternal: "supportTimelineInternal"
-    default: "\(rawValue)"
-    }
+  public var debugDescription: String {
+    "[\(elements().map { Self.names[$0]?.native ?? "\($0.rawValue)" }.joined(separator: ", "))]"
   }
+
+  private static let names: [Self: (swift: String, native: String)] = [
+    .dynamicInputs: ("dynamicInputs", "AVFILTER_FLAG_DYNAMIC_INPUTS"),
+    .dynamicOutputs: ("dynamicOutputs", "AVFILTER_FLAG_DYNAMIC_OUTPUTS"),
+    .sliceThreads: ("sliceThreads", "AVFILTER_FLAG_SLICE_THREADS"),
+    .supportTimelineGeneric: ("supportTimelineGeneric", "AVFILTER_FLAG_SUPPORT_TIMELINE_GENERIC"),
+    .supportTimelineInternal: ("supportTimelineInternal", "AVFILTER_FLAG_SUPPORT_TIMELINE_INTERNAL"),
+  ]
 }
 
 extension AVFilter: AVOptionSupport {
@@ -311,7 +312,7 @@ extension AVFilterContext: AVClassSupport, AVOptionSupport {
 
 // MARK: - AVBufferSourceFlag
 
-public struct AVBufferSourceFlag: OptionSet {
+public struct AVBufferSourceFlag: OptionSet, Hashable {
   /// Do not check for format changes.
   public static let noCheckFormat = AVBufferSourceFlag(
     rawValue: Int32(AV_BUFFERSRC_FLAG_NO_CHECK_FORMAT))
@@ -327,19 +328,20 @@ public struct AVBufferSourceFlag: OptionSet {
   public init(rawValue: Int32) { self.rawValue = rawValue }
 }
 
-extension AVBufferSourceFlag: CustomStringConvertible {
+extension AVBufferSourceFlag: CustomStringConvertible, CustomDebugStringConvertible {
   public var description: String {
-    "[\(elements().map(\.string).joined(separator: ", "))]"
+    "[\(elements().map { Self.names[$0]?.swift ?? "\($0.rawValue)" }.joined(separator: ", "))]"
   }
 
-  private var string: String {
-    switch self {
-    case .noCheckFormat: "noCheckFormat"
-    case .push: "push"
-    case .keepReference: "keepReference"
-    default: "\(rawValue)"
-    }
+  public var debugDescription: String {
+    "[\(elements().map { Self.names[$0]?.native ?? "\($0.rawValue)" }.joined(separator: ", "))]"
   }
+
+  private static let names: [Self: (swift: String, native: String)] = [
+    .noCheckFormat: ("noCheckFormat", "AV_BUFFERSRC_FLAG_NO_CHECK_FORMAT"),
+    .push: ("push", "AV_BUFFERSRC_FLAG_PUSH"),
+    .keepReference: ("keepReference", "AV_BUFFERSRC_FLAG_KEEP_REF"),
+  ]
 }
 
 // MARK: - Buffer Source
@@ -365,7 +367,7 @@ extension AVFilterContext {
 
 // MARK: - AVBufferSinkFlag
 
-public struct AVBufferSinkFlag: OptionSet {
+public struct AVBufferSinkFlag: OptionSet, Hashable {
   /// Tell av_buffersink_get_buffer_ref() to read video/samples buffer
   /// reference, but not remove it from the buffer. This is useful if you
   /// need only to read a video/samples buffer, without to fetch it.
@@ -380,18 +382,19 @@ public struct AVBufferSinkFlag: OptionSet {
   public init(rawValue: Int32) { self.rawValue = rawValue }
 }
 
-extension AVBufferSinkFlag: CustomStringConvertible {
+extension AVBufferSinkFlag: CustomStringConvertible, CustomDebugStringConvertible {
   public var description: String {
-    "[\(elements().map(\.string).joined(separator: ", "))]"
+    "[\(elements().map { Self.names[$0]?.swift ?? "\($0.rawValue)" }.joined(separator: ", "))]"
   }
 
-  private var string: String {
-    switch self {
-    case .peek: "peek"
-    case .noRequest: "noRequest"
-    default: "\(rawValue)"
-    }
+  public var debugDescription: String {
+    "[\(elements().map { Self.names[$0]?.native ?? "\($0.rawValue)" }.joined(separator: ", "))]"
   }
+
+  private static let names: [Self: (swift: String, native: String)] = [
+    .peek: ("peek", "AV_BUFFERSINK_FLAG_PEEK"),
+    .noRequest: ("noRequest", "AV_BUFFERSINK_FLAG_NO_REQUEST"),
+  ]
 }
 
 // MARK: - Buffer Sink
@@ -499,7 +502,7 @@ public struct AVFilterLink {
   public var mediaType: AVMediaType {
     AVMediaType(native: native.pointee.type)
   }
-
+    
   /// Define the timebase used by the PTS of the frames/samples which will pass through this link.
   /// During the configuration stage, each filter is supposed to change only the output timebase,
   /// while the timebase of the input link is assumed to be an unchangeable property.

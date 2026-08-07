@@ -39,8 +39,8 @@ public final class AVCodecParameters {
     
     /// Specific type of the encoded data (the codec used).
     public var codecId: AVCodecID {
-        get { native.pointee.codec_id }
-        set { native.pointee.codec_id = newValue }
+        get { AVCodecID(native: native.pointee.codec_id) }
+        set { native.pointee.codec_id = newValue.native }
     }
     
     /// Additional information about the codec (corresponds to the AVI FOURCC).
@@ -129,6 +129,12 @@ extension AVCodecParameters {
     public var pixelFormat: AVPixelFormat {
         get { AVPixelFormat(native.pointee.format) }
         set { native.pointee.format = newValue.rawValue }
+    }
+    
+    /// The alpha mode of the video frame.
+    public var alphaMode: AVAlphaMode {
+        get { AVAlphaMode(native: native.pointee.alpha_mode) }
+        set { native.pointee.alpha_mode = newValue.native }
     }
     
     /// The width of the video frame in pixels.

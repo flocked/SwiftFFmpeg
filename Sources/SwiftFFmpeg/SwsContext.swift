@@ -126,7 +126,7 @@ public final class SwsContext {
 
 extension SwsContext {
   ///
-  public struct Flag: OptionSet {
+  public struct Flag: OptionSet, Hashable {
     /// Select fast bilinear scaling algorithm.
     public static let fastBilinear = Flag(rawValue: Int32(SWS_FAST_BILINEAR.rawValue))
     /// Select bilinear scaling algorithm.
@@ -167,33 +167,34 @@ extension SwsContext {
   }
 }
 
-extension SwsContext.Flag: CustomStringConvertible {
+extension SwsContext.Flag: CustomStringConvertible, CustomDebugStringConvertible {
 
   public var description: String {
-    "[\(elements().map(\.string).joined(separator: ", "))]"
+    "[\(elements().map { Self.names[$0]?.swift ?? "\($0.rawValue)" }.joined(separator: ", "))]"
   }
 
-  private var string: String {
-    switch self {
-    case .fastBilinear: "fastBilinear"
-    case .bilinear: "bilinear"
-    case .bicubic: "bicubic"
-    case .x: "x"
-    case .point: "point"
-    case .area: "area"
-    case .bicublin: "bicublin"
-    case .gauss: "gauss"
-    case .sinc: "sinc"
-    case .lanczos: "lanczos"
-    case .spline: "spline"
-    case .printInfo: "printInfo"
-    case .fullChromaInt: "fullChromaInt"
-    case .fullChromaInp: "fullChromaInp"
-    case .accurateRnd: "accurateRnd"
-    case .bitexact: "bitexact"
-    default: "\(rawValue)"
-    }
+  public var debugDescription: String {
+    "[\(elements().map { Self.names[$0]?.native ?? "\($0.rawValue)" }.joined(separator: ", "))]"
   }
+
+  private static let names: [Self: (swift: String, native: String)] = [
+    .fastBilinear: ("fastBilinear", "SWS_FAST_BILINEAR"),
+    .bilinear: ("bilinear", "SWS_BILINEAR"),
+    .bicubic: ("bicubic", "SWS_BICUBIC"),
+    .x: ("x", "SWS_X"),
+    .point: ("point", "SWS_POINT"),
+    .area: ("area", "SWS_AREA"),
+    .bicublin: ("bicublin", "SWS_BICUBLIN"),
+    .gauss: ("gauss", "SWS_GAUSS"),
+    .sinc: ("sinc", "SWS_SINC"),
+    .lanczos: ("lanczos", "SWS_LANCZOS"),
+    .spline: ("spline", "SWS_SPLINE"),
+    .printInfo: ("printInfo", "SWS_PRINT_INFO"),
+    .fullChromaInt: ("fullChromaInt", "SWS_FULL_CHR_H_INT"),
+    .fullChromaInp: ("fullChromaInp", "SWS_FULL_CHR_H_INP"),
+    .accurateRnd: ("accurateRnd", "SWS_ACCURATE_RND"),
+    .bitexact: ("bitexact", "SWS_BITEXACT"),
+  ]
 }
 
 extension SwsContext: AVClassSupport, AVOptionSupport {

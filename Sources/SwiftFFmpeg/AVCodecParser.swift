@@ -24,7 +24,7 @@ public struct AVCodecParser {
       native.pointee.codec_ids.0, native.pointee.codec_ids.1, native.pointee.codec_ids.2,
       native.pointee.codec_ids.3,
     ]
-    return list.map({ AVCodecID(UInt32($0)) }).filter({ $0 != .none })
+    return list.map({ AVCodecID(native: $0) }).filter({ $0 != .none })
   }
 
   /// Get all registered codec parsers.
@@ -54,8 +54,7 @@ public final class AVCodecParserContext {
 
   public init?(codecContext: AVCodecContext) {
     precondition(codecContext.codec != nil, "'AVCodecContext.codec' must not be nil.")
-
-    guard let ptr = av_parser_init(Int32(codecContext.codec!.id.rawValue)) else {
+    guard let ptr = av_parser_init(codecContext.codec!.id.native) else {
       return nil
     }
     self.native = ptr

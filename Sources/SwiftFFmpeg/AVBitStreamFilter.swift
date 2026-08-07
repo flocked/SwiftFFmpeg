@@ -39,7 +39,8 @@ public struct AVBitStreamFilter {
   ///
   /// May be empty, in that case the filter works with any codec id.
   public var supportedCodecIds: [AVCodecID] {
-    values(native.pointee.codec_ids, until: .none) ?? []
+    values(native.pointee.codec_ids, until: AV_CODEC_ID_NONE)?
+      .map({ AVCodecID(native: $0) }) ?? []
   }
 
   /// Get all registered bitstream filters.

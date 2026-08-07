@@ -14,7 +14,7 @@ private func openCodecContext(fmtCtx: AVFormatContext, mediaType: AVMediaType) t
   let streamIndex = fmtCtx.findBestStream(type: mediaType)!
   let stream = fmtCtx.streams[streamIndex]
   // find decoder for the stream
-  let decoder = AVCodec.findDecoderById(stream.codecParameters.codecId)!
+    let decoder = AVCodec.decoder(for: stream.codecParameters.codecId)!
   // Allocate a codec context for the decoder
   let codecCtx = AVCodecContext(codec: decoder)
   // Copy codec parameters from input stream to output codec context

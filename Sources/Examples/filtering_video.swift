@@ -57,7 +57,7 @@ func filtering_video() throws {
   let stram = fmtCtx.streams[streamIndex]
 
   // create decoding context
-  let decoder = AVCodec.findDecoderById(stram.codecParameters.codecId)!
+    let decoder = AVCodec.decoder(for: stram.codecParameters.codecId)!
   let decoderCtx = AVCodecContext(codec: decoder)
   decoderCtx.setParameters(stram.codecParameters)
   // init the video decoder

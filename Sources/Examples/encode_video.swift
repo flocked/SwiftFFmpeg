@@ -49,7 +49,7 @@ func encode_video() throws {
 
   let output = CommandLine.arguments[2]
   // find the mpeg1video encoder
-  let codec = AVCodec.findEncoderByName("mpeg1video")!
+    let codec = AVCodec.encoder(for: .mpeg1video)!
   let codecCtx = AVCodecContext(codec: codec)
 
   // put sample parameters

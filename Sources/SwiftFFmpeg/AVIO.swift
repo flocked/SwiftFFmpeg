@@ -351,7 +351,7 @@ extension AVIOContext {
   /// URL open modes
   ///
   /// The flags argument to avio_open must be one of the following constants, optionally ORed with other flags.
-  public struct Flag: OptionSet {
+  public struct Flag: OptionSet, Hashable {
     /// read-only
     public static let read = Flag(rawValue: AVIO_FLAG_READ)
     /// write-only
@@ -380,20 +380,21 @@ extension AVIOContext {
   }
 }
 
-extension AVIOContext.Flag: CustomStringConvertible {
+extension AVIOContext.Flag: CustomStringConvertible, CustomDebugStringConvertible {
   public var description: String {
-    "[\(elements().map(\.string).joined(separator: ", "))]"
+    "[\(elements().map { Self.names[$0]?.swift ?? "\($0.rawValue)" }.joined(separator: ", "))]"
   }
 
-  private var string: String {
-    switch self {
-    case .read: "read"
-    case .write: "write"
-    case .nonBlock: "nonBlock"
-    case .direct: "direct"
-    default: "\(rawValue)"
-    }
+  public var debugDescription: String {
+    "[\(elements().map { Self.names[$0]?.native ?? "\($0.rawValue)" }.joined(separator: ", "))]"
   }
+
+  private static let names: [Self: (swift: String, native: String)] = [
+    .read: ("read", "AVIO_FLAG_READ"),
+    .write: ("write", "AVIO_FLAG_WRITE"),
+    .nonBlock: ("nonBlock", "AVIO_FLAG_NONBLOCK"),
+    .direct: ("direct", "AVIO_FLAG_DIRECT"),
+  ]
 }
 
 // MARK: - AVIOContext.SeekWhence

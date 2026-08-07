@@ -44,7 +44,7 @@ func encode_audio() throws {
 
   let output = CommandLine.arguments[2]
   // find the MP2 encoder
-  let codec = AVCodec.findEncoderById(.MP2)!
+    let codec = AVCodec.encoder(for: .mp2)!
   let codecCtx = AVCodecContext(codec: codec)
 
   // set sample parameters

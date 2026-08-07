@@ -63,7 +63,7 @@ func decode_video() throws {
   let input = CommandLine.arguments[2]
   let output = CommandLine.arguments[3]
 
-  let codec = AVCodec.findDecoderById(.H264)!
+    let codec = AVCodec.decoder(for: .h264)!
   let codecCtx = AVCodecContext(codec: codec)
   try codecCtx.openCodec()
 

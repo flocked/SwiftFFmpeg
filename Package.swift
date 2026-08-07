@@ -21,8 +21,8 @@ let package = Package(
   targets: [
     .binaryTarget(
       name: "FFmpeg",
-      url: "https://github.com/flocked/ffmpeg-apple-xcframeworks/releases/download/FFmpeg-8.1.2/FFmpeg.xcframework.zip",
-      checksum: "0c9e49c16b6e332f2d20cdf314cc1f05652dc12dd64c7c3e05edbe4f56c73d4d"
+      url: "https://github.com/flocked/ffmpeg-apple-xcframeworks/releases/download/FFmpeg-9.0/FFmpeg.xcframework.zip",
+      checksum: "71ce26922179688d5e07afe42a7ac630656ba9a7766ec00d1293575d75cd1cb4"
     ),
     .target(
       name: "CFFmpeg",

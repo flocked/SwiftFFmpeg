@@ -8,7 +8,7 @@
 import CFFmpeg
 
 /// Options that describe the disposition and intended use of a media stream.
-public struct AVStreamDisposition: OptionSet, Sendable, CustomStringConvertible, CustomDebugStringConvertible {
+public struct AVStreamDisposition: OptionSet, Hashable, Sendable, CustomStringConvertible, CustomDebugStringConvertible {
     /// The raw disposition value.
     public let rawValue: Int32
     /// Creates a new stream disposition from the specified raw value.
@@ -55,39 +55,32 @@ public struct AVStreamDisposition: OptionSet, Sendable, CustomStringConvertible,
     public static let multilayer = Self(rawValue: AV_DISPOSITION_MULTILAYER)
     
     public var description: String {
-        "[\( elements().map(\.string).joined(separator: ", "))]"
+        "[\(elements().map { Self.names[$0]?.swift ?? "\($0.rawValue)" }.joined(separator: ", "))]"
     }
     
     public var debugDescription: String {
-        "[\( elements().map(\.ffmpegName).joined(separator: ", "))]"
+        "[\(elements().map { Self.names[$0]?.native ?? "\($0.rawValue)" }.joined(separator: ", "))]"
     }
-    
-    private var ffmpegName: String {
-        String(cString: av_disposition_to_string(rawValue)) ?? "\(rawValue)"
-    }
-    
-    private var string: String {
-        switch self {
-        case .default: "default"
-        case .dub: "dub"
-        case .original: "original"
-        case .comment: "comment"
-        case .lyrics: "lyrics"
-        case .karaoke: "karaoke"
-        case .forced: "forced"
-        case .hearingImpaired: "hearingImpaired"
-        case .visualImpaired: "visualImpaired"
-        case .cleanEffects: "cleanEffects"
-        case .attachedPicture: "attachedPicture"
-        case .timedThumbnails: "timedThumbnails"
-        case .nonDiegetic: "nonDiegetic"
-        case .captions: "captions"
-        case .descriptions: "descriptions"
-        case .metadata: "metadata"
-        case .dependent: "dependent"
-        case .stillImage: "stillImage"
-        case .multilayer: "multilayer"
-        default: ffmpegName
-        }
-    }
+
+    private static let names: [Self: (swift: String, native: String)] = [
+        .default: ("default", "AV_DISPOSITION_DEFAULT"),
+        .dub: ("dub", "AV_DISPOSITION_DUB"),
+        .original: ("original", "AV_DISPOSITION_ORIGINAL"),
+        .comment: ("comment", "AV_DISPOSITION_COMMENT"),
+        .lyrics: ("lyrics", "AV_DISPOSITION_LYRICS"),
+        .karaoke: ("karaoke", "AV_DISPOSITION_KARAOKE"),
+        .forced: ("forced", "AV_DISPOSITION_FORCED"),
+        .hearingImpaired: ("hearingImpaired", "AV_DISPOSITION_HEARING_IMPAIRED"),
+        .visualImpaired: ("visualImpaired", "AV_DISPOSITION_VISUAL_IMPAIRED"),
+        .cleanEffects: ("cleanEffects", "AV_DISPOSITION_CLEAN_EFFECTS"),
+        .attachedPicture: ("attachedPicture", "AV_DISPOSITION_ATTACHED_PIC"),
+        .timedThumbnails: ("timedThumbnails", "AV_DISPOSITION_TIMED_THUMBNAILS"),
+        .nonDiegetic: ("nonDiegetic", "AV_DISPOSITION_NON_DIEGETIC"),
+        .captions: ("captions", "AV_DISPOSITION_CAPTIONS"),
+        .descriptions: ("descriptions", "AV_DISPOSITION_DESCRIPTIONS"),
+        .metadata: ("metadata", "AV_DISPOSITION_METADATA"),
+        .dependent: ("dependent", "AV_DISPOSITION_DEPENDENT"),
+        .stillImage: ("stillImage", "AV_DISPOSITION_STILL_IMAGE"),
+        .multilayer: ("multilayer", "AV_DISPOSITION_MULTILAYER"),
+    ]
 }

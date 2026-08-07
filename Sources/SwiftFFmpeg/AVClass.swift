@@ -70,42 +70,24 @@ extension AVClass {
 extension AVClass.Category: CustomStringConvertible {
   public var description: String {
     switch self {
-    case .na:
-      return "na"
-    case .input:
-      return "input"
-    case .output:
-      return "output"
-    case .muxer:
-      return "muxer"
-    case .demuxer:
-      return "demuxer"
-    case .encoder:
-      return "encoder"
-    case .decoder:
-      return "decoder"
-    case .filter:
-      return "filter"
-    case .bitStreamFilter:
-      return "bitStreamFilter"
-    case .swscaler:
-      return "swscaler"
-    case .swresampler:
-      return "swresampler"
-    case .hwDevice:
-      return "hwDevice"
-    case .deviceVideoOutput:
-      return "deviceVideoOutput"
-    case .deviceVideoInput:
-      return "deviceVideoInput"
-    case .deviceAudioOutput:
-      return "deviceAudioOutput"
-    case .deviceAudioInput:
-      return "deviceAudioInput"
-    case .deviceOutput:
-      return "deviceOutput"
-    case .deviceInput:
-      return "deviceInput"
+    case .na: "na"
+    case .input: "input"
+    case .output: "output"
+    case .muxer: "muxer"
+    case .demuxer: "demuxer"
+    case .encoder: "encoder"
+    case .decoder: "decoder"
+    case .filter: "filter"
+    case .bitStreamFilter: "bitStreamFilter"
+    case .swscaler: "swscaler"
+    case .swresampler: "swresampler"
+    case .hwDevice: "hwDevice"
+    case .deviceVideoOutput: "deviceVideoOutput"
+    case .deviceVideoInput: "deviceVideoInput"
+    case .deviceAudioOutput: "deviceAudioOutput"
+    case .deviceAudioInput: "deviceAudioInput"
+    case .deviceOutput: "deviceOutput"
+    case .deviceInput: "deviceInput"
     }
   }
 }
