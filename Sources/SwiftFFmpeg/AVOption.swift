@@ -55,10 +55,9 @@ public struct AVOption {
                 self.max = Int32(clamping: native.max)
                 self.defaultValue = Int32(clamping: native.default_val.i64)
             case .channelLayout:
-                Swift.print("channelLayout", String(cString: native.default_val.str) ?? "nil", native.default_val.i64)
-                self.min = Int64(clamping: native.min)
-                self.max = Int64(clamping: native.max)
-                self.defaultValue = native.default_val.i64
+                self.min = nil
+                self.max = nil
+                self.defaultValue = String(cString: native.default_val.str).flatMap({ AVChannelLayout(name: $0) })
             case .int64, .const, .duration:
                 self.min = Int64(clamping: native.min)
                 self.max = Int64(clamping: native.max)
@@ -88,33 +87,26 @@ public struct AVOption {
                 self.max = nil
                 self.defaultValue = String(cString: native.default_val.str)
             case .rational, .videoRate:
-                self.min = nil
-                self.max = nil
+                self.min = native.min
+                self.max = native.max
                 self.defaultValue = native.default_val.q
             case .binary:
                 self.min = nil
                 self.max = nil
                 self.defaultValue = nil
             case .dict:
+                Swift.print("dict default:", String(cString: native.default_val.str) ?? "nil")
                 self.min = nil
                 self.max = nil
                 self.defaultValue = nil
             case .color:
                 self.min = nil
                 self.max = nil
-                if let name = String(cString: native.default_val.str), let color = AVColor(name: name) {
-                    self.defaultValue = color
-                } else {
-                    self.defaultValue = String(cString: native.default_val.str)
-                }
+                self.defaultValue = String(cString: native.default_val.str).flatMap({ AVColor(name: $0) })
             case .imageSize:
                 self.min = nil
                 self.max = nil
-                if let name = String(cString: native.default_val.str), let size = AVImageSize(name: name) {
-                    self.defaultValue = size
-                } else {
-                    self.defaultValue = String(cString: native.default_val.str)
-                }
+                self.defaultValue = String(cString: native.default_val.str).flatMap({ AVImageSize(name: $0) })
             }
         } else {
             /// Have to handle later
