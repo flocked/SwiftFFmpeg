@@ -9,28 +9,7 @@ import CFFmpeg
 import Foundation
 import os
 
-
-// MARK: - AVLog
-
 public enum AVLog {
-    func sdsd() {
-        av_log_set_callback { context, level, format, args in
-            let level = AVLog.Level(rawValue: level)
-            guard let format = String(cString: format), let message = args.map({ NSString(format: format, arguments: $0) as String }) else {
-                return
-            }
-            guard AVLog.level.contains(level) else { return }
-            Swift.print(message)
-        }
-        
-        av_log_set_callback { _, level, format, args in
-         //   guard AVLog.level.contains(AVLog.Level(rawValue: level)) else { return }
-            guard let rawFormat = format, let args else { return }
-            let message = NSString(format: String(cString: rawFormat), arguments: args) as String
-            Swift.print(message, terminator: "")
-        }
-    }
-    
     /// Get/set the log level.
     public static var level: Level {
         get { Level(rawValue: av_log_get_level()) }
@@ -41,19 +20,39 @@ public enum AVLog {
     /// to the current level. By default, all logging messages are sent to
     /// stderr. This behavior can be altered by setting a different logging callback
     /// function.
-    public static func log(_ message: String, at level: Level) {
-        swift_log(nil, level.rawValue, "\(message)\n")
+    public static func log(_ items: Any..., at level: Level, separator: String = " ", terminator: String = "\n") {
+        swift_log(nil, level.rawValue, items.map { String(describing: $0) }.joined(separator: separator) + terminator)
     }
 
     /// Send the specified message to the log if the level is less than or equal
     /// to the current level. By default, all logging messages are sent to
     /// stderr. This behavior can be altered by setting a different logging callback
     /// function.
-    public static func log(_ message: String, at level: Level, context: AVClassSupport) {
+    public static func log(_ items: Any..., at level: Level, context: AVClassSupport, separator: String = " ", terminator: String = "\n") {
         context.withUnsafeObjectPointer { ptr in
-            swift_log(ptr, level.rawValue, "\(message)\n")
+            swift_log(ptr, level.rawValue, items.map { String(describing: $0) }.joined(separator: separator) + terminator)
         }
     }
+    
+    /**
+     Sets the callback handler for FFmpeg log messages and their associated levels.
+
+     Pass `nil` to restore the default logging callback.
+     */
+    public static func setCallback(_ handler: (@Sendable (_ level: Level, _ message: String) -> Void)?) {
+        self.handler = handler
+        if handler == nil {
+            swift_initialize_ffmpeg_logging()
+            return
+        }
+        av_log_set_callback { _, level, format, args in
+            guard let format, let args, let handler = AVLog.handler else { return }
+            let message = NSString(format: String(cString: format), arguments: args) as String
+            handler(Level(rawValue: level), message)
+        }
+    }
+    
+    private static var handler: (@Sendable (_ level: Level, _ message: String) -> Void)?
 }
 
 // MARK: - AVLog.Level

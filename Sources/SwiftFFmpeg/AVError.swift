@@ -110,6 +110,14 @@ public extension AVError {
     static func posix(_ code: Int32) -> AVError {
         AVError(code: swift_AVUNERROR(code))
     }
+    
+    static func swiftUNError(_ code: Int32) -> AVError {
+        AVError(code: swift_AVUNERROR(code))
+    }
+    
+    static func swiftError(_ code: Int32) -> AVError {
+        AVError(code: swift_AVERROR(code))
+    }    
 }
 
 extension BinaryInteger {
@@ -118,21 +126,13 @@ extension BinaryInteger {
         return Output(self)
     }
     
-    @discardableResult
-    func throwIfFail() throws -> Self {
+    func throwIfFail() throws {
         guard self >= 0 else { throw AVError(code: Int32(self)) }
-        return self
     }
     
-    @discardableResult
-    func abortIfFail() -> Self {
+    func abortIfFail() {
         guard self >= 0 else { abort("error: \(AVError(code: Int32(self)))") }
-        return self
     }
-}
-
-extension Int32 {
-
 }
 
 func abort(_ message: String) -> Never {

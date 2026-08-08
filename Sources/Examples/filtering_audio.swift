@@ -56,7 +56,7 @@ func filtering_audio() throws {
   let inputs = AVFilterInOut()
   let outputs = AVFilterInOut()
   let sampleFmts = [AVSampleFormat.int16]
-  let channelLayout = AVChannelLayoutMono
+    let channelLayout = AVChannelLayout.mono
   let sampleRates = [8000] as [CInt]
   let filterGraph = AVFilterGraph()
 

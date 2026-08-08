@@ -51,7 +51,7 @@ func encode_audio() throws {
   codecCtx.bitRate = 64000
   codecCtx.sampleFormat = .int16
   codecCtx.sampleRate = 44100
-  codecCtx.channelLayout = AVChannelLayoutStereo
+    codecCtx.channelLayout = AVChannelLayout.stereo
 
   try codecCtx.openCodec()
 

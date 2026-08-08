@@ -3,12 +3,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-static void swift_ffmpeg_log_callback(
-    void *context,
-    int level,
-    const char *format,
-    va_list args
-) {
+static void swift_ffmpeg_log_callback(void *context, int level, const char *format, va_list args) {
     if (level > av_log_get_level()) {
         return;
     }

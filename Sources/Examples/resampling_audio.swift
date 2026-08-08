@@ -47,14 +47,14 @@ func resampling_audio() throws {
   defer { fclose(file) }
 
   // source
-  let srcChannelLayout = AVChannelLayoutStereo
+    let srcChannelLayout = AVChannelLayout.stereo
   let srcChannelCount = srcChannelLayout.channelCount
   let srcSampleRate = 48000 as Int64
   let srcSampleFmt = AVSampleFormat.double
   let srcSampleCount = 1024
 
   // destination
-  let dstChannelLayout = AVChannelLayoutStereo
+    let dstChannelLayout = AVChannelLayout.stereo
   let dstChannelCount = dstChannelLayout.channelCount
   let dstSampleRate = 44100 as Int64
   let dstSampleFmt = AVSampleFormat.int16
