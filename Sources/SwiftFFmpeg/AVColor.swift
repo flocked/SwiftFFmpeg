@@ -21,6 +21,13 @@ public struct AVColor: Hashable, Sendable {
     var rgbaBytes: [UInt8] {
         [red, green, blue, alpha]
     }
+    
+    init(_ values: [UInt8]) {
+        red = values[safe: 0] ?? 0
+        green = values[safe: 1] ?? 0
+        blue = values[safe: 2] ?? 0
+        alpha = values[safe: 3] ?? .max
+    }
 
     /// Creates a color with the given red, green, blue, and alpha components.
     public init(red: UInt8, green: UInt8, blue: UInt8, alpha: UInt8 = 255) {

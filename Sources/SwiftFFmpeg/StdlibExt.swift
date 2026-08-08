@@ -77,3 +77,10 @@ extension OptionSet where RawValue: FixedWidthInteger, Element == Self {
         }
     }
 }
+
+extension Collection {
+    subscript(safe index: Index) -> Element? {
+        guard !isEmpty, index >= startIndex, index < endIndex else { return nil }
+        return self[index]
+    }
+}
