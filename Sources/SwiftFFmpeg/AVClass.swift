@@ -7,32 +7,31 @@
 
 import CFFmpeg
 
-// MARK: - AVClass
-
-/// Describes an FFmpeg object class and its AVOptions metadata.
+/// An `FFmpeg` class that describes the options and metadata shared by one or more `FFmpeg` objects.
 public struct AVClass {
     /// The name of the class.
     public let name: String
     /// The options of the class.
-    public let options: [AVOption]?
-    /// The category of the class. It's used for visualization (like color).
-    ///
-    /// This is only set if the category is equal for all objects using this class.
+    public let options: [AVOption]
+    /// The category of the class
     public let category: Category
-
-    /// The libavutil version this class was created with.
+    /// The `libavutil` version the class was created with.
     public let version: Int32
-
-    /// The potential child classes for objects of this class.
+    /// The child classes of the class.
     public let childClasses: [AVClass]
+    
+    /// All options of the class, including those of its child classes.
+    public var allOptions: [AVOption] {
+        var options = options
+        options.append(contentsOf: childClasses.flatMap(\.allOptions))
+        return options
+    }
 
     init(native: UnsafePointer<CFFmpeg.AVClass>) {
         self.name = String(cString: native.pointee.class_name)
         self.category = Category(rawValue: native.pointee.category.rawValue)!
         self.version = native.pointee.version
-        self.options = Array(native.pointee.option, until: { $0.name == nil })?.map(
-            AVOption.init(native:)
-        )
+        self.options = Array(native.pointee.option, until: { $0.name == nil })?.map(AVOption.init(native:)) ?? []
         var childClasses: [AVClass] = []
         if let iterate = native.pointee.child_class_iterate {
             var state: UnsafeMutableRawPointer?
@@ -49,7 +48,7 @@ public struct AVClass {
 public extension AVClass {
     enum Category: UInt32, CustomStringConvertible {
         /// No specific class category is known.
-        case na
+        case none
         /// An input object.
         case input
         /// An output object.
@@ -101,7 +100,7 @@ public extension AVClass {
         
         public var description: String {
             switch self {
-            case .na: "na"
+            case .none: "none"
             case .input: "input"
             case .output: "output"
             case .muxer: "muxer"

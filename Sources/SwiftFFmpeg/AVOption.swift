@@ -10,8 +10,6 @@ import Foundation
 
 // MARK: - AVOption
 
-typealias CAVOption = CFFmpeg.AVOption
-
 public struct AVOption {
     public let name: String
     /// The short English help text about the option.
