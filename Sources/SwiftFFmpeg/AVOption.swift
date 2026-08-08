@@ -160,7 +160,7 @@ extension CFFmpeg.AVOptionArrayDef {
 
 extension AVOption: CustomStringConvertible {
     public var description: String {
-        var strings = ["name: \"\(name)\"", "type: \(type)"]
+        var strings = ["\"\(name)\"", "type: \(type)"]
         if let unit = unit {
             strings.append("unit: \"\(unit)\"")
         }
@@ -182,7 +182,7 @@ extension AVOption: CustomStringConvertible {
         if let help = help {
             strings.append("help: \"\(help)\"")
         }
-        return "AVOption(\(strings.joined(separator: ", ")))"
+        return "(\(strings.joined(separator: ", ")))"
     }
 }
 
