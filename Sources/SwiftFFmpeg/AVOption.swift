@@ -160,28 +160,29 @@ extension CFFmpeg.AVOptionArrayDef {
 
 extension AVOption: CustomStringConvertible {
     public var description: String {
-        var str = "{name: \"\(name)\", "
-        if let help = help {
-            str += "help: \"\(help)\", "
+        var strings = ["name: \"\(name)\"", "type: \(type)"]
+        if let unit = unit {
+            strings.append("unit: \"\(unit)\"")
         }
-        str += "offset: \(offset), type: \(type), "
         if let defaultValue = defaultValue {
             if defaultValue is String {
-                str += "default: \"\(defaultValue)\", "
+                strings.append("default: \"\(defaultValue)\"")
             } else {
-                str += "default: \(defaultValue), "
+                strings.append("default: \(defaultValue)")
             }
-        } else {
-            str += "default: -, "
         }
-        str += "min: \(min), max: \(max), flags: \(flags), "
-        if let unit = unit {
-            str += "unit: \"\(unit)\""
-        } else {
-            str.removeLast(2)
+        if let min = min {
+            strings.append("min: \(min)")
         }
-        str += "}"
-        return str
+        if let max = max {
+            strings.append("max: \(max)")
+        }
+        strings.append("flags: \(flags)")
+        strings.append("offset: \(offset)")
+        if let help = help {
+            strings.append("help: \"\(help)\"")
+        }
+        return "AVOption(\(strings.joined(separator: ", ")))"
     }
 }
 
