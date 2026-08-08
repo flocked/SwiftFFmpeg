@@ -46,12 +46,12 @@ func scaling_video() throws {
   // source
   let srcW = 320
   let srcH = 240
-  let srcPixFmt = AVPixelFormat.YUV420P
+  let srcPixFmt = AVPixelFormat.yuv420p
 
   // destination
   let dstW = Int(videoSize.split(separator: "x")[0]) ?? 640
   let dstH = Int(videoSize.split(separator: "x")[1]) ?? 480
-  let dstPixFmt = AVPixelFormat.RGB24
+  let dstPixFmt = AVPixelFormat.rgb24
 
   // create scaling context
   guard

@@ -220,12 +220,6 @@ public struct AVPixelFormatFlags: OptionSet, Hashable, CustomStringConvertible, 
     ]
 }
 
-extension AVPixelFormat: @retroactive CustomStringConvertible {
-    public var description: String {
-        name
-    }
-}
-
 /// Describes the field order of interlaced video.
 public enum AVFieldOrder: UInt32, CustomStringConvertible, CustomDebugStringConvertible {
     /// The field order is unknown.

@@ -67,7 +67,7 @@ func filtering_video() throws {
   let buffersink = AVFilter(name: "buffersink")!
   let inputs = AVFilterInOut()
   let outputs = AVFilterInOut()
-  let pixFmts = [AVPixelFormat.GRAY8]
+  let pixFmts = [AVPixelFormat.gray8]
   let filterGraph = AVFilterGraph()
 
   // buffer video source: the decoded frames from the decoder will be inserted here.

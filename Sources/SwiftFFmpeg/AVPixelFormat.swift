@@ -9,659 +9,7 @@ import CFFmpeg
 
 public typealias AVPixelFormat = CFFmpeg.AVPixelFormat
 
-public extension AVPixelFormat {
-    static let none = AV_PIX_FMT_NONE
-    /// planar YUV 4:2:0, 12bpp, (1 Cr & Cb sample per 2x2 Y samples)
-    static let YUV420P = AV_PIX_FMT_YUV420P
-    /// packed YUV 4:2:2, 16bpp, Y0 Cb Y1 Cr
-    static let YUYV422 = AV_PIX_FMT_YUYV422
-    /// packed RGB 8:8:8, 24bpp, RGBRGB...
-    static let RGB24 = AV_PIX_FMT_RGB24
-    /// packed RGB 8:8:8, 24bpp, BGRBGR...
-    static let BGR24 = AV_PIX_FMT_BGR24
-    /// planar YUV 4:2:2, 16bpp, (1 Cr & Cb sample per 2x1 Y samples)
-    static let YUV422P = AV_PIX_FMT_YUV422P
-    /// planar YUV 4:4:4, 24bpp, (1 Cr & Cb sample per 1x1 Y samples)
-    static let YUV444P = AV_PIX_FMT_YUV444P
-    /// planar YUV 4:1:0,  9bpp, (1 Cr & Cb sample per 4x4 Y samples)
-    static let YUV410P = AV_PIX_FMT_YUV410P
-    /// planar YUV 4:1:1, 12bpp, (1 Cr & Cb sample per 4x1 Y samples)
-    static let YUV411P = AV_PIX_FMT_YUV411P
-    ///        Y        ,  8bpp
-    static let GRAY8 = AV_PIX_FMT_GRAY8
-    ///        Y        ,  1bpp, 0 is white, 1 is black, in each byte pixels are ordered from the msb to the lsb
-    static let MONOWHITE = AV_PIX_FMT_MONOWHITE
-    ///        Y        ,  1bpp, 0 is black, 1 is white, in each byte pixels are ordered from the msb to the lsb
-    static let MONOBLACK = AV_PIX_FMT_MONOBLACK
-    /// 8 bits with AV_PIX_FMT_RGB32 palette
-    static let PAL8 = AV_PIX_FMT_PAL8
-    /// planar YUV 4:2:0, 12bpp, full scale (JPEG), deprecated in favor of AV_PIX_FMT_YUV420P and setting color_range
-    static let YUVJ420P = AV_PIX_FMT_YUVJ420P
-    /// planar YUV 4:2:2, 16bpp, full scale (JPEG), deprecated in favor of AV_PIX_FMT_YUV422P and setting color_range
-    static let YUVJ422P = AV_PIX_FMT_YUVJ422P
-    /// planar YUV 4:4:4, 24bpp, full scale (JPEG), deprecated in favor of AV_PIX_FMT_YUV444P and setting color_range
-    static let YUVJ444P = AV_PIX_FMT_YUVJ444P
-    /// packed YUV 4:2:2, 16bpp, Cb Y0 Cr Y1
-    static let UYVY422 = AV_PIX_FMT_UYVY422
-    /// packed YUV 4:1:1, 12bpp, Cb Y0 Y1 Cr Y2 Y3
-    static let UYYVYY411 = AV_PIX_FMT_UYYVYY411
-    /// packed RGB 3:3:2,  8bpp, (msb)2B 3G 3R(lsb)
-    static let BGR8 = AV_PIX_FMT_BGR8
-    /// packed RGB 1:2:1 bitstream,  4bpp, (msb)1B 2G 1R(lsb), a byte contains two pixels, the first pixel in the byte is the one composed by the 4 msb bits
-    static let BGR4 = AV_PIX_FMT_BGR4
-    /// packed RGB 1:2:1,  8bpp, (msb)1B 2G 1R(lsb)
-    static let BGR4_BYTE = AV_PIX_FMT_BGR4_BYTE
-    /// packed RGB 3:3:2,  8bpp, (msb)2R 3G 3B(lsb)
-    static let RGB8 = AV_PIX_FMT_RGB8
-    /// packed RGB 1:2:1 bitstream,  4bpp, (msb)1R 2G 1B(lsb), a byte contains two pixels, the first pixel in the byte is the one composed by the 4 msb bits
-    static let RGB4 = AV_PIX_FMT_RGB4
-    /// packed RGB 1:2:1,  8bpp, (msb)1R 2G 1B(lsb)
-    static let RGB4_BYTE = AV_PIX_FMT_RGB4_BYTE
-    /// planar YUV 4:2:0, 12bpp, 1 plane for Y and 1 plane for the UV components, which are interleaved (first byte U and the following byte V)
-    static let NV12 = AV_PIX_FMT_NV12
-    /// as above, but U and V bytes are swapped
-    static let NV21 = AV_PIX_FMT_NV21
-    /// packed ARGB 8:8:8:8, 32bpp, ARGBARGB...
-    static let ARGB = AV_PIX_FMT_ARGB
-    /// packed RGBA 8:8:8:8, 32bpp, RGBARGBA...
-    static let RGBA = AV_PIX_FMT_RGBA
-    /// packed ABGR 8:8:8:8, 32bpp, ABGRABGR...
-    static let ABGR = AV_PIX_FMT_ABGR
-    /// packed BGRA 8:8:8:8, 32bpp, BGRABGRA...
-    static let BGRA = AV_PIX_FMT_BGRA
-    ///        Y        , 16bpp, big-endian
-    static let GRAY16BE = AV_PIX_FMT_GRAY16BE
-    ///        Y        , 16bpp, little-endian
-    static let GRAY16LE = AV_PIX_FMT_GRAY16LE
-    /// planar YUV 4:4:0 (1 Cr & Cb sample per 1x2 Y samples)
-    static let YUV440P = AV_PIX_FMT_YUV440P
-    /// planar YUV 4:4:0 full scale (JPEG), deprecated in favor of AV_PIX_FMT_YUV440P and setting color_range
-    static let YUVJ440P = AV_PIX_FMT_YUVJ440P
-    /// planar YUV 4:2:0, 20bpp, (1 Cr & Cb sample per 2x2 Y & A samples)
-    static let YUVA420P = AV_PIX_FMT_YUVA420P
-    /// packed RGB 16:16:16, 48bpp, 16R, 16G, 16B, the 2-byte value for each R/G/B component is stored as big-endian
-    static let RGB48BE = AV_PIX_FMT_RGB48BE
-    /// packed RGB 16:16:16, 48bpp, 16R, 16G, 16B, the 2-byte value for each R/G/B component is stored as little-endian
-    static let RGB48LE = AV_PIX_FMT_RGB48LE
-    /// packed RGB 5:6:5, 16bpp, (msb)   5R 6G 5B(lsb), big-endian
-    static let RGB565BE = AV_PIX_FMT_RGB565BE
-    /// packed RGB 5:6:5, 16bpp, (msb)   5R 6G 5B(lsb), little-endian
-    static let RGB565LE = AV_PIX_FMT_RGB565LE
-    /// packed RGB 5:5:5, 16bpp, (msb)1X 5R 5G 5B(lsb), big-endian   , X=unused/undefined
-    static let RGB555BE = AV_PIX_FMT_RGB555BE
-    /// packed RGB 5:5:5, 16bpp, (msb)1X 5R 5G 5B(lsb), little-endian, X=unused/undefined
-    static let RGB555LE = AV_PIX_FMT_RGB555LE
-    /// packed BGR 5:6:5, 16bpp, (msb)   5B 6G 5R(lsb), big-endian
-    static let BGR565BE = AV_PIX_FMT_BGR565BE
-    /// packed BGR 5:6:5, 16bpp, (msb)   5B 6G 5R(lsb), little-endian
-    static let BGR565LE = AV_PIX_FMT_BGR565LE
-    /// packed BGR 5:5:5, 16bpp, (msb)1X 5B 5G 5R(lsb), big-endian   , X=unused/undefined
-    static let BGR555BE = AV_PIX_FMT_BGR555BE
-    /// packed BGR 5:5:5, 16bpp, (msb)1X 5B 5G 5R(lsb), little-endian, X=unused/undefined
-    static let BGR555LE = AV_PIX_FMT_BGR555LE
-
-    /// Hardware acceleration through VA-API, data[3] contains a VASurfaceID.
-    static let VAAPI = AV_PIX_FMT_VAAPI
-
-    /// planar YUV 4:2:0, 24bpp, (1 Cr & Cb sample per 2x2 Y samples), little-endian
-    static let YUV420P16LE = AV_PIX_FMT_YUV420P16LE
-    /// planar YUV 4:2:0, 24bpp, (1 Cr & Cb sample per 2x2 Y samples), big-endian
-    static let YUV420P16BE = AV_PIX_FMT_YUV420P16BE
-    /// planar YUV 4:2:2, 32bpp, (1 Cr & Cb sample per 2x1 Y samples), little-endian
-    static let YUV422P16LE = AV_PIX_FMT_YUV422P16LE
-    /// planar YUV 4:2:2, 32bpp, (1 Cr & Cb sample per 2x1 Y samples), big-endian
-    static let YUV422P16BE = AV_PIX_FMT_YUV422P16BE
-    /// planar YUV 4:4:4, 48bpp, (1 Cr & Cb sample per 1x1 Y samples), little-endian
-    static let YUV444P16LE = AV_PIX_FMT_YUV444P16LE
-    /// planar YUV 4:4:4, 48bpp, (1 Cr & Cb sample per 1x1 Y samples), big-endian
-    static let YUV444P16BE = AV_PIX_FMT_YUV444P16BE
-    /// HW decoding through DXVA2, Picture.data[3] contains a LPDIRECT3DSURFACE9 pointer
-    static let DXVA2_VLD = AV_PIX_FMT_DXVA2_VLD
-
-    /// packed RGB 4:4:4, 16bpp, (msb)4X 4R 4G 4B(lsb), little-endian, X=unused/undefined
-    static let RGB444LE = AV_PIX_FMT_RGB444LE
-    /// packed RGB 4:4:4, 16bpp, (msb)4X 4R 4G 4B(lsb), big-endian,    X=unused/undefined
-    static let RGB444BE = AV_PIX_FMT_RGB444BE
-    /// packed BGR 4:4:4, 16bpp, (msb)4X 4B 4G 4R(lsb), little-endian, X=unused/undefined
-    static let BGR444LE = AV_PIX_FMT_BGR444LE
-    /// packed BGR 4:4:4, 16bpp, (msb)4X 4B 4G 4R(lsb), big-endian,    X=unused/undefined
-    static let BGR444BE = AV_PIX_FMT_BGR444BE
-    /// 8 bits gray, 8 bits alpha
-    static let YA8 = AV_PIX_FMT_YA8
-
-    /// alias for AV_PIX_FMT_YA8
-    static let Y400A = AV_PIX_FMT_Y400A
-    /// alias for AV_PIX_FMT_YA8
-    static let GRAY8A = AV_PIX_FMT_GRAY8A
-
-    /// packed RGB 16:16:16, 48bpp, 16B, 16G, 16R, the 2-byte value for each R/G/B component is stored as big-endian
-    static let BGR48BE = AV_PIX_FMT_BGR48BE
-    /// packed RGB 16:16:16, 48bpp, 16B, 16G, 16R, the 2-byte value for each R/G/B component is stored as little-endian
-    static let BGR48LE = AV_PIX_FMT_BGR48LE
-
-    /**
-     * The following 12 formats have the disadvantage of needing 1 format for each bit depth.
-     * Notice that each 9/10 bits sample is stored in 16 bits with extra padding.
-     * If you want to support multiple bit depths, then using AV_PIX_FMT_YUV420P16* with the bpp stored separately is better.
-     */
-    /// planar YUV 4:2:0, 13.5bpp, (1 Cr & Cb sample per 2x2 Y samples), big-endian
-    static let YUV420P9BE = AV_PIX_FMT_YUV420P9BE
-    /// planar YUV 4:2:0, 13.5bpp, (1 Cr & Cb sample per 2x2 Y samples), little-endian
-    static let YUV420P9LE = AV_PIX_FMT_YUV420P9LE
-    /// planar YUV 4:2:0, 15bpp, (1 Cr & Cb sample per 2x2 Y samples), big-endian
-    static let YUV420P10BE = AV_PIX_FMT_YUV420P10BE
-    /// planar YUV 4:2:0, 15bpp, (1 Cr & Cb sample per 2x2 Y samples), little-endian
-    static let YUV420P10LE = AV_PIX_FMT_YUV420P10LE
-    /// planar YUV 4:2:2, 20bpp, (1 Cr & Cb sample per 2x1 Y samples), big-endian
-    static let YUV422P10BE = AV_PIX_FMT_YUV422P10BE
-    /// planar YUV 4:2:2, 20bpp, (1 Cr & Cb sample per 2x1 Y samples), little-endian
-    static let YUV422P10LE = AV_PIX_FMT_YUV422P10LE
-    /// planar YUV 4:4:4, 27bpp, (1 Cr & Cb sample per 1x1 Y samples), big-endian
-    static let YUV444P9BE = AV_PIX_FMT_YUV444P9BE
-    /// planar YUV 4:4:4, 27bpp, (1 Cr & Cb sample per 1x1 Y samples), little-endian
-    static let YUV444P9LE = AV_PIX_FMT_YUV444P9LE
-    /// planar YUV 4:4:4, 30bpp, (1 Cr & Cb sample per 1x1 Y samples), big-endian
-    static let YUV444P10BE = AV_PIX_FMT_YUV444P10BE
-    /// planar YUV 4:4:4, 30bpp, (1 Cr & Cb sample per 1x1 Y samples), little-endian
-    static let YUV444P10LE = AV_PIX_FMT_YUV444P10LE
-    /// planar YUV 4:2:2, 18bpp, (1 Cr & Cb sample per 2x1 Y samples), big-endian
-    static let YUV422P9BE = AV_PIX_FMT_YUV422P9BE
-    /// planar YUV 4:2:2, 18bpp, (1 Cr & Cb sample per 2x1 Y samples), little-endian
-    static let YUV422P9LE = AV_PIX_FMT_YUV422P9LE
-    /// planar GBR 4:4:4 24bpp
-    static let GBRP = AV_PIX_FMT_GBRP
-    static let GBR24P = AV_PIX_FMT_GBR24P
-    /// planar GBR 4:4:4 27bpp, big-endian
-    static let GBRP9BE = AV_PIX_FMT_GBRP9BE
-    /// planar GBR 4:4:4 27bpp, little-endian
-    static let GBRP9LE = AV_PIX_FMT_GBRP9LE
-    /// planar GBR 4:4:4 30bpp, big-endian
-    static let GBRP10BE = AV_PIX_FMT_GBRP10BE
-    /// planar GBR 4:4:4 30bpp, little-endian
-    static let GBRP10LE = AV_PIX_FMT_GBRP10LE
-    /// planar GBR 4:4:4 48bpp, big-endian
-    static let GBRP16BE = AV_PIX_FMT_GBRP16BE
-    /// planar GBR 4:4:4 48bpp, little-endian
-    static let GBRP16LE = AV_PIX_FMT_GBRP16LE
-    /// planar YUV 4:2:2 24bpp, (1 Cr & Cb sample per 2x1 Y & A samples)
-    static let YUVA422P = AV_PIX_FMT_YUVA422P
-    /// planar YUV 4:4:4 32bpp, (1 Cr & Cb sample per 1x1 Y & A samples)
-    static let YUVA444P = AV_PIX_FMT_YUVA444P
-    /// planar YUV 4:2:0 22.5bpp, (1 Cr & Cb sample per 2x2 Y & A samples), big-endian
-    static let YUVA420P9BE = AV_PIX_FMT_YUVA420P9BE
-    /// planar YUV 4:2:0 22.5bpp, (1 Cr & Cb sample per 2x2 Y & A samples), little-endian
-    static let YUVA420P9LE = AV_PIX_FMT_YUVA420P9LE
-    /// planar YUV 4:2:2 27bpp, (1 Cr & Cb sample per 2x1 Y & A samples), big-endian
-    static let YUVA422P9BE = AV_PIX_FMT_YUVA422P9BE
-    /// planar YUV 4:2:2 27bpp, (1 Cr & Cb sample per 2x1 Y & A samples), little-endian
-    static let YUVA422P9LE = AV_PIX_FMT_YUVA422P9LE
-    /// planar YUV 4:4:4 36bpp, (1 Cr & Cb sample per 1x1 Y & A samples), big-endian
-    static let YUVA444P9BE = AV_PIX_FMT_YUVA444P9BE
-    /// planar YUV 4:4:4 36bpp, (1 Cr & Cb sample per 1x1 Y & A samples), little-endian
-    static let YUVA444P9LE = AV_PIX_FMT_YUVA444P9LE
-    /// planar YUV 4:2:0 25bpp, (1 Cr & Cb sample per 2x2 Y & A samples, big-endian)
-    static let YUVA420P10BE = AV_PIX_FMT_YUVA420P10BE
-    /// planar YUV 4:2:0 25bpp, (1 Cr & Cb sample per 2x2 Y & A samples, little-endian)
-    static let YUVA420P10LE = AV_PIX_FMT_YUVA420P10LE
-    /// planar YUV 4:2:2 30bpp, (1 Cr & Cb sample per 2x1 Y & A samples, big-endian)
-    static let YUVA422P10BE = AV_PIX_FMT_YUVA422P10BE
-    /// planar YUV 4:2:2 30bpp, (1 Cr & Cb sample per 2x1 Y & A samples, little-endian)
-    static let YUVA422P10LE = AV_PIX_FMT_YUVA422P10LE
-    /// planar YUV 4:4:4 40bpp, (1 Cr & Cb sample per 1x1 Y & A samples, big-endian)
-    static let YUVA444P10BE = AV_PIX_FMT_YUVA444P10BE
-    /// planar YUV 4:4:4 40bpp, (1 Cr & Cb sample per 1x1 Y & A samples, little-endian)
-    static let YUVA444P10LE = AV_PIX_FMT_YUVA444P10LE
-    /// planar YUV 4:2:0 40bpp, (1 Cr & Cb sample per 2x2 Y & A samples, big-endian)
-    static let YUVA420P16BE = AV_PIX_FMT_YUVA420P16BE
-    /// planar YUV 4:2:0 40bpp, (1 Cr & Cb sample per 2x2 Y & A samples, little-endian)
-    static let YUVA420P16LE = AV_PIX_FMT_YUVA420P16LE
-    /// planar YUV 4:2:2 48bpp, (1 Cr & Cb sample per 2x1 Y & A samples, big-endian)
-    static let YUVA422P16BE = AV_PIX_FMT_YUVA422P16BE
-    /// planar YUV 4:2:2 48bpp, (1 Cr & Cb sample per 2x1 Y & A samples, little-endian)
-    static let YUVA422P16LE = AV_PIX_FMT_YUVA422P16LE
-    /// planar YUV 4:4:4 64bpp, (1 Cr & Cb sample per 1x1 Y & A samples, big-endian)
-    static let YUVA444P16BE = AV_PIX_FMT_YUVA444P16BE
-    /// planar YUV 4:4:4 64bpp, (1 Cr & Cb sample per 1x1 Y & A samples, little-endian)
-    static let YUVA444P16LE = AV_PIX_FMT_YUVA444P16LE
-
-    /// HW acceleration through VDPAU, Picture.data[3] contains a VdpVideoSurface
-    static let VDPAU = AV_PIX_FMT_VDPAU
-
-    /// packed XYZ 4:4:4, 36 bpp, (msb) 12X, 12Y, 12Z (lsb), the 2-byte value for each X/Y/Z is stored as little-endian, the 4 lower bits are set to 0
-    static let XYZ12LE = AV_PIX_FMT_XYZ12LE
-    /// packed XYZ 4:4:4, 36 bpp, (msb) 12X, 12Y, 12Z (lsb), the 2-byte value for each X/Y/Z is stored as big-endian, the 4 lower bits are set to 0
-    static let XYZ12BE = AV_PIX_FMT_XYZ12BE
-    /// interleaved chroma YUV 4:2:2, 16bpp, (1 Cr & Cb sample per 2x1 Y samples)
-    static let NV16 = AV_PIX_FMT_NV16
-    /// interleaved chroma YUV 4:2:2, 20bpp, (1 Cr & Cb sample per 2x1 Y samples), little-endian
-    static let NV20LE = AV_PIX_FMT_NV20LE
-    /// interleaved chroma YUV 4:2:2, 20bpp, (1 Cr & Cb sample per 2x1 Y samples), big-endian
-    static let NV20BE = AV_PIX_FMT_NV20BE
-
-    /// packed RGBA 16:16:16:16, 64bpp, 16R, 16G, 16B, 16A, the 2-byte value for each R/G/B/A component is stored as big-endian
-    static let RGBA64BE = AV_PIX_FMT_RGBA64BE
-    /// packed RGBA 16:16:16:16, 64bpp, 16R, 16G, 16B, 16A, the 2-byte value for each R/G/B/A component is stored as little-endian
-    static let RGBA64LE = AV_PIX_FMT_RGBA64LE
-    /// packed RGBA 16:16:16:16, 64bpp, 16B, 16G, 16R, 16A, the 2-byte value for each R/G/B/A component is stored as big-endian
-    static let BGRA64BE = AV_PIX_FMT_BGRA64BE
-    /// packed RGBA 16:16:16:16, 64bpp, 16B, 16G, 16R, 16A, the 2-byte value for each R/G/B/A component is stored as little-endian
-    static let BGRA64LE = AV_PIX_FMT_BGRA64LE
-
-    /// packed YUV 4:2:2, 16bpp, Y0 Cr Y1 Cb
-    static let YVYU422 = AV_PIX_FMT_YVYU422
-
-    /// 16 bits gray, 16 bits alpha (big-endian)
-    static let YA16BE = AV_PIX_FMT_YA16BE
-    /// 16 bits gray, 16 bits alpha (little-endian)
-    static let YA16LE = AV_PIX_FMT_YA16LE
-
-    /// planar GBRA 4:4:4:4 32bpp
-    static let GBRAP = AV_PIX_FMT_GBRAP
-    /// planar GBRA 4:4:4:4 64bpp, big-endian
-    static let GBRAP16BE = AV_PIX_FMT_GBRAP16BE
-    /// planar GBRA 4:4:4:4 64bpp, little-endian
-    static let GBRAP16LE = AV_PIX_FMT_GBRAP16LE
-    /**
-     *  HW acceleration through QSV, data[3] contains a pointer to the
-     *  mfxFrameSurface1 structure.
-     */
-    static let QSV = AV_PIX_FMT_QSV
-    /**
-     * HW acceleration though MMAL, data[3] contains a pointer to the
-     * MMAL_BUFFER_HEADER_T structure.
-     */
-    static let MMAL = AV_PIX_FMT_MMAL
-
-    /// HW decoding through Direct3D11 via old API, Picture.data[3] contains a ID3D11VideoDecoderOutputView pointer
-    static let D3D11VA_VLD = AV_PIX_FMT_D3D11VA_VLD
-
-    /**
-     * HW acceleration through CUDA. data[i] contain CUdeviceptr pointers
-     * exactly as for system memory frames.
-     */
-    static let CUDA = AV_PIX_FMT_CUDA
-
-    /// packed RGB 8:8:8, 32bpp, XRGBXRGB...   X=unused/undefined
-    static let _0RGB = AV_PIX_FMT_0RGB
-    /// packed RGB 8:8:8, 32bpp, RGBXRGBX...   X=unused/undefined
-    static let RGB0 = AV_PIX_FMT_RGB0
-    /// packed BGR 8:8:8, 32bpp, XBGRXBGR...   X=unused/undefined
-    static let _0BGR = AV_PIX_FMT_0BGR
-    /// packed BGR 8:8:8, 32bpp, BGRXBGRX...   X=unused/undefined
-    static let BGR0 = AV_PIX_FMT_BGR0
-
-    /// planar YUV 4:2:0,18bpp, (1 Cr & Cb sample per 2x2 Y samples), big-endian
-    static let YUV420P12BE = AV_PIX_FMT_YUV420P12BE
-    /// planar YUV 4:2:0,18bpp, (1 Cr & Cb sample per 2x2 Y samples), little-endian
-    static let YUV420P12LE = AV_PIX_FMT_YUV420P12LE
-    /// planar YUV 4:2:0,21bpp, (1 Cr & Cb sample per 2x2 Y samples), big-endian
-    static let YUV420P14BE = AV_PIX_FMT_YUV420P14BE
-    /// planar YUV 4:2:0,21bpp, (1 Cr & Cb sample per 2x2 Y samples), little-endian
-    static let YUV420P14LE = AV_PIX_FMT_YUV420P14LE
-    /// planar YUV 4:2:2,24bpp, (1 Cr & Cb sample per 2x1 Y samples), big-endian
-    static let YUV422P12BE = AV_PIX_FMT_YUV422P12BE
-    /// planar YUV 4:2:2,24bpp, (1 Cr & Cb sample per 2x1 Y samples), little-endian
-    static let YUV422P12LE = AV_PIX_FMT_YUV422P12LE
-    /// planar YUV 4:2:2,28bpp, (1 Cr & Cb sample per 2x1 Y samples), big-endian
-    static let YUV422P14BE = AV_PIX_FMT_YUV422P14BE
-    /// planar YUV 4:2:2,28bpp, (1 Cr & Cb sample per 2x1 Y samples), little-endian
-    static let YUV422P14LE = AV_PIX_FMT_YUV422P14LE
-    /// planar YUV 4:4:4,36bpp, (1 Cr & Cb sample per 1x1 Y samples), big-endian
-    static let YUV444P12BE = AV_PIX_FMT_YUV444P12BE
-    /// planar YUV 4:4:4,36bpp, (1 Cr & Cb sample per 1x1 Y samples), little-endian
-    static let YUV444P12LE = AV_PIX_FMT_YUV444P12LE
-    /// planar YUV 4:4:4,42bpp, (1 Cr & Cb sample per 1x1 Y samples), big-endian
-    static let YUV444P14BE = AV_PIX_FMT_YUV444P14BE
-    /// planar YUV 4:4:4,42bpp, (1 Cr & Cb sample per 1x1 Y samples), little-endian
-    static let YUV444P14LE = AV_PIX_FMT_YUV444P14LE
-    /// planar GBR 4:4:4 36bpp, big-endian
-    static let GBRP12BE = AV_PIX_FMT_GBRP12BE
-    /// planar GBR 4:4:4 36bpp, little-endian
-    static let GBRP12LE = AV_PIX_FMT_GBRP12LE
-    /// planar GBR 4:4:4 42bpp, big-endian
-    static let GBRP14BE = AV_PIX_FMT_GBRP14BE
-    /// planar GBR 4:4:4 42bpp, little-endian
-    static let GBRP14LE = AV_PIX_FMT_GBRP14LE
-    /// planar YUV 4:1:1, 12bpp, (1 Cr & Cb sample per 4x1 Y samples) full scale (JPEG), deprecated in favor of AV_PIX_FMT_YUV411P and setting color_range
-    static let YUVJ411P = AV_PIX_FMT_YUVJ411P
-
-    /// bayer, BGBG..(odd line), GRGR..(even line), 8-bit samples */
-    static let BAYER_BGGR8 = AV_PIX_FMT_BAYER_BGGR8
-    /// bayer, RGRG..(odd line), GBGB..(even line), 8-bit samples */
-    static let BAYER_RGGB8 = AV_PIX_FMT_BAYER_RGGB8
-    /// bayer, GBGB..(odd line), RGRG..(even line), 8-bit samples */
-    static let BAYER_GBRG8 = AV_PIX_FMT_BAYER_GBRG8
-    /// bayer, GRGR..(odd line), BGBG..(even line), 8-bit samples */
-    static let BAYER_GRBG8 = AV_PIX_FMT_BAYER_GRBG8
-    /// bayer, BGBG..(odd line), GRGR..(even line), 16-bit samples, little-endian */
-    static let BAYER_BGGR16LE = AV_PIX_FMT_BAYER_BGGR16LE
-    /// bayer, BGBG..(odd line), GRGR..(even line), 16-bit samples, big-endian */
-    static let BAYER_BGGR16BE = AV_PIX_FMT_BAYER_BGGR16BE
-    /// bayer, RGRG..(odd line), GBGB..(even line), 16-bit samples, little-endian */
-    static let BAYER_RGGB16LE = AV_PIX_FMT_BAYER_RGGB16LE
-    /// bayer, RGRG..(odd line), GBGB..(even line), 16-bit samples, big-endian */
-    static let BAYER_RGGB16BE = AV_PIX_FMT_BAYER_RGGB16BE
-    /// bayer, GBGB..(odd line), RGRG..(even line), 16-bit samples, little-endian */
-    static let BAYER_GBRG16LE = AV_PIX_FMT_BAYER_GBRG16LE
-    /// bayer, GBGB..(odd line), RGRG..(even line), 16-bit samples, big-endian */
-    static let BAYER_GBRG16BE = AV_PIX_FMT_BAYER_GBRG16BE
-    /// bayer, GRGR..(odd line), BGBG..(even line), 16-bit samples, little-endian */
-    static let BAYER_GRBG16LE = AV_PIX_FMT_BAYER_GRBG16LE
-    /// bayer, GRGR..(odd line), BGBG..(even line), 16-bit samples, big-endian */
-    static let BAYER_GRBG16BE = AV_PIX_FMT_BAYER_GRBG16BE
-
-    /// planar YUV 4:4:0,20bpp, (1 Cr & Cb sample per 1x2 Y samples), little-endian
-    static let YUV440P10LE = AV_PIX_FMT_YUV440P10LE
-    /// planar YUV 4:4:0,20bpp, (1 Cr & Cb sample per 1x2 Y samples), big-endian
-    static let YUV440P10BE = AV_PIX_FMT_YUV440P10BE
-    /// planar YUV 4:4:0,24bpp, (1 Cr & Cb sample per 1x2 Y samples), little-endian
-    static let YUV440P12LE = AV_PIX_FMT_YUV440P12LE
-    /// planar YUV 4:4:0,24bpp, (1 Cr & Cb sample per 1x2 Y samples), big-endian
-    static let YUV440P12BE = AV_PIX_FMT_YUV440P12BE
-    /// packed AYUV 4:4:4,64bpp (1 Cr & Cb sample per 1x1 Y & A samples), little-endian
-    static let AYUV64LE = AV_PIX_FMT_AYUV64LE
-    /// packed AYUV 4:4:4,64bpp (1 Cr & Cb sample per 1x1 Y & A samples), big-endian
-    static let AYUV64BE = AV_PIX_FMT_AYUV64BE
-
-    /// hardware decoding through Videotoolbox
-    static let VIDEOTOOLBOX = AV_PIX_FMT_VIDEOTOOLBOX
-
-    /// like NV12, with 10bpp per component, data in the high bits, zeros in the low bits, little-endian
-    static let P010LE = AV_PIX_FMT_P010LE
-    /// like NV12, with 10bpp per component, data in the high bits, zeros in the low bits, big-endian
-    static let P010BE = AV_PIX_FMT_P010BE
-
-    /// planar GBR 4:4:4:4 48bpp, big-endian
-    static let GBRAP12BE = AV_PIX_FMT_GBRAP12BE
-    /// planar GBR 4:4:4:4 48bpp, little-endian
-    static let GBRAP12LE = AV_PIX_FMT_GBRAP12LE
-
-    /// planar GBR 4:4:4:4 40bpp, big-endian
-    static let GBRAP10BE = AV_PIX_FMT_GBRAP10BE
-    /// planar GBR 4:4:4:4 40bpp, little-endian
-    static let GBRAP10LE = AV_PIX_FMT_GBRAP10LE
-
-    /// hardware decoding through MediaCodec
-    static let MEDIACODEC = AV_PIX_FMT_MEDIACODEC
-
-    ///        Y        , 12bpp, big-endian
-    static let GRAY12BE = AV_PIX_FMT_GRAY12BE
-    ///        Y        , 12bpp, little-endian
-    static let GRAY12LE = AV_PIX_FMT_GRAY12LE
-    ///        Y        , 10bpp, big-endian
-    static let GRAY10BE = AV_PIX_FMT_GRAY10BE
-    ///        Y        , 10bpp, little-endian
-    static let GRAY10LE = AV_PIX_FMT_GRAY10LE
-
-    /// like NV12, with 16bpp per component, little-endian
-    static let P016LE = AV_PIX_FMT_P016LE
-    /// like NV12, with 16bpp per component, big-endian
-    static let P016BE = AV_PIX_FMT_P016BE
-
-    /**
-     * Hardware surfaces for Direct3D11.
-     *
-     * This is preferred over the legacy AV_PIX_FMT_D3D11VA_VLD. The new D3D11
-     * hwaccel API and filtering support AV_PIX_FMT_D3D11 only.
-     *
-     * data[0] contains a ID3D11Texture2D pointer, and data[1] contains the
-     * texture array index of the frame as intptr_t if the ID3D11Texture2D is
-     * an array texture (or always 0 if it's a normal texture).
-     */
-    static let D3D11 = AV_PIX_FMT_D3D11
-
-    ///        Y        , 9bpp, big-endian
-    static let GRAY9BE = AV_PIX_FMT_GRAY9BE
-    ///        Y        , 9bpp, little-endian
-    static let GRAY9LE = AV_PIX_FMT_GRAY9LE
-
-    /// IEEE-754 single precision planar GBR 4:4:4,     96bpp, big-endian
-    static let GBRPF32BE = AV_PIX_FMT_GBRPF32BE
-    /// IEEE-754 single precision planar GBR 4:4:4,     96bpp, little-endian
-    static let GBRPF32LE = AV_PIX_FMT_GBRPF32LE
-    /// IEEE-754 single precision planar GBRA 4:4:4:4, 128bpp, big-endian
-    static let GBRAPF32BE = AV_PIX_FMT_GBRAPF32BE
-    /// IEEE-754 single precision planar GBRA 4:4:4:4, 128bpp, little-endian
-    static let GBRAPF32LE = AV_PIX_FMT_GBRAPF32LE
-
-    /**
-     * DRM-managed buffers exposed through PRIME buffer sharing.
-     *
-     * data[0] points to an AVDRMFrameDescriptor.
-     */
-    static let DRM_PRIME = AV_PIX_FMT_DRM_PRIME
-    /**
-     * Hardware surfaces for OpenCL.
-     *
-     * data[i] contain 2D image objects (typed in C as cl_mem, used
-     * in OpenCL as image2d_t) for each plane of the surface.
-     */
-    static let OPENCL = AV_PIX_FMT_OPENCL
-
-    ///        Y        , 14bpp, big-endian
-    static let GRAY14BE = AV_PIX_FMT_GRAY14BE
-    ///        Y        , 14bpp, little-endian
-    static let GRAY14LE = AV_PIX_FMT_GRAY14LE
-
-    /// IEEE-754 single precision Y, 32bpp, big-endian
-    static let GRAYF32BE = AV_PIX_FMT_GRAYF32BE
-    /// IEEE-754 single precision Y, 32bpp, little-endian
-    static let GRAYF32LE = AV_PIX_FMT_GRAYF32LE
-
-    /// planar YUV 4:2:2,24bpp, (1 Cr & Cb sample per 2x1 Y samples), 12b alpha, big-endian
-    static let YUVA422P12BE = AV_PIX_FMT_YUVA422P12BE
-    /// planar YUV 4:2:2,24bpp, (1 Cr & Cb sample per 2x1 Y samples), 12b alpha, little-endian
-    static let YUVA422P12LE = AV_PIX_FMT_YUVA422P12LE
-    /// planar YUV 4:4:4,36bpp, (1 Cr & Cb sample per 1x1 Y samples), 12b alpha, big-endian
-    static let YUVA444P12BE = AV_PIX_FMT_YUVA444P12BE
-    /// planar YUV 4:4:4,36bpp, (1 Cr & Cb sample per 1x1 Y samples), 12b alpha, little-endian
-    static let YUVA444P12LE = AV_PIX_FMT_YUVA444P12LE
-
-    /// planar YUV 4:4:4, 24bpp, 1 plane for Y and 1 plane for the UV components, which are interleaved (first byte U and the following byte V)
-    static let NV24 = AV_PIX_FMT_NV24
-    /// as above, but U and V bytes are swapped
-    static let NV42 = AV_PIX_FMT_NV42
-
-    /**
-     * Vulkan hardware images.
-     *
-     * data[0] points to an AVVkFrame.
-     */
-    static let VULKAN = AV_PIX_FMT_VULKAN
-
-    /// packed YUV 4:2:2 like YUYV422, 20bpp, data in the high bits, big-endian
-    static let Y210BE = AV_PIX_FMT_Y210BE
-    /// packed YUV 4:2:2 like YUYV422, 20bpp, data in the high bits, little-endian
-    static let Y210LE = AV_PIX_FMT_Y210LE
-
-    /// packed RGB 10:10:10, 30bpp, (msb)2X 10R 10G 10B(lsb), little-endian, X=unused/undefined
-    static let X2RGB10LE = AV_PIX_FMT_X2RGB10LE
-    /// packed RGB 10:10:10, 30bpp, (msb)2X 10R 10G 10B(lsb), big-endian, X=unused/undefined
-    static let X2RGB10BE = AV_PIX_FMT_X2RGB10BE
-    /// packed BGR 10:10:10, 30bpp, (msb)2X 10B 10G 10R(lsb), little-endian, X=unused/undefined
-    static let X2BGR10LE = AV_PIX_FMT_X2BGR10LE
-    /// packed BGR 10:10:10, 30bpp, (msb)2X 10B 10G 10R(lsb), big-endian, X=unused/undefined
-    static let X2BGR10BE = AV_PIX_FMT_X2BGR10BE
-
-    /// interleaved chroma YUV 4:2:2, 20bpp, data in the high bits, big-endian
-    static let P210BE = AV_PIX_FMT_P210BE
-    /// interleaved chroma YUV 4:2:2, 20bpp, data in the high bits, little-endian
-    static let P210LE = AV_PIX_FMT_P210LE
-
-    /// interleaved chroma YUV 4:4:4, 30bpp, data in the high bits, big-endian
-    static let P410BE = AV_PIX_FMT_P410BE
-    /// interleaved chroma YUV 4:4:4, 30bpp, data in the high bits, little-endian
-    static let P410LE = AV_PIX_FMT_P410LE
-
-    /// interleaved chroma YUV 4:2:2, 32bpp, big-endian
-    static let P216BE = AV_PIX_FMT_P216BE
-    /// interleaved chroma YUV 4:2:2, 32bpp, little-endian
-    static let P216LE = AV_PIX_FMT_P216LE
-
-    /// interleaved chroma YUV 4:4:4, 48bpp, big-endian
-    static let P416BE = AV_PIX_FMT_P416BE
-    /// interleaved chroma YUV 4:4:4, 48bpp, little-endian
-    static let P416LE = AV_PIX_FMT_P416LE
-
-    /// packed VUYA 4:4:4:4, 32bpp (1 Cr & Cb sample per 1x1 Y & A samples), VUYAVUYA...
-    static let VUYA = AV_PIX_FMT_VUYA
-
-    /// IEEE-754 half precision packed RGBA 16:16:16:16, 64bpp, RGBARGBA..., big-endian
-    static let RGBAF16BE = AV_PIX_FMT_RGBAF16BE
-    /// IEEE-754 half precision packed RGBA 16:16:16:16, 64bpp, RGBARGBA..., little-endian
-    static let RGBAF16LE = AV_PIX_FMT_RGBAF16LE
-
-    /// packed VUYX 4:4:4:4, 32bpp, variant of VUYA where alpha channel is left undefined
-    static let VUYX = AV_PIX_FMT_VUYX
-
-    /// like NV12, with 12bpp per component, data in the high bits, zeros in the low bits, little-endian
-    static let P012LE = AV_PIX_FMT_P012LE
-    /// like NV12, with 12bpp per component, data in the high bits, zeros in the low bits, big-endian
-    static let P012BE = AV_PIX_FMT_P012BE
-
-    /// packed YUV 4:2:2 like YUYV422, 24bpp, data in the high bits, zeros in the low bits, big-endian
-    static let Y212BE = AV_PIX_FMT_Y212BE
-    /// packed YUV 4:2:2 like YUYV422, 24bpp, data in the high bits, zeros in the low bits, little-endian
-    static let Y212LE = AV_PIX_FMT_Y212LE
-
-    /// packed XVYU 4:4:4, 32bpp, (msb)2X 10V 10Y 10U(lsb), big-endian, variant of Y410 where alpha channel is left undefined
-    static let XV30BE = AV_PIX_FMT_XV30BE
-    /// packed XVYU 4:4:4, 32bpp, (msb)2X 10V 10Y 10U(lsb), little-endian, variant of Y410 where alpha channel is left undefined
-    static let XV30LE = AV_PIX_FMT_XV30LE
-
-    /// packed XVYU 4:4:4, 48bpp, data in the high bits, zeros in the low bits, big-endian, variant of Y412 where alpha channel is left undefined
-    static let XV36BE = AV_PIX_FMT_XV36BE
-    /// packed XVYU 4:4:4, 48bpp, data in the high bits, zeros in the low bits, little-endian, variant of Y412 where alpha channel is left undefined
-    static let XV36LE = AV_PIX_FMT_XV36LE
-
-    /// IEEE-754 single precision packed RGB 32:32:32, 96bpp, RGBRGB..., big-endian
-    static let RGBF32BE = AV_PIX_FMT_RGBF32BE
-    /// IEEE-754 single precision packed RGB 32:32:32, 96bpp, RGBRGB..., little-endian
-    static let RGBF32LE = AV_PIX_FMT_RGBF32LE
-
-    /// IEEE-754 single precision packed RGBA 32:32:32:32, 128bpp, RGBARGBA..., big-endian
-    static let RGBAF32BE = AV_PIX_FMT_RGBAF32BE
-    /// IEEE-754 single precision packed RGBA 32:32:32:32, 128bpp, RGBARGBA..., little-endian
-    static let RGBAF32LE = AV_PIX_FMT_RGBAF32LE
-
-    /// interleaved chroma YUV 4:2:2, 24bpp, data in the high bits, big-endian
-    static let P212BE = AV_PIX_FMT_P212BE
-    /// interleaved chroma YUV 4:2:2, 24bpp, data in the high bits, little-endian
-    static let P212LE = AV_PIX_FMT_P212LE
-
-    /// interleaved chroma YUV 4:4:4, 36bpp, data in the high bits, big-endian
-    static let P412BE = AV_PIX_FMT_P412BE
-    /// interleaved chroma YUV 4:4:4, 36bpp, data in the high bits, little-endian
-    static let P412LE = AV_PIX_FMT_P412LE
-
-    /// planar GBR 4:4:4:4 56bpp, big-endian
-    static let GBRAP14BE = AV_PIX_FMT_GBRAP14BE
-    /// planar GBR 4:4:4:4 56bpp, little-endian
-    static let GBRAP14LE = AV_PIX_FMT_GBRAP14LE
-
-    /**
-     * Hardware surfaces for Direct3D 12.
-     *
-     * data[0] points to an AVD3D12VAFrame.
-     */
-    static let D3D12 = AV_PIX_FMT_D3D12
-
-    /// packed AYUV 4:4:4:4, 32bpp (1 Cr & Cb sample per 1x1 Y & A samples), AYUVAYUV...
-    static let AYUV = AV_PIX_FMT_AYUV
-
-    /// packed UYVA 4:4:4:4, 32bpp (1 Cr & Cb sample per 1x1 Y & A samples), UYVAUYVA...
-    static let UYVA = AV_PIX_FMT_UYVA
-
-    /// packed VYU 4:4:4, 24bpp (1 Cr & Cb sample per 1x1 Y), VYUVYU...
-    static let VYU444 = AV_PIX_FMT_VYU444
-
-    /// packed VYUX 4:4:4 like XV30, 32bpp, (msb)10V 10Y 10U 2X(lsb), big-endian
-    static let V30XBE = AV_PIX_FMT_V30XBE
-    /// packed VYUX 4:4:4 like XV30, 32bpp, (msb)10V 10Y 10U 2X(lsb), little-endian
-    static let V30XLE = AV_PIX_FMT_V30XLE
-
-    /// IEEE-754 half precision packed RGB 16:16:16, 48bpp, RGBRGB..., big-endian
-    static let RGBF16BE = AV_PIX_FMT_RGBF16BE
-    /// IEEE-754 half precision packed RGB 16:16:16, 48bpp, RGBRGB..., little-endian
-    static let RGBF16LE = AV_PIX_FMT_RGBF16LE
-
-    /// packed RGBA 32:32:32:32, 128bpp, RGBARGBA..., big-endian
-    static let RGBA128BE = AV_PIX_FMT_RGBA128BE
-    /// packed RGBA 32:32:32:32, 128bpp, RGBARGBA..., little-endian
-    static let RGBA128LE = AV_PIX_FMT_RGBA128LE
-
-    /// packed RGB 32:32:32, 96bpp, RGBRGB..., big-endian
-    static let RGB96BE = AV_PIX_FMT_RGB96BE
-    /// packed RGB 32:32:32, 96bpp, RGBRGB..., little-endian
-    static let RGB96LE = AV_PIX_FMT_RGB96LE
-
-    /// packed YUV 4:2:2 like YUYV422, 32bpp, big-endian
-    static let Y216BE = AV_PIX_FMT_Y216BE
-    /// packed YUV 4:2:2 like YUYV422, 32bpp, little-endian
-    static let Y216LE = AV_PIX_FMT_Y216LE
-
-    /// packed XVYU 4:4:4, 64bpp, big-endian, variant of Y416 where alpha channel is left undefined
-    static let XV48BE = AV_PIX_FMT_XV48BE
-    /// packed XVYU 4:4:4, 64bpp, little-endian, variant of Y416 where alpha channel is left undefined
-    static let XV48LE = AV_PIX_FMT_XV48LE
-
-    /// IEEE-754 half precision planar GBR 4:4:4, 48bpp, big-endian
-    static let GBRPF16BE = AV_PIX_FMT_GBRPF16BE
-    /// IEEE-754 half precision planar GBR 4:4:4, 48bpp, little-endian
-    static let GBRPF16LE = AV_PIX_FMT_GBRPF16LE
-    /// IEEE-754 half precision planar GBRA 4:4:4:4, 64bpp, big-endian
-    static let GBRAPF16BE = AV_PIX_FMT_GBRAPF16BE
-    /// IEEE-754 half precision planar GBRA 4:4:4:4, 64bpp, little-endian
-    static let GBRAPF16LE = AV_PIX_FMT_GBRAPF16LE
-
-    /// IEEE-754 half precision Y, 16bpp, big-endian
-    static let GRAYF16BE = AV_PIX_FMT_GRAYF16BE
-    /// IEEE-754 half precision Y, 16bpp, little-endian
-    static let GRAYF16LE = AV_PIX_FMT_GRAYF16LE
-
-    /// HW acceleration through AMF, data[0] contains an AMFSurface pointer.
-    static let AMF_SURFACE = AV_PIX_FMT_AMF_SURFACE
-
-    /// Y, 32bpp, big-endian
-    static let GRAY32BE = AV_PIX_FMT_GRAY32BE
-    /// Y, 32bpp, little-endian
-    static let GRAY32LE = AV_PIX_FMT_GRAY32LE
-
-    /// IEEE-754 single precision packed YA, 32 bits gray, 32 bits alpha, 64bpp, big-endian
-    static let YAF32BE = AV_PIX_FMT_YAF32BE
-    /// IEEE-754 single precision packed YA, 32 bits gray, 32 bits alpha, 64bpp, little-endian
-    static let YAF32LE = AV_PIX_FMT_YAF32LE
-
-    /// IEEE-754 half precision packed YA, 16 bits gray, 16 bits alpha, 32bpp, big-endian
-    static let YAF16BE = AV_PIX_FMT_YAF16BE
-    /// IEEE-754 half precision packed YA, 16 bits gray, 16 bits alpha, 32bpp, little-endian
-    static let YAF16LE = AV_PIX_FMT_YAF16LE
-
-    /// planar GBRA 4:4:4:4 128bpp, big-endian
-    static let GBRAP32BE = AV_PIX_FMT_GBRAP32BE
-    /// planar GBRA 4:4:4:4 128bpp, little-endian
-    static let GBRAP32LE = AV_PIX_FMT_GBRAP32LE
-
-    /// planar YUV 4:4:4, 30bpp, (1 Cr & Cb sample per 1x1 Y samples), lowest bits zero, big-endian
-    static let YUV444P10MSBBE = AV_PIX_FMT_YUV444P10MSBBE
-    /// planar YUV 4:4:4, 30bpp, (1 Cr & Cb sample per 1x1 Y samples), lowest bits zero, little-endian
-    static let YUV444P10MSBLE = AV_PIX_FMT_YUV444P10MSBLE
-    /// planar YUV 4:4:4, 30bpp, (1 Cr & Cb sample per 1x1 Y samples), lowest bits zero, big-endian
-    static let YUV444P12MSBBE = AV_PIX_FMT_YUV444P12MSBBE
-    /// planar YUV 4:4:4, 30bpp, (1 Cr & Cb sample per 1x1 Y samples), lowest bits zero, little-endian
-    static let YUV444P12MSBLE = AV_PIX_FMT_YUV444P12MSBLE
-    /// planar GBR 4:4:4 30bpp, lowest bits zero, big-endian
-    static let GBRP10MSBBE = AV_PIX_FMT_GBRP10MSBBE
-    /// planar GBR 4:4:4 30bpp, lowest bits zero, little-endian
-    static let GBRP10MSBLE = AV_PIX_FMT_GBRP10MSBLE
-    /// planar GBR 4:4:4 36bpp, lowest bits zero, big-endian
-    static let GBRP12MSBBE = AV_PIX_FMT_GBRP12MSBBE
-    /// planar GBR 4:4:4 36bpp, lowest bits zero, little-endian
-    static let GBRP12MSBLE = AV_PIX_FMT_GBRP12MSBLE
-
-    /// hardware decoding through OpenHarmony
-    static let OHCODEC = AV_PIX_FMT_OHCODEC
-
+extension AVPixelFormat: @retroactive CustomStringConvertible {
     /// Return the pixel format corresponding to name.
     ///
     /// If there is no pixel format with name name, then looks for a pixel format with the name
@@ -669,7 +17,7 @@ public extension AVPixelFormat {
     /// For example in a little-endian system, first looks for "gray16", then for "gray16le".
     ///
     /// Finally if no pixel format has been found, returns `nil`.
-    init?(name: String) {
+    public init?(name: String) {
         let type = av_get_pix_fmt(name)
         guard type != .none else {
             return nil
@@ -678,17 +26,17 @@ public extension AVPixelFormat {
     }
 
     /// The name of the pixel format.
-    var name: String {
-        String(cString: av_get_pix_fmt_name(self)) ?? "unknown"
+    public var name: String {
+        String(cString: av_get_pix_fmt_name(self)) ?? "\(rawValue)"
     }
 
     /// The number of planes in the pixel format.
-    var planeCount: Int {
+    public var planeCount: Int {
         max(Int(av_pix_fmt_count_planes(self)), 0)
     }
 
     /// The number of components each pixel has.
-    var numberOfComponents: Int? {
+    public var numberOfComponents: Int? {
         desc.map { Int($0.pointee.nb_components) }
     }
 
@@ -697,17 +45,17 @@ public extension AVPixelFormat {
 
      Note that this is not the same as the number of bits per sample. he returned number of bits refers to the number of bits actually used for storing the pixel information, that is padding bits are not counted.
      */
-    var bitsPerPixel: Int32? {
+    public var bitsPerPixel: Int32? {
         desc.map { av_get_bits_per_pixel($0) }
     }
 
     /// The number of bits per pixel, including any padding or unused bits.
-    var bitsPerPixelPadded: Int32? {
+    public var bitsPerPixelPadded: Int32? {
         desc.map { av_get_padded_bits_per_pixel($0) }
     }
 
     /// Alternative names.
-    var alias: [String] {
+    public var alias: [String] {
         String(cString: desc?.pointee.alias)?.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) } ?? []
     }
 
@@ -719,7 +67,7 @@ public extension AVPixelFormat {
      The note above is needed to ensure rounding up.
      This value only refers to the chroma components.
       */
-    var log2ChromaW: Int? {
+    public var log2ChromaW: Int? {
         desc.map { Int($0.pointee.log2_chroma_w) }
     }
 
@@ -731,11 +79,11 @@ public extension AVPixelFormat {
      The note above is needed to ensure rounding up.
      This value only refers to the chroma components.
       */
-    var log2ChromaH: Int? {
+    public var log2ChromaH: Int? {
         desc.map { Int($0.pointee.log2_chroma_h) }
     }
 
-    var desc: UnsafePointer<AVPixFmtDescriptor>? {
+    public var desc: UnsafePointer<AVPixFmtDescriptor>? {
         av_pix_fmt_desc_get(self)
     }
 
@@ -746,9 +94,715 @@ public extension AVPixelFormat {
      */
 
     /// The pixel format descriptor of the pixel format.
-    var descriptor: AVPixelFormatDescriptor? {
+    public var descriptor: AVPixelFormatDescriptor? {
         av_pix_fmt_desc_get(self).map(AVPixelFormatDescriptor.init(native:))
     }
+    
+    public var description: String {
+        name
+    }
+}
+
+extension AVPixelFormat {
+    /// None.
+    public static let none = AV_PIX_FMT_NONE
+    /// planar YUV 4:2:0, 12bpp, (1 Cr & Cb sample per 2x2 Y samples)
+    public static let yuv420p = AV_PIX_FMT_YUV420P
+    /// packed YUV 4:2:2, 16bpp, Y0 Cb Y1 Cr
+    public static let yuyv422 = AV_PIX_FMT_YUYV422
+    /**
+     packed RGB 8:8:8, 24bpp, RGBRGB...
+     */
+    public static let rgb24 = AV_PIX_FMT_RGB24
+    /**
+     packed RGB 8:8:8, 24bpp, BGRBGR...
+     */
+    public static let bgr24 = AV_PIX_FMT_BGR24
+    /// planar YUV 4:2:2, 16bpp, (1 Cr & Cb sample per 2x1 Y samples)
+    public static let yuv422p = AV_PIX_FMT_YUV422P
+    /// planar YUV 4:4:4, 24bpp, (1 Cr & Cb sample per 1x1 Y samples)
+    public static let yuv444p = AV_PIX_FMT_YUV444P
+    /// planar YUV 4:1:0,  9bpp, (1 Cr & Cb sample per 4x4 Y samples)
+    public static let yuv410p = AV_PIX_FMT_YUV410P
+    /// planar YUV 4:1:1, 12bpp, (1 Cr & Cb sample per 4x1 Y samples)
+    public static let yuv411p = AV_PIX_FMT_YUV411P
+    /// Y        ,  8bpp
+    public static let gray8 = AV_PIX_FMT_GRAY8
+    /**
+     Y        ,  1bpp, 0 is white, 1 is black, in each byte pixels are ordered from the msb to the lsb
+     */
+    public static let monowhite = AV_PIX_FMT_MONOWHITE
+    /**
+     Y        ,  1bpp, 0 is black, 1 is white, in each byte pixels are ordered from the msb to the lsb
+     */
+    public static let monoblack = AV_PIX_FMT_MONOBLACK
+    /// 8 bits with AV_PIX_FMT_RGB32 palette
+    public static let pal8 = AV_PIX_FMT_PAL8
+    /**
+     planar YUV 4:2:0, 12bpp, full scale (JPEG), deprecated in favor of AV_PIX_FMT_YUV420P and setting color_range
+     */
+    public static let yuvj420p = AV_PIX_FMT_YUVJ420P
+    /**
+     planar YUV 4:2:2, 16bpp, full scale (JPEG), deprecated in favor of AV_PIX_FMT_YUV422P and setting color_range
+     */
+    public static let yuvj422p = AV_PIX_FMT_YUVJ422P
+    /**
+     planar YUV 4:4:4, 24bpp, full scale (JPEG), deprecated in favor of AV_PIX_FMT_YUV444P and setting color_range
+     */
+    public static let yuvj444p = AV_PIX_FMT_YUVJ444P
+    /// packed YUV 4:2:2, 16bpp, Cb Y0 Cr Y1
+    public static let uyvy422 = AV_PIX_FMT_UYVY422
+    /// packed YUV 4:1:1, 12bpp, Cb Y0 Y1 Cr Y2 Y3
+    public static let uyyvyy411 = AV_PIX_FMT_UYYVYY411
+    /// packed RGB 3:3:2,  8bpp, (msb)2B 3G 3R(lsb)
+    public static let bgr8 = AV_PIX_FMT_BGR8
+    /**
+     packed RGB 1:2:1 bitstream,  4bpp, (msb)1B 2G 1R(lsb), a byte contains two pixels, the first pixel in the byte is the one composed by the 4 msb bits
+     */
+    public static let bgr4 = AV_PIX_FMT_BGR4
+    /// packed RGB 1:2:1,  8bpp, (msb)1B 2G 1R(lsb)
+    public static let bgr4Byte = AV_PIX_FMT_BGR4_BYTE
+    /// packed RGB 3:3:2,  8bpp, (msb)3R 3G 2B(lsb)
+    public static let rgb8 = AV_PIX_FMT_RGB8
+    /**
+     packed RGB 1:2:1 bitstream,  4bpp, (msb)1R 2G 1B(lsb), a byte contains two pixels, the first pixel in the byte is the one composed by the 4 msb bits
+     */
+    public static let rgb4 = AV_PIX_FMT_RGB4
+    /// packed RGB 1:2:1,  8bpp, (msb)1R 2G 1B(lsb)
+    public static let rgb4Byte = AV_PIX_FMT_RGB4_BYTE
+    /**
+     planar YUV 4:2:0, 12bpp, 1 plane for Y and 1 plane for the UV components, which are interleaved (first byte U and the following byte V)
+     */
+    public static let nv12 = AV_PIX_FMT_NV12
+    /// as above, but U and V bytes are swapped
+    public static let nv21 = AV_PIX_FMT_NV21
+    /**
+     packed ARGB 8:8:8:8, 32bpp, ARGBARGB...
+     */
+    public static let argb = AV_PIX_FMT_ARGB
+    /**
+     packed RGBA 8:8:8:8, 32bpp, RGBARGBA...
+     */
+    public static let rgba = AV_PIX_FMT_RGBA
+    /**
+     packed ABGR 8:8:8:8, 32bpp, ABGRABGR...
+     */
+    public static let abgr = AV_PIX_FMT_ABGR
+    /**
+     packed BGRA 8:8:8:8, 32bpp, BGRABGRA...
+     */
+    public static let bgra = AV_PIX_FMT_BGRA
+    /// Y        , 16bpp, big-endian
+    public static let gray16be = AV_PIX_FMT_GRAY16BE
+    /// Y        , 16bpp, little-endian
+    public static let gray16le = AV_PIX_FMT_GRAY16LE
+    /// planar YUV 4:4:0 (1 Cr & Cb sample per 1x2 Y samples)
+    public static let yuv440p = AV_PIX_FMT_YUV440P
+    /**
+     planar YUV 4:4:0 full scale (JPEG), deprecated in favor of AV_PIX_FMT_YUV440P and setting color_range
+     */
+    public static let yuvj440p = AV_PIX_FMT_YUVJ440P
+    /// planar YUV 4:2:0, 20bpp, (1 Cr & Cb sample per 2x2 Y & A samples)
+    public static let yuva420p = AV_PIX_FMT_YUVA420P
+    /**
+     packed RGB 16:16:16, 48bpp, 16R, 16G, 16B, the 2-byte value for each R/G/B component is stored as big-endian
+     */
+    public static let rgb48be = AV_PIX_FMT_RGB48BE
+    /**
+     packed RGB 16:16:16, 48bpp, 16R, 16G, 16B, the 2-byte value for each R/G/B component is stored as little-endian
+     */
+    public static let rgb48le = AV_PIX_FMT_RGB48LE
+    /// packed RGB 5:6:5, 16bpp, (msb)   5R 6G 5B(lsb), big-endian
+    public static let rgb565be = AV_PIX_FMT_RGB565BE
+    /// packed RGB 5:6:5, 16bpp, (msb)   5R 6G 5B(lsb), little-endian
+    public static let rgb565le = AV_PIX_FMT_RGB565LE
+    /// packed RGB 5:5:5, 16bpp, (msb)1X 5R 5G 5B(lsb), big-endian   , X=unused/undefined
+    public static let rgb555be = AV_PIX_FMT_RGB555BE
+    /// packed RGB 5:5:5, 16bpp, (msb)1X 5R 5G 5B(lsb), little-endian, X=unused/undefined
+    public static let rgb555le = AV_PIX_FMT_RGB555LE
+    /// packed BGR 5:6:5, 16bpp, (msb)   5B 6G 5R(lsb), big-endian
+    public static let bgr565be = AV_PIX_FMT_BGR565BE
+    /// packed BGR 5:6:5, 16bpp, (msb)   5B 6G 5R(lsb), little-endian
+    public static let bgr565le = AV_PIX_FMT_BGR565LE
+    /// packed BGR 5:5:5, 16bpp, (msb)1X 5B 5G 5R(lsb), big-endian   , X=unused/undefined
+    public static let bgr555be = AV_PIX_FMT_BGR555BE
+    /// packed BGR 5:5:5, 16bpp, (msb)1X 5B 5G 5R(lsb), little-endian, X=unused/undefined
+    public static let bgr555le = AV_PIX_FMT_BGR555LE
+    public static let vaapi = AV_PIX_FMT_VAAPI
+    /// planar YUV 4:2:0, 24bpp, (1 Cr & Cb sample per 2x2 Y samples), little-endian
+    public static let yuv420p16le = AV_PIX_FMT_YUV420P16LE
+    /// planar YUV 4:2:0, 24bpp, (1 Cr & Cb sample per 2x2 Y samples), big-endian
+    public static let yuv420p16be = AV_PIX_FMT_YUV420P16BE
+    /// planar YUV 4:2:2, 32bpp, (1 Cr & Cb sample per 2x1 Y samples), little-endian
+    public static let yuv422p16le = AV_PIX_FMT_YUV422P16LE
+    /// planar YUV 4:2:2, 32bpp, (1 Cr & Cb sample per 2x1 Y samples), big-endian
+    public static let yuv422p16be = AV_PIX_FMT_YUV422P16BE
+    /// planar YUV 4:4:4, 48bpp, (1 Cr & Cb sample per 1x1 Y samples), little-endian
+    public static let yuv444p16le = AV_PIX_FMT_YUV444P16LE
+    /// planar YUV 4:4:4, 48bpp, (1 Cr & Cb sample per 1x1 Y samples), big-endian
+    public static let yuv444p16be = AV_PIX_FMT_YUV444P16BE
+    /**
+     HW decoding through DXVA2, Picture.data[3] contains a LPDIRECT3DSURFACE9 pointer
+     */
+    public static let dxva2Vld = AV_PIX_FMT_DXVA2_VLD
+    /// packed RGB 4:4:4, 16bpp, (msb)4X 4R 4G 4B(lsb), little-endian, X=unused/undefined
+    public static let rgb444le = AV_PIX_FMT_RGB444LE
+    /// packed RGB 4:4:4, 16bpp, (msb)4X 4R 4G 4B(lsb), big-endian,    X=unused/undefined
+    public static let rgb444be = AV_PIX_FMT_RGB444BE
+    /// packed BGR 4:4:4, 16bpp, (msb)4X 4B 4G 4R(lsb), little-endian, X=unused/undefined
+    public static let bgr444le = AV_PIX_FMT_BGR444LE
+    /// packed BGR 4:4:4, 16bpp, (msb)4X 4B 4G 4R(lsb), big-endian,    X=unused/undefined
+    public static let bgr444be = AV_PIX_FMT_BGR444BE
+    /// 8 bits gray, 8 bits alpha
+    public static let ya8 = AV_PIX_FMT_YA8
+    /// alias for AV_PIX_FMT_YA8
+    public static let y400a = ya8
+    /// alias for AV_PIX_FMT_YA8
+    public static let gray8a = ya8
+    /**
+     packed RGB 16:16:16, 48bpp, 16B, 16G, 16R, the 2-byte value for each R/G/B component is stored as big-endian
+     */
+    public static let bgr48be = AV_PIX_FMT_BGR48BE
+    /**
+     packed RGB 16:16:16, 48bpp, 16B, 16G, 16R, the 2-byte value for each R/G/B component is stored as little-endian
+     */
+    public static let bgr48le = AV_PIX_FMT_BGR48LE
+    /**
+     planar YUV 4:2:0, 13.5bpp, (1 Cr & Cb sample per 2x2 Y samples), big-endian
+     */
+    public static let yuv420p9be = AV_PIX_FMT_YUV420P9BE
+    /**
+     planar YUV 4:2:0, 13.5bpp, (1 Cr & Cb sample per 2x2 Y samples), little-endian
+     */
+    public static let yuv420p9le = AV_PIX_FMT_YUV420P9LE
+    /// planar YUV 4:2:0, 15bpp, (1 Cr & Cb sample per 2x2 Y samples), big-endian
+    public static let yuv420p10be = AV_PIX_FMT_YUV420P10BE
+    /// planar YUV 4:2:0, 15bpp, (1 Cr & Cb sample per 2x2 Y samples), little-endian
+    public static let yuv420p10le = AV_PIX_FMT_YUV420P10LE
+    /// planar YUV 4:2:2, 20bpp, (1 Cr & Cb sample per 2x1 Y samples), big-endian
+    public static let yuv422p10be = AV_PIX_FMT_YUV422P10BE
+    /// planar YUV 4:2:2, 20bpp, (1 Cr & Cb sample per 2x1 Y samples), little-endian
+    public static let yuv422p10le = AV_PIX_FMT_YUV422P10LE
+    /// planar YUV 4:4:4, 27bpp, (1 Cr & Cb sample per 1x1 Y samples), big-endian
+    public static let yuv444p9be = AV_PIX_FMT_YUV444P9BE
+    /// planar YUV 4:4:4, 27bpp, (1 Cr & Cb sample per 1x1 Y samples), little-endian
+    public static let yuv444p9le = AV_PIX_FMT_YUV444P9LE
+    /// planar YUV 4:4:4, 30bpp, (1 Cr & Cb sample per 1x1 Y samples), big-endian
+    public static let yuv444p10be = AV_PIX_FMT_YUV444P10BE
+    /// planar YUV 4:4:4, 30bpp, (1 Cr & Cb sample per 1x1 Y samples), little-endian
+    public static let yuv444p10le = AV_PIX_FMT_YUV444P10LE
+    /// planar YUV 4:2:2, 18bpp, (1 Cr & Cb sample per 2x1 Y samples), big-endian
+    public static let yuv422p9be = AV_PIX_FMT_YUV422P9BE
+    /// planar YUV 4:2:2, 18bpp, (1 Cr & Cb sample per 2x1 Y samples), little-endian
+    public static let yuv422p9le = AV_PIX_FMT_YUV422P9LE
+    /// planar GBR 4:4:4 24bpp
+    public static let gbrp = AV_PIX_FMT_GBRP
+    /// planar GBR 4:4:4 27bpp, big-endian
+    public static let gbrp9be = AV_PIX_FMT_GBRP9BE
+    /// planar GBR 4:4:4 27bpp, little-endian
+    public static let gbrp9le = AV_PIX_FMT_GBRP9LE
+    /// planar GBR 4:4:4 30bpp, big-endian
+    public static let gbrp10be = AV_PIX_FMT_GBRP10BE
+    /// planar GBR 4:4:4 30bpp, little-endian
+    public static let gbrp10le = AV_PIX_FMT_GBRP10LE
+    /// planar GBR 4:4:4 48bpp, big-endian
+    public static let gbrp16be = AV_PIX_FMT_GBRP16BE
+    /// planar GBR 4:4:4 48bpp, little-endian
+    public static let gbrp16le = AV_PIX_FMT_GBRP16LE
+    /// planar YUV 4:2:2 24bpp, (1 Cr & Cb sample per 2x1 Y & A samples)
+    public static let yuva422p = AV_PIX_FMT_YUVA422P
+    /// planar YUV 4:4:4 32bpp, (1 Cr & Cb sample per 1x1 Y & A samples)
+    public static let yuva444p = AV_PIX_FMT_YUVA444P
+    /**
+     planar YUV 4:2:0 22.5bpp, (1 Cr & Cb sample per 2x2 Y & A samples), big-endian
+     */
+    public static let yuva420p9be = AV_PIX_FMT_YUVA420P9BE
+    /**
+     planar YUV 4:2:0 22.5bpp, (1 Cr & Cb sample per 2x2 Y & A samples), little-endian
+     */
+    public static let yuva420p9le = AV_PIX_FMT_YUVA420P9LE
+    /// planar YUV 4:2:2 27bpp, (1 Cr & Cb sample per 2x1 Y & A samples), big-endian
+    public static let yuva422p9be = AV_PIX_FMT_YUVA422P9BE
+    /// planar YUV 4:2:2 27bpp, (1 Cr & Cb sample per 2x1 Y & A samples), little-endian
+    public static let yuva422p9le = AV_PIX_FMT_YUVA422P9LE
+    /// planar YUV 4:4:4 36bpp, (1 Cr & Cb sample per 1x1 Y & A samples), big-endian
+    public static let yuva444p9be = AV_PIX_FMT_YUVA444P9BE
+    /// planar YUV 4:4:4 36bpp, (1 Cr & Cb sample per 1x1 Y & A samples), little-endian
+    public static let yuva444p9le = AV_PIX_FMT_YUVA444P9LE
+    /// planar YUV 4:2:0 25bpp, (1 Cr & Cb sample per 2x2 Y & A samples, big-endian)
+    public static let yuva420p10be = AV_PIX_FMT_YUVA420P10BE
+    /// planar YUV 4:2:0 25bpp, (1 Cr & Cb sample per 2x2 Y & A samples, little-endian)
+    public static let yuva420p10le = AV_PIX_FMT_YUVA420P10LE
+    /// planar YUV 4:2:2 30bpp, (1 Cr & Cb sample per 2x1 Y & A samples, big-endian)
+    public static let yuva422p10be = AV_PIX_FMT_YUVA422P10BE
+    /// planar YUV 4:2:2 30bpp, (1 Cr & Cb sample per 2x1 Y & A samples, little-endian)
+    public static let yuva422p10le = AV_PIX_FMT_YUVA422P10LE
+    /// planar YUV 4:4:4 40bpp, (1 Cr & Cb sample per 1x1 Y & A samples, big-endian)
+    public static let yuva444p10be = AV_PIX_FMT_YUVA444P10BE
+    /// planar YUV 4:4:4 40bpp, (1 Cr & Cb sample per 1x1 Y & A samples, little-endian)
+    public static let yuva444p10le = AV_PIX_FMT_YUVA444P10LE
+    /// planar YUV 4:2:0 40bpp, (1 Cr & Cb sample per 2x2 Y & A samples, big-endian)
+    public static let yuva420p16be = AV_PIX_FMT_YUVA420P16BE
+    /// planar YUV 4:2:0 40bpp, (1 Cr & Cb sample per 2x2 Y & A samples, little-endian)
+    public static let yuva420p16le = AV_PIX_FMT_YUVA420P16LE
+    /// planar YUV 4:2:2 48bpp, (1 Cr & Cb sample per 2x1 Y & A samples, big-endian)
+    public static let yuva422p16be = AV_PIX_FMT_YUVA422P16BE
+    /// planar YUV 4:2:2 48bpp, (1 Cr & Cb sample per 2x1 Y & A samples, little-endian)
+    public static let yuva422p16le = AV_PIX_FMT_YUVA422P16LE
+    /// planar YUV 4:4:4 64bpp, (1 Cr & Cb sample per 1x1 Y & A samples, big-endian)
+    public static let yuva444p16be = AV_PIX_FMT_YUVA444P16BE
+    /// planar YUV 4:4:4 64bpp, (1 Cr & Cb sample per 1x1 Y & A samples, little-endian)
+    public static let yuva444p16le = AV_PIX_FMT_YUVA444P16LE
+    /**
+     HW acceleration through VDPAU, Picture.data[3] contains a VdpVideoSurface
+     */
+    public static let vdpau = AV_PIX_FMT_VDPAU
+    /**
+     packed XYZ 4:4:4, 36 bpp, (msb) 12X, 12Y, 12Z (lsb), the 2-byte value for each X/Y/Z is stored as little-endian, the 4 lower bits are set to 0
+     */
+    public static let xyz12le = AV_PIX_FMT_XYZ12LE
+    /**
+     packed XYZ 4:4:4, 36 bpp, (msb) 12X, 12Y, 12Z (lsb), the 2-byte value for each X/Y/Z is stored as big-endian, the 4 lower bits are set to 0
+     */
+    public static let xyz12be = AV_PIX_FMT_XYZ12BE
+    /// interleaved chroma YUV 4:2:2, 16bpp, (1 Cr & Cb sample per 2x1 Y samples)
+    public static let nv16 = AV_PIX_FMT_NV16
+    /// interleaved chroma YUV 4:2:2, 20bpp, (1 Cr & Cb sample per 2x1 Y samples), little-endian
+    public static let nv20le = AV_PIX_FMT_NV20LE
+    /// interleaved chroma YUV 4:2:2, 20bpp, (1 Cr & Cb sample per 2x1 Y samples), big-endian
+    public static let nv20be = AV_PIX_FMT_NV20BE
+    /**
+     packed RGBA 16:16:16:16, 64bpp, 16R, 16G, 16B, 16A, the 2-byte value for each R/G/B/A component is stored as big-endian
+     */
+    public static let rgba64be = AV_PIX_FMT_RGBA64BE
+    /**
+     packed RGBA 16:16:16:16, 64bpp, 16R, 16G, 16B, 16A, the 2-byte value for each R/G/B/A component is stored as little-endian
+     */
+    public static let rgba64le = AV_PIX_FMT_RGBA64LE
+    /**
+     packed RGBA 16:16:16:16, 64bpp, 16B, 16G, 16R, 16A, the 2-byte value for each R/G/B/A component is stored as big-endian
+     */
+    public static let bgra64be = AV_PIX_FMT_BGRA64BE
+    /**
+     packed RGBA 16:16:16:16, 64bpp, 16B, 16G, 16R, 16A, the 2-byte value for each R/G/B/A component is stored as little-endian
+     */
+    public static let bgra64le = AV_PIX_FMT_BGRA64LE
+    /// packed YUV 4:2:2, 16bpp, Y0 Cr Y1 Cb
+    public static let yvyu422 = AV_PIX_FMT_YVYU422
+    /// 16 bits gray, 16 bits alpha (big-endian)
+    public static let ya16be = AV_PIX_FMT_YA16BE
+    /// 16 bits gray, 16 bits alpha (little-endian)
+    public static let ya16le = AV_PIX_FMT_YA16LE
+    /// planar GBRA 4:4:4:4 32bpp
+    public static let gbrap = AV_PIX_FMT_GBRAP
+    /// planar GBRA 4:4:4:4 64bpp, big-endian
+    public static let gbrap16be = AV_PIX_FMT_GBRAP16BE
+    /// planar GBRA 4:4:4:4 64bpp, little-endian
+    public static let gbrap16le = AV_PIX_FMT_GBRAP16LE
+    /**
+     HW acceleration through QSV, data[3] contains a pointer to the mfxFrameSurface1 structure.
+     */
+    public static let qsv = AV_PIX_FMT_QSV
+    public static let mmal = AV_PIX_FMT_MMAL
+    /**
+     HW decoding through Direct3D11 via old API, Picture.data[3] contains a ID3D11VideoDecoderOutputView pointer
+     */
+    public static let d3d11vaVld = AV_PIX_FMT_D3D11VA_VLD
+    public static let cuda = AV_PIX_FMT_CUDA
+    /**
+     packed RGB 8:8:8, 32bpp, XRGBXRGB..
+       X=unused/undefined
+     */
+    public static let format0rgb = AV_PIX_FMT_0RGB
+    /**
+     packed RGB 8:8:8, 32bpp, RGBXRGBX..
+       X=unused/undefined
+     */
+    public static let rgb0 = AV_PIX_FMT_RGB0
+    /**
+     packed BGR 8:8:8, 32bpp, XBGRXBGR..
+       X=unused/undefined
+     */
+    public static let format0bgr = AV_PIX_FMT_0BGR
+    /**
+     packed BGR 8:8:8, 32bpp, BGRXBGRX..
+       X=unused/undefined
+     */
+    public static let bgr0 = AV_PIX_FMT_BGR0
+    /// planar YUV 4:2:0,18bpp, (1 Cr & Cb sample per 2x2 Y samples), big-endian
+    public static let yuv420p12be = AV_PIX_FMT_YUV420P12BE
+    /// planar YUV 4:2:0,18bpp, (1 Cr & Cb sample per 2x2 Y samples), little-endian
+    public static let yuv420p12le = AV_PIX_FMT_YUV420P12LE
+    /// planar YUV 4:2:0,21bpp, (1 Cr & Cb sample per 2x2 Y samples), big-endian
+    public static let yuv420p14be = AV_PIX_FMT_YUV420P14BE
+    /// planar YUV 4:2:0,21bpp, (1 Cr & Cb sample per 2x2 Y samples), little-endian
+    public static let yuv420p14le = AV_PIX_FMT_YUV420P14LE
+    /// planar YUV 4:2:2,24bpp, (1 Cr & Cb sample per 2x1 Y samples), big-endian
+    public static let yuv422p12be = AV_PIX_FMT_YUV422P12BE
+    /// planar YUV 4:2:2,24bpp, (1 Cr & Cb sample per 2x1 Y samples), little-endian
+    public static let yuv422p12le = AV_PIX_FMT_YUV422P12LE
+    /// planar YUV 4:2:2,28bpp, (1 Cr & Cb sample per 2x1 Y samples), big-endian
+    public static let yuv422p14be = AV_PIX_FMT_YUV422P14BE
+    /// planar YUV 4:2:2,28bpp, (1 Cr & Cb sample per 2x1 Y samples), little-endian
+    public static let yuv422p14le = AV_PIX_FMT_YUV422P14LE
+    /// planar YUV 4:4:4,36bpp, (1 Cr & Cb sample per 1x1 Y samples), big-endian
+    public static let yuv444p12be = AV_PIX_FMT_YUV444P12BE
+    /// planar YUV 4:4:4,36bpp, (1 Cr & Cb sample per 1x1 Y samples), little-endian
+    public static let yuv444p12le = AV_PIX_FMT_YUV444P12LE
+    /// planar YUV 4:4:4,42bpp, (1 Cr & Cb sample per 1x1 Y samples), big-endian
+    public static let yuv444p14be = AV_PIX_FMT_YUV444P14BE
+    /// planar YUV 4:4:4,42bpp, (1 Cr & Cb sample per 1x1 Y samples), little-endian
+    public static let yuv444p14le = AV_PIX_FMT_YUV444P14LE
+    /// planar GBR 4:4:4 36bpp, big-endian
+    public static let gbrp12be = AV_PIX_FMT_GBRP12BE
+    /// planar GBR 4:4:4 36bpp, little-endian
+    public static let gbrp12le = AV_PIX_FMT_GBRP12LE
+    /// planar GBR 4:4:4 42bpp, big-endian
+    public static let gbrp14be = AV_PIX_FMT_GBRP14BE
+    /// planar GBR 4:4:4 42bpp, little-endian
+    public static let gbrp14le = AV_PIX_FMT_GBRP14LE
+    /**
+     planar YUV 4:1:1, 12bpp, (1 Cr & Cb sample per 4x1 Y samples) full scale (JPEG), deprecated in favor of AV_PIX_FMT_YUV411P and setting color_range
+     */
+    public static let yuvj411p = AV_PIX_FMT_YUVJ411P
+    /**
+     bayer, BGBG..(odd line), GRGR..(even line), 8-bit samples
+     */
+    public static let bayerBggr8 = AV_PIX_FMT_BAYER_BGGR8
+    /**
+     bayer, RGRG..(odd line), GBGB..(even line), 8-bit samples
+     */
+    public static let bayerRggb8 = AV_PIX_FMT_BAYER_RGGB8
+    /**
+     bayer, GBGB..(odd line), RGRG..(even line), 8-bit samples
+     */
+    public static let bayerGbrg8 = AV_PIX_FMT_BAYER_GBRG8
+    /**
+     bayer, GRGR..(odd line), BGBG..(even line), 8-bit samples
+     */
+    public static let bayerGrbg8 = AV_PIX_FMT_BAYER_GRBG8
+    /**
+     bayer, BGBG..(odd line), GRGR..(even line), 16-bit samples, little-endian
+     */
+    public static let bayerBggr16le = AV_PIX_FMT_BAYER_BGGR16LE
+    /**
+     bayer, BGBG..(odd line), GRGR..(even line), 16-bit samples, big-endian
+     */
+    public static let bayerBggr16be = AV_PIX_FMT_BAYER_BGGR16BE
+    /**
+     bayer, RGRG..(odd line), GBGB..(even line), 16-bit samples, little-endian
+     */
+    public static let bayerRggb16le = AV_PIX_FMT_BAYER_RGGB16LE
+    /**
+     bayer, RGRG..(odd line), GBGB..(even line), 16-bit samples, big-endian
+     */
+    public static let bayerRggb16be = AV_PIX_FMT_BAYER_RGGB16BE
+    /**
+     bayer, GBGB..(odd line), RGRG..(even line), 16-bit samples, little-endian
+     */
+    public static let bayerGbrg16le = AV_PIX_FMT_BAYER_GBRG16LE
+    /**
+     bayer, GBGB..(odd line), RGRG..(even line), 16-bit samples, big-endian
+     */
+    public static let bayerGbrg16be = AV_PIX_FMT_BAYER_GBRG16BE
+    /**
+     bayer, GRGR..(odd line), BGBG..(even line), 16-bit samples, little-endian
+     */
+    public static let bayerGrbg16le = AV_PIX_FMT_BAYER_GRBG16LE
+    /**
+     bayer, GRGR..(odd line), BGBG..(even line), 16-bit samples, big-endian
+     */
+    public static let bayerGrbg16be = AV_PIX_FMT_BAYER_GRBG16BE
+    /// planar YUV 4:4:0,20bpp, (1 Cr & Cb sample per 1x2 Y samples), little-endian
+    public static let yuv440p10le = AV_PIX_FMT_YUV440P10LE
+    /// planar YUV 4:4:0,20bpp, (1 Cr & Cb sample per 1x2 Y samples), big-endian
+    public static let yuv440p10be = AV_PIX_FMT_YUV440P10BE
+    /// planar YUV 4:4:0,24bpp, (1 Cr & Cb sample per 1x2 Y samples), little-endian
+    public static let yuv440p12le = AV_PIX_FMT_YUV440P12LE
+    /// planar YUV 4:4:0,24bpp, (1 Cr & Cb sample per 1x2 Y samples), big-endian
+    public static let yuv440p12be = AV_PIX_FMT_YUV440P12BE
+    /// packed AYUV 4:4:4,64bpp (1 Cr & Cb sample per 1x1 Y & A samples), little-endian
+    public static let ayuv64le = AV_PIX_FMT_AYUV64LE
+    /// packed AYUV 4:4:4,64bpp (1 Cr & Cb sample per 1x1 Y & A samples), big-endian
+    public static let ayuv64be = AV_PIX_FMT_AYUV64BE
+    /// hardware decoding through Videotoolbox
+    public static let videotoolbox = AV_PIX_FMT_VIDEOTOOLBOX
+    /**
+     like NV12, with 10bpp per component, data in the high bits, zeros in the low bits, little-endian
+     */
+    public static let p010le = AV_PIX_FMT_P010LE
+    /**
+     like NV12, with 10bpp per component, data in the high bits, zeros in the low bits, big-endian
+     */
+    public static let p010be = AV_PIX_FMT_P010BE
+    /// planar GBR 4:4:4:4 48bpp, big-endian
+    public static let gbrap12be = AV_PIX_FMT_GBRAP12BE
+    /// planar GBR 4:4:4:4 48bpp, little-endian
+    public static let gbrap12le = AV_PIX_FMT_GBRAP12LE
+    /// planar GBR 4:4:4:4 40bpp, big-endian
+    public static let gbrap10be = AV_PIX_FMT_GBRAP10BE
+    /// planar GBR 4:4:4:4 40bpp, little-endian
+    public static let gbrap10le = AV_PIX_FMT_GBRAP10LE
+    /// hardware decoding through MediaCodec
+    public static let mediacodec = AV_PIX_FMT_MEDIACODEC
+    /// Y        , 12bpp, big-endian
+    public static let gray12be = AV_PIX_FMT_GRAY12BE
+    /// Y        , 12bpp, little-endian
+    public static let gray12le = AV_PIX_FMT_GRAY12LE
+    /// Y        , 10bpp, big-endian
+    public static let gray10be = AV_PIX_FMT_GRAY10BE
+    /// Y        , 10bpp, little-endian
+    public static let gray10le = AV_PIX_FMT_GRAY10LE
+    /// like NV12, with 16bpp per component, little-endian
+    public static let p016le = AV_PIX_FMT_P016LE
+    /// like NV12, with 16bpp per component, big-endian
+    public static let p016be = AV_PIX_FMT_P016BE
+    public static let d3d11 = AV_PIX_FMT_D3D11
+    /// Y        , 9bpp, big-endian
+    public static let gray9be = AV_PIX_FMT_GRAY9BE
+    /// Y        , 9bpp, little-endian
+    public static let gray9le = AV_PIX_FMT_GRAY9LE
+    /// IEEE-754 single precision planar GBR 4:4:4,     96bpp, big-endian
+    public static let gbrpf32be = AV_PIX_FMT_GBRPF32BE
+    /// IEEE-754 single precision planar GBR 4:4:4,     96bpp, little-endian
+    public static let gbrpf32le = AV_PIX_FMT_GBRPF32LE
+    /// IEEE-754 single precision planar GBRA 4:4:4:4, 128bpp, big-endian
+    public static let gbrapf32be = AV_PIX_FMT_GBRAPF32BE
+    /// IEEE-754 single precision planar GBRA 4:4:4:4, 128bpp, little-endian
+    public static let gbrapf32le = AV_PIX_FMT_GBRAPF32LE
+    public static let drmPRIME = AV_PIX_FMT_DRM_PRIME
+    public static let opencl = AV_PIX_FMT_OPENCL
+    /// Y        , 14bpp, big-endian
+    public static let gray14be = AV_PIX_FMT_GRAY14BE
+    /// Y        , 14bpp, little-endian
+    public static let gray14le = AV_PIX_FMT_GRAY14LE
+    /// IEEE-754 single precision Y, 32bpp, big-endian
+    public static let grayf32be = AV_PIX_FMT_GRAYF32BE
+    /// IEEE-754 single precision Y, 32bpp, little-endian
+    public static let grayf32le = AV_PIX_FMT_GRAYF32LE
+    /// planar YUV 4:2:2,24bpp, (1 Cr & Cb sample per 2x1 Y samples), 12b alpha, big-endian
+    public static let yuva422p12be = AV_PIX_FMT_YUVA422P12BE
+    /// planar YUV 4:2:2,24bpp, (1 Cr & Cb sample per 2x1 Y samples), 12b alpha, little-endian
+    public static let yuva422p12le = AV_PIX_FMT_YUVA422P12LE
+    /// planar YUV 4:4:4,36bpp, (1 Cr & Cb sample per 1x1 Y samples), 12b alpha, big-endian
+    public static let yuva444p12be = AV_PIX_FMT_YUVA444P12BE
+    /// planar YUV 4:4:4,36bpp, (1 Cr & Cb sample per 1x1 Y samples), 12b alpha, little-endian
+    public static let yuva444p12le = AV_PIX_FMT_YUVA444P12LE
+    /**
+     planar YUV 4:4:4, 24bpp, 1 plane for Y and 1 plane for the UV components, which are interleaved (first byte U and the following byte V)
+     */
+    public static let nv24 = AV_PIX_FMT_NV24
+    /// as above, but U and V bytes are swapped
+    public static let nv42 = AV_PIX_FMT_NV42
+    public static let vulkan = AV_PIX_FMT_VULKAN
+    /// packed YUV 4:2:2 like YUYV422, 20bpp, data in the high bits, big-endian
+    public static let y210be = AV_PIX_FMT_Y210BE
+    /// packed YUV 4:2:2 like YUYV422, 20bpp, data in the high bits, little-endian
+    public static let y210le = AV_PIX_FMT_Y210LE
+    /// packed RGB 10:10:10, 30bpp, (msb)2X 10R 10G 10B(lsb), little-endian, X=unused/undefined
+    public static let x2rgb10le = AV_PIX_FMT_X2RGB10LE
+    /// packed RGB 10:10:10, 30bpp, (msb)2X 10R 10G 10B(lsb), big-endian, X=unused/undefined
+    public static let x2rgb10be = AV_PIX_FMT_X2RGB10BE
+    /// packed BGR 10:10:10, 30bpp, (msb)2X 10B 10G 10R(lsb), little-endian, X=unused/undefined
+    public static let x2bgr10le = AV_PIX_FMT_X2BGR10LE
+    /// packed BGR 10:10:10, 30bpp, (msb)2X 10B 10G 10R(lsb), big-endian, X=unused/undefined
+    public static let x2bgr10be = AV_PIX_FMT_X2BGR10BE
+    /// interleaved chroma YUV 4:2:2, 20bpp, data in the high bits, big-endian
+    public static let p210be = AV_PIX_FMT_P210BE
+    /// interleaved chroma YUV 4:2:2, 20bpp, data in the high bits, little-endian
+    public static let p210le = AV_PIX_FMT_P210LE
+    /// interleaved chroma YUV 4:4:4, 30bpp, data in the high bits, big-endian
+    public static let p410be = AV_PIX_FMT_P410BE
+    /// interleaved chroma YUV 4:4:4, 30bpp, data in the high bits, little-endian
+    public static let p410le = AV_PIX_FMT_P410LE
+    /// interleaved chroma YUV 4:2:2, 32bpp, big-endian
+    public static let p216be = AV_PIX_FMT_P216BE
+    /// interleaved chroma YUV 4:2:2, 32bpp, little-endian
+    public static let p216le = AV_PIX_FMT_P216LE
+    /// interleaved chroma YUV 4:4:4, 48bpp, big-endian
+    public static let p416be = AV_PIX_FMT_P416BE
+    /// interleaved chroma YUV 4:4:4, 48bpp, little-endian
+    public static let p416le = AV_PIX_FMT_P416LE
+    /**
+     packed VUYA 4:4:4:4, 32bpp (1 Cr & Cb sample per 1x1 Y & A samples), VUYAVUYA...
+     */
+    public static let vuya = AV_PIX_FMT_VUYA
+    /**
+     IEEE-754 half precision packed RGBA 16:16:16:16, 64bpp, RGBARGBA..., big-endian
+     */
+    public static let rgbaf16be = AV_PIX_FMT_RGBAF16BE
+    /**
+     IEEE-754 half precision packed RGBA 16:16:16:16, 64bpp, RGBARGBA..., little-endian
+     */
+    public static let rgbaf16le = AV_PIX_FMT_RGBAF16LE
+    /// packed VUYX 4:4:4:4, 32bpp, Variant of VUYA where alpha channel is left undefined
+    public static let vuyx = AV_PIX_FMT_VUYX
+    /**
+     like NV12, with 12bpp per component, data in the high bits, zeros in the low bits, little-endian
+     */
+    public static let p012le = AV_PIX_FMT_P012LE
+    /**
+     like NV12, with 12bpp per component, data in the high bits, zeros in the low bits, big-endian
+     */
+    public static let p012be = AV_PIX_FMT_P012BE
+    /**
+     packed YUV 4:2:2 like YUYV422, 24bpp, data in the high bits, zeros in the low bits, big-endian
+     */
+    public static let y212be = AV_PIX_FMT_Y212BE
+    /**
+     packed YUV 4:2:2 like YUYV422, 24bpp, data in the high bits, zeros in the low bits, little-endian
+     */
+    public static let y212le = AV_PIX_FMT_Y212LE
+    /**
+     packed XVYU 4:4:4, 32bpp, (msb)2X 10V 10Y 10U(lsb), big-endian, variant of Y410 where alpha channel is left undefined
+     */
+    public static let xv30be = AV_PIX_FMT_XV30BE
+    /**
+     packed XVYU 4:4:4, 32bpp, (msb)2X 10V 10Y 10U(lsb), little-endian, variant of Y410 where alpha channel is left undefined
+     */
+    public static let xv30le = AV_PIX_FMT_XV30LE
+    /**
+     packed XVYU 4:4:4, 48bpp, data in the high bits, zeros in the low bits, big-endian, variant of Y412 where alpha channel is left undefined
+     */
+    public static let xv36be = AV_PIX_FMT_XV36BE
+    /**
+     packed XVYU 4:4:4, 48bpp, data in the high bits, zeros in the low bits, little-endian, variant of Y412 where alpha channel is left undefined
+     */
+    public static let xv36le = AV_PIX_FMT_XV36LE
+    /**
+     IEEE-754 single precision packed RGB 32:32:32, 96bpp, RGBRGB..., big-endian
+     */
+    public static let rgbf32be = AV_PIX_FMT_RGBF32BE
+    /**
+     IEEE-754 single precision packed RGB 32:32:32, 96bpp, RGBRGB..., little-endian
+     */
+    public static let rgbf32le = AV_PIX_FMT_RGBF32LE
+    /**
+     IEEE-754 single precision packed RGBA 32:32:32:32, 128bpp, RGBARGBA..., big-endian
+     */
+    public static let rgbaf32be = AV_PIX_FMT_RGBAF32BE
+    /**
+     IEEE-754 single precision packed RGBA 32:32:32:32, 128bpp, RGBARGBA..., little-endian
+     */
+    public static let rgbaf32le = AV_PIX_FMT_RGBAF32LE
+    /// interleaved chroma YUV 4:2:2, 24bpp, data in the high bits, big-endian
+    public static let p212be = AV_PIX_FMT_P212BE
+    /// interleaved chroma YUV 4:2:2, 24bpp, data in the high bits, little-endian
+    public static let p212le = AV_PIX_FMT_P212LE
+    /// interleaved chroma YUV 4:4:4, 36bpp, data in the high bits, big-endian
+    public static let p412be = AV_PIX_FMT_P412BE
+    /// interleaved chroma YUV 4:4:4, 36bpp, data in the high bits, little-endian
+    public static let p412le = AV_PIX_FMT_P412LE
+    /// planar GBR 4:4:4:4 56bpp, big-endian
+    public static let gbrap14be = AV_PIX_FMT_GBRAP14BE
+    /// planar GBR 4:4:4:4 56bpp, little-endian
+    public static let gbrap14le = AV_PIX_FMT_GBRAP14LE
+    public static let d3d12 = AV_PIX_FMT_D3D12
+    /**
+     packed AYUV 4:4:4:4, 32bpp (1 Cr & Cb sample per 1x1 Y & A samples), AYUVAYUV...
+     */
+    public static let ayuv = AV_PIX_FMT_AYUV
+    /**
+     packed UYVA 4:4:4:4, 32bpp (1 Cr & Cb sample per 1x1 Y & A samples), UYVAUYVA...
+     */
+    public static let uyva = AV_PIX_FMT_UYVA
+    /**
+     packed VYU 4:4:4, 24bpp (1 Cr & Cb sample per 1x1 Y), VYUVYU...
+     */
+    public static let vyu444 = AV_PIX_FMT_VYU444
+    /// packed VYUX 4:4:4 like XV30, 32bpp, (msb)10V 10Y 10U 2X(lsb), big-endian
+    public static let v30xbe = AV_PIX_FMT_V30XBE
+    /// packed VYUX 4:4:4 like XV30, 32bpp, (msb)10V 10Y 10U 2X(lsb), little-endian
+    public static let v30xle = AV_PIX_FMT_V30XLE
+    /**
+     IEEE-754 half precision packed RGB 16:16:16, 48bpp, RGBRGB..., big-endian
+     */
+    public static let rgbf16be = AV_PIX_FMT_RGBF16BE
+    /**
+     IEEE-754 half precision packed RGB 16:16:16, 48bpp, RGBRGB..., little-endian
+     */
+    public static let rgbf16le = AV_PIX_FMT_RGBF16LE
+    /**
+     packed RGBA 32:32:32:32, 128bpp, RGBARGBA..., big-endian
+     */
+    public static let rgba128be = AV_PIX_FMT_RGBA128BE
+    /**
+     packed RGBA 32:32:32:32, 128bpp, RGBARGBA..., little-endian
+     */
+    public static let rgba128le = AV_PIX_FMT_RGBA128LE
+    /**
+     packed RGBA 32:32:32, 96bpp, RGBRGB..., big-endian
+     */
+    public static let rgb96be = AV_PIX_FMT_RGB96BE
+    /**
+     packed RGBA 32:32:32, 96bpp, RGBRGB..., little-endian
+     */
+    public static let rgb96le = AV_PIX_FMT_RGB96LE
+    /// packed YUV 4:2:2 like YUYV422, 32bpp, big-endian
+    public static let y216be = AV_PIX_FMT_Y216BE
+    /// packed YUV 4:2:2 like YUYV422, 32bpp, little-endian
+    public static let y216le = AV_PIX_FMT_Y216LE
+    /**
+     packed XVYU 4:4:4, 64bpp, big-endian, variant of Y416 where alpha channel is left undefined
+     */
+    public static let xv48be = AV_PIX_FMT_XV48BE
+    /**
+     packed XVYU 4:4:4, 64bpp, little-endian, variant of Y416 where alpha channel is left undefined
+     */
+    public static let xv48le = AV_PIX_FMT_XV48LE
+    /// IEEE-754 half precision planer GBR 4:4:4, 48bpp, big-endian
+    public static let gbrpf16be = AV_PIX_FMT_GBRPF16BE
+    /// IEEE-754 half precision planer GBR 4:4:4, 48bpp, little-endian
+    public static let gbrpf16le = AV_PIX_FMT_GBRPF16LE
+    /// IEEE-754 half precision planar GBRA 4:4:4:4, 64bpp, big-endian
+    public static let gbrapf16be = AV_PIX_FMT_GBRAPF16BE
+    /// IEEE-754 half precision planar GBRA 4:4:4:4, 64bpp, little-endian
+    public static let gbrapf16le = AV_PIX_FMT_GBRAPF16LE
+    /// IEEE-754 half precision Y, 16bpp, big-endian
+    public static let grayf16be = AV_PIX_FMT_GRAYF16BE
+    /// IEEE-754 half precision Y, 16bpp, little-endian
+    public static let grayf16le = AV_PIX_FMT_GRAYF16LE
+    public static let amfSurface = AV_PIX_FMT_AMF_SURFACE
+    /// Y        , 32bpp, big-endian
+    public static let gray32be = AV_PIX_FMT_GRAY32BE
+    /// Y        , 32bpp, little-endian
+    public static let gray32le = AV_PIX_FMT_GRAY32LE
+    /// IEEE-754 single precision packed YA, 32 bits gray, 32 bits alpha, 64bpp, big-endian
+    public static let yaf32be = AV_PIX_FMT_YAF32BE
+    /// IEEE-754 single precision packed YA, 32 bits gray, 32 bits alpha, 64bpp, little-endian
+    public static let yaf32le = AV_PIX_FMT_YAF32LE
+    /// IEEE-754 half precision packed YA, 16 bits gray, 16 bits alpha, 32bpp, big-endian
+    public static let yaf16be = AV_PIX_FMT_YAF16BE
+    /// IEEE-754 half precision packed YA, 16 bits gray, 16 bits alpha, 32bpp, little-endian
+    public static let yaf16le = AV_PIX_FMT_YAF16LE
+    /// planar GBRA 4:4:4:4 128bpp, big-endian
+    public static let gbrap32be = AV_PIX_FMT_GBRAP32BE
+    /// planar GBRA 4:4:4:4 128bpp, little-endian
+    public static let gbrap32le = AV_PIX_FMT_GBRAP32LE
+    /**
+     planar YUV 4:4:4, 30bpp, (1 Cr & Cb sample per 1x1 Y samples), lowest bits zero, big-endian
+     */
+    public static let yuv444p10msbbe = AV_PIX_FMT_YUV444P10MSBBE
+    /**
+     planar YUV 4:4:4, 30bpp, (1 Cr & Cb sample per 1x1 Y samples), lowest bits zero, little-endian
+     */
+    public static let yuv444p10msble = AV_PIX_FMT_YUV444P10MSBLE
+    /**
+     planar YUV 4:4:4, 30bpp, (1 Cr & Cb sample per 1x1 Y samples), lowest bits zero, big-endian
+     */
+    public static let yuv444p12msbbe = AV_PIX_FMT_YUV444P12MSBBE
+    /**
+     planar YUV 4:4:4, 30bpp, (1 Cr & Cb sample per 1x1 Y samples), lowest bits zero, little-endian
+     */
+    public static let yuv444p12msble = AV_PIX_FMT_YUV444P12MSBLE
+    /// planar GBR 4:4:4 30bpp, lowest bits zero, big-endian
+    public static let gbrp10msbbe = AV_PIX_FMT_GBRP10MSBBE
+    /// planar GBR 4:4:4 30bpp, lowest bits zero, little-endian
+    public static let gbrp10msble = AV_PIX_FMT_GBRP10MSBLE
+    /// planar GBR 4:4:4 36bpp, lowest bits zero, big-endian
+    public static let gbrp12msbbe = AV_PIX_FMT_GBRP12MSBBE
+    /// planar GBR 4:4:4 36bpp, lowest bits zero, little-endian
+    public static let gbrp12msble = AV_PIX_FMT_GBRP12MSBLE
 }
 
 // MARK: - AVColorPrimaries

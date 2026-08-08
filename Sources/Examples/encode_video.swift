@@ -67,7 +67,7 @@ func encode_video() throws {
   // will always be I frame irrespective to gop_size
   codecCtx.gopSize = 10
   codecCtx.maxBFrames = 1
-  codecCtx.pixelFormat = .YUV420P
+  codecCtx.pixelFormat = .yuv420p
 
   try codecCtx.openCodec()
 
