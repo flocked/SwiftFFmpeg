@@ -49,10 +49,11 @@ public struct AVOption {
             case .flags:
                 self.min = nil
                 self.max = nil
-                Swift.print("CHECKK", Int32(exactly: native.default_val.i64) ?? "nil")
-                Swift.print(Int32(exactly: native.default_val.i64).map(AVOption.Flag.init) ?? "nil")
-                
-                self.defaultValue = Int32(exactly: native.default_val.i64).map(AVOption.Flag.init) ?? []
+                if let rawValue = Int32(exactly: native.default_val.i64), rawValue >= 0 {
+                    self.defaultValue = AVOption.Flag(rawValue: rawValue)
+                } else {
+                    self.defaultValue = AVOption.Flag(rawValue: 0)
+                }
             case .int:
                 self.min = Int32(clamping: native.min)
                 self.max = Int32(clamping: native.max)
