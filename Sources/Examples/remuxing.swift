@@ -59,10 +59,10 @@ func remuxing() throws {
     stream.codecParameters.codecTag = 0
   }
 
-  ofmtCtx.dumpFormat(url: output, isOutput: true)
+  ofmtCtx.dumpFormat(at: output, isOutput: true)
 
   if !ofmtCtx.outputFormat!.flags.contains(.noFile) {
-    try ofmtCtx.openOutput(url: output, flags: .write)
+    try ofmtCtx.openOutput(at: output, flags: .write)
   }
 
   try ofmtCtx.writeHeader()

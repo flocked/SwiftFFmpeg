@@ -20,7 +20,7 @@ private func makeMuxer(stream: AVStream) throws -> (AVFormatContext, AVStream) {
   ostream.codecParameters.copy(from: stream.codecParameters)
   ostream.codecParameters.codecTag = 0
   if !muxer.outputFormat!.flags.contains(.noFile) {
-    try muxer.openOutput(url: output, flags: .write)
+    try muxer.openOutput(at: output, flags: .write)
   }
   return (muxer, ostream)
 }
