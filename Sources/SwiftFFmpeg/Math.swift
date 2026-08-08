@@ -17,10 +17,22 @@ extension AVRational: @retroactive Hashable, @retroactive @unchecked Sendable {
     public var toDouble: Double {
         av_q2d(self)
     }
+    
+    public init(_ value: Double, maximum: Int32 = 1 << 26) {
+        self = av_d2q(value, maximum)
+    }
 
     /// Invert a rational. `1 / q`
     public var inverted: Self {
         av_inv_q(self)
+    }
+    
+    /// Returns a reduced rational value.
+    public func reduced(maximum: Int64 = Int64.max) -> Self {
+        var numerator: Int32 = 0
+        var denominator: Int32 = 0
+        av_reduce(&numerator, &denominator, Int64(num), Int64(den), maximum)
+        return Self(num: numerator, den: denominator)
     }
     
     public func hash(into hasher: inout Hasher) {

@@ -33,17 +33,17 @@ public struct AVError: Error, Equatable {
 
 public extension AVError {
     /// Resource temporarily unavailable
-    static let tryAgain = AVError(code: swift_AVERROR(EAGAIN))
+    static let tryAgain = AVError.posix(EAGAIN)
     /// Invalid argument
-    static let invalidArgument = AVError(code: swift_AVERROR(EINVAL))
+    static let invalidArgument = AVError.posix(EINVAL)
     /// Cannot allocate memory
-    static let outOfMemory = AVError(code: swift_AVERROR(ENOMEM))
+    static let outOfMemory = AVError.posix(ENOMEM)
     /// The value is out of range
-    static let outOfRange = AVError(code: swift_AVERROR(ERANGE))
+    static let outOfRange = AVError.posix(ERANGE)
     /// The value is not valid
-    static let invalidValue = AVError(code: swift_AVERROR(EINVAL))
+    static let invalidValue = AVError.posix(EINVAL)
     /// Function not implemented
-    static let noSystem = AVError(code: swift_AVERROR(ENOSYS))
+    static let noSystem = AVError.posix(ENOSYS)
 
     /// Bitstream filter not found
     static let bitstreamFilterNotFound = AVError(code: swift_AVERROR_BSF_NOT_FOUND)
@@ -103,21 +103,13 @@ public extension AVError {
     
     /// A posix error for the specified posix error code.
     static func posix(_ code: POSIXError.Code) -> AVError {
-        posix(code.rawValue)
+        AVError(code: swift_AVERROR(code.rawValue))
     }
     
     /// A posix error for the specified posix error code.
     static func posix(_ code: Int32) -> AVError {
-        AVError(code: swift_AVUNERROR(code))
-    }
-    
-    static func swiftUNError(_ code: Int32) -> AVError {
-        AVError(code: swift_AVUNERROR(code))
-    }
-    
-    static func swiftError(_ code: Int32) -> AVError {
         AVError(code: swift_AVERROR(code))
-    }    
+    }
 }
 
 extension BinaryInteger {
