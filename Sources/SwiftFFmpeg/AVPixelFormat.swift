@@ -24,6 +24,10 @@ extension AVPixelFormat: @retroactive CustomStringConvertible {
         }
         self = type
     }
+    
+    public init(rawValue: Int64) {
+        self = AVPixelFormat(rawValue: Int32(rawValue))
+    }
 
     /// The name of the pixel format.
     public var name: String {
