@@ -21,6 +21,10 @@ extension AVRational: @retroactive Hashable, @retroactive @unchecked Sendable {
     public init(_ value: Double, maximum: Int32 = 1 << 26) {
         self = av_d2q(value, maximum)
     }
+    
+    public init(_ num: Int32,_ den: Int32) {
+        self = Self(num: num, den: den)
+    }
 
     /// Invert a rational. `1 / q`
     public var inverted: Self {
