@@ -47,8 +47,8 @@ public struct AVOption {
                 self.max = AVSampleFormat(rawValue: Int32(clamping: native.max))
                 self.defaultValue = AVSampleFormat(rawValue: Int32(clamping: native.default_val.i64))
             case .flags:
-                self.min = AVOption.Flag(rawValue: Int32(clamping: native.min))
-                self.max = AVOption.Flag(rawValue: Int32(clamping: native.max))
+                self.min = nil
+                self.max = nil
                 self.defaultValue = AVOption.Flag(rawValue: Int32(clamping: native.default_val.i64))
             case .int:
                 self.min = Int32(clamping: native.min)
@@ -95,7 +95,6 @@ public struct AVOption {
                 self.max = nil
                 self.defaultValue = nil
             case .dict:
-                Swift.print("dict default:", String(cString: native.default_val.str) ?? "nil")
                 self.min = nil
                 self.max = nil
                 self.defaultValue = nil
