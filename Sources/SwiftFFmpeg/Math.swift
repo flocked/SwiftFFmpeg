@@ -12,7 +12,7 @@ import CFFmpeg
 /// Rational number (pair of numerator and denominator).
 public typealias AVRational = CFFmpeg.AVRational
 
-extension AVRational: @retroactive @unchecked Sendable {
+extension AVRational: @retroactive @unchecked Sendable, @retroactive Equatable {
     /// Converts the rational to a Double value.
     public var toDouble: Double {
         av_q2d(self)

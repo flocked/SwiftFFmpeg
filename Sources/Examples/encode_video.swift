@@ -59,7 +59,7 @@ func encode_video() throws {
   codecCtx.height = 288
   // frames per second
   codecCtx.timebase = AVRational(num: 1, den: 25)
-  codecCtx.framerate = AVRational(num: 25, den: 1)
+  codecCtx.frameRate = AVRational(num: 25, den: 1)
   // emit one intra frame every ten frames
   // check frame pict_type before passing frame
   // to encoder, if frame->pict_type is AV_PICTURE_TYPE_I

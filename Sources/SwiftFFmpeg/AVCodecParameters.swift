@@ -165,26 +165,30 @@ public extension AVCodecParameters {
         return CGSize(width: width, height: height)
     }
     
-    /// The aspect ratio (width / height) which a single pixel should have when displayed.
-    ///
-    /// When the aspect ratio is unknown / undefined, the numerator should be set to 0
-    /// (the denominator may have any value).
-    var sampleAspectRatio: AVRational {
-        get { native.pointee.sample_aspect_ratio }
-        set { native.pointee.sample_aspect_ratio = newValue }
+    /**
+     The sample aspect ratio, or `nil` if unknown.
+
+     The sample aspect ratio is the width of a pixel divided by its height.
+     */
+    var sampleAspectRatio: AVRational? {
+        get {
+            let ratio = native.pointee.sample_aspect_ratio
+            return ratio.num != 0 ? ratio : nil
+        }
+        set { native.pointee.sample_aspect_ratio = newValue ?? AVRational(num: 0, den: 1) }
     }
-    
-    /// Video only. Number of frames per second, for streams with constant frame
-    /// durations. Should be set to { 0, 1 } when some frames have differing
-    /// durations or if the value is not known.
-    ///
-    /// @note This field correponds to values that are stored in codec-level
-    /// headers and is typically overridden by container/transport-layer
-    /// timestamps, when available. It should thus be used only as a last resort,
-    /// when no higher-level timing information is available.
-    var framerate: AVRational {
-        get { native.pointee.framerate }
-        set { native.pointee.framerate = newValue }
+
+    /**
+     The frame rate of constant-frame-duration video, or `nil` if unknown or variable.
+
+     This value represents codec-level timing information and should be used only when higher-level container or transport timing information isn't available.
+     */
+    var frameRate: AVRational? {
+        get {
+            let frameRate = native.pointee.framerate
+            return frameRate.num != 0 ? frameRate : nil
+        }
+        set { native.pointee.framerate = newValue ?? AVRational(num: 0, den: 1) }
     }
     
     /// The field order of the video frame.

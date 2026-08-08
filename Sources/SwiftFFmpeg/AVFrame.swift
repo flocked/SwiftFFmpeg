@@ -360,10 +360,13 @@ public extension AVFrame {
         set { native.pointee.pict_type = newValue.native }
     }
 
-    /// The sample aspect ratio for the video frame, 0/1 if unknown/unspecified.
-    var sampleAspectRatio: AVRational {
-        get { native.pointee.sample_aspect_ratio }
-        set { native.pointee.sample_aspect_ratio = newValue }
+    /// The sample aspect ratio of the video frame, or `nil` if unknown or unspecified.
+    var sampleAspectRatio: AVRational? {
+        get {
+            let ratio = native.pointee.sample_aspect_ratio
+            return ratio.num != 0 ? ratio : nil
+        }
+        set { native.pointee.sample_aspect_ratio = newValue ?? AVRational(num: 0, den: 1) }
     }
 
     /// When decoding, this signals how much the picture must be delayed.

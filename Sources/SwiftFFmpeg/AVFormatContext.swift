@@ -426,32 +426,32 @@ public extension AVFormatContext {
         return ret >= 0 ? Int(ret) : nil
     }
 
-    /// Guess the sample aspect ratio of a frame, based on both the stream and the frame aspect ratio.
-    ///
-    /// Since the frame aspect ratio is set by the codec but the stream aspect ratio is set by the demuxer,
-    /// these two may not be equal. This function tries to return the value that you should use if you would
-    /// like to display the frame.
-    ///
-    /// Basic logic is to use the stream aspect ratio if it is set to something sane otherwise use the frame
-    /// aspect ratio. This way a container setting, which is usually easy to modify can override the coded value
-    /// in the frames.
-    ///
-    /// - Parameters:
-    ///   - stream: the stream which the frame is part of
-    ///   - frame: the frame with the aspect ratio to be determined
-    /// - Returns: the guessed (valid) sample aspect ratio, 0/1 if no idea
-    func guessSampleAspectRatio(stream: AVStream?, frame: AVFrame? = nil) -> AVRational {
-        av_guess_sample_aspect_ratio(native, stream?.native, frame?.native)
+    /**
+     Returns the estimated sample aspect ratio for a frame based on the stream and frame information.
+
+     The stream aspect ratio is preferred when valid, allowing container information to override the value encoded in the frame.
+
+     - Parameters:
+       - stream: The stream containing the frame.
+       - frame: The frame whose sample aspect ratio to estimate.
+     - Returns: The estimated sample aspect ratio, or `nil` if it can't be determined.
+     */
+    func guessSampleAspectRatio(stream: AVStream?, frame: AVFrame? = nil) -> AVRational? {
+        let ratio = av_guess_sample_aspect_ratio(native, stream?.native, frame?.native)
+        return ratio.num != 0 ? ratio : nil
     }
 
-    /// Guess the frame rate, based on both the container and codec information.
-    ///
-    /// - Parameters:
-    ///   - stream: the stream which the frame is part of
-    ///   - frame: the frame for which the frame rate should be determined
-    /// - Returns: the guessed (valid) frame rate, 0/1 if no idea
-    func guessFrameRate(stream: AVStream, frame: AVFrame? = nil) -> AVRational {
-        av_guess_frame_rate(native, stream.native, frame?.native)
+    /**
+     Returns the estimated frame rate based on container and codec information.
+
+     - Parameters:
+       - stream: The stream whose frame rate to estimate.
+       - frame: The frame to use when estimating the frame rate.
+     - Returns: The estimated frame rate, or `nil` if it can't be determined.
+     */
+    func guessFrameRate(stream: AVStream, frame: AVFrame? = nil) -> AVRational? {
+        let frameRate = av_guess_frame_rate(native, stream.native, frame?.native)
+        return frameRate.num != 0 ? frameRate : nil
     }
 
     /// Return the next frame of a stream.

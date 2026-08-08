@@ -21,7 +21,7 @@ final class AVFrameTests: XCTestCase {
     let f1 = AVFrame()
     f1.width = 1920
     f1.height = 1080
-    f1.pixelFormat = .YUV420P
+    f1.pixelFormat = .yuv420p
 
     XCTAssertNil(f1.buffer[0])
     XCTAssertFalse(f1.isWritable)
@@ -35,7 +35,7 @@ final class AVFrameTests: XCTestCase {
     let f1 = AVFrame()
     f1.width = 1920
     f1.height = 1080
-    f1.pixelFormat = .YUV420P
+    f1.pixelFormat = .yuv420p
 
     XCTAssertNoThrow(try f1.allocBuffer())
 
@@ -56,7 +56,7 @@ final class AVFrameTests: XCTestCase {
     let f1 = AVFrame()
     f1.width = 1920
     f1.height = 1080
-    f1.pixelFormat = .YUV420P
+    f1.pixelFormat = .yuv420p
 
     XCTAssertNoThrow(try f1.allocBuffer())
 
@@ -76,7 +76,7 @@ final class AVFrameTests: XCTestCase {
     let f1 = AVFrame()
     f1.width = 1920
     f1.height = 1080
-    f1.pixelFormat = .YUV420P
+    f1.pixelFormat = .yuv420p
 
     XCTAssertNoThrow(try f1.allocBuffer())
 
@@ -92,7 +92,7 @@ final class AVFrameTests: XCTestCase {
     XCTAssertTrue(f2.isWritable)
     XCTAssertEqual(f2.width, 1920)
     XCTAssertEqual(f2.height, 1080)
-    XCTAssertEqual(f2.pixelFormat, .YUV420P)
+    XCTAssertEqual(f2.pixelFormat, .yuv420p)
     XCTAssertNotNil(f2.buffer[0])
   }
 
@@ -100,7 +100,7 @@ final class AVFrameTests: XCTestCase {
     let f1 = AVFrame()
     f1.width = 1920
     f1.height = 1080
-    f1.pixelFormat = .YUV420P
+    f1.pixelFormat = .yuv420p
 
     XCTAssertNoThrow(try f1.allocBuffer())
 

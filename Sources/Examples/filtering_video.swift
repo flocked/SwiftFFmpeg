@@ -75,7 +75,7 @@ func filtering_video() throws {
   video_size=\(decoderCtx.width)x\(decoderCtx.height):\
   pix_fmt=\(decoderCtx.pixelFormat.rawValue):\
   time_base=\(stram.timebase.num)/\(stram.timebase.den):\
-  pixel_aspect=\(decoderCtx.sampleAspectRatio.num)/\(decoderCtx.sampleAspectRatio.den)
+  pixel_aspect=\(decoderCtx.sampleAspectRatio.map({ "\($0.num)"}) ?? "-")/\(decoderCtx.sampleAspectRatio.map({ "\($0.den)"}) ?? "-")
   """
   let buffersrcCtx = try filterGraph.addFilter(buffersrc, name: "in", args: args)
 

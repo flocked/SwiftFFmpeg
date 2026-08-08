@@ -112,8 +112,13 @@ public final class AVStream {
     ///
     /// - encoding: Set by user.
     /// - decoding: Set by libavformat.
-    public var sampleAspectRatio: AVRational {
-        native.pointee.sample_aspect_ratio
+    /// The sample aspect ratio of the stream, or `nil` if unknown.
+    public var sampleAspectRatio: AVRational? {
+        get {
+            let ratio = native.pointee.sample_aspect_ratio
+            return ratio.num != 0 ? ratio : nil
+        }
+        set { native.pointee.sample_aspect_ratio = newValue ?? AVRational(num: 0, den: 1) }
     }
     
     /// The metadata of the stream.
@@ -127,35 +132,39 @@ public final class AVStream {
         metadata[key.rawValue]
     }
     
-    /// Average framerate.
-    ///
-    /// - demuxing: May be set by libavformat when creating the stream or in
-    ///   `AVFormatContext.findStreamInfo(options:)`.
-    /// - muxing: May be set by the caller before `AVFormatContext.writeHeader(options:)`.
-    public var averageFramerate: AVRational {
-        get { native.pointee.avg_frame_rate }
-        set { native.pointee.avg_frame_rate = newValue }
+    /**
+     The average frame rate of the stream, or `nil` if unknown.
+
+     When demuxing, this value may be determined by libavformat; when muxing, it may be set before writing the header.
+     */
+    public var averageFrameRate: AVRational? {
+        get {
+            let frameRate = native.pointee.avg_frame_rate
+            return frameRate.num != 0 ? frameRate : nil
+        }
+        set { native.pointee.avg_frame_rate = newValue ?? AVRational(num: 0, den: 1) }
     }
     
     /// The average frame rate as frames per second, or `nil` if it is unknown.
-    public var averageFrameRateValue: Double? {
-        guard averageFramerate.num != 0, averageFramerate.den != 0 else { return nil }
-        return averageFramerate.toDouble
+    public var averageFrameRateFps: Double? {
+        guard let frameRate = averageFrameRate, frameRate.den != 0 else { return nil }
+        return frameRate.toDouble
     }
     
-    /// Real base framerate of the stream.
-    /// This is the lowest framerate with which all timestamps can be represented accurately
-    /// (it is the least common multiple of all framerates in the stream). Note, this value is just a guess!
-    /// For example, if the timebase is 1/90000 and all frames have either approximately 3600 or 1800 timer ticks,
-    /// then realFramerate will be 50/1.
-    public var realFramerate: AVRational {
-        native.pointee.r_frame_rate
+    /**
+     The lowest frame rate with which all timestamps in the stream can be represented accurately, or `nil` if unknown.
+
+     This value is estimated by libavformat and may not represent the actual average frame rate.
+     */
+    public var realFrameRate: AVRational? {
+        let frameRate = native.pointee.r_frame_rate
+        return frameRate.num != 0 ? frameRate : nil
     }
     
     /// The real base frame rate as frames per second, or `nil` if it is unknown.
-    public var realFrameRateValue: Double? {
-        guard realFramerate.num != 0, realFramerate.den != 0 else { return nil }
-        return realFramerate.toDouble
+    public var realFrameRateFps: Double? {
+        guard let frameRate = realFrameRate, frameRate.den != 0 else { return nil }
+        return frameRate.toDouble
     }
     
     /// Codec parameters associated with this stream.

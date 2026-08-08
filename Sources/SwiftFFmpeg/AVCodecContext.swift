@@ -61,12 +61,6 @@ public final class AVCodecContext {
         set { native.pointee.codec = UnsafePointer(newValue?.native) }
     }
 
-    /// Indicates how the alpha channel of the video is represented.
-    public var alphaMode: AVAlphaMode {
-        get { AVAlphaMode(native: native.pointee.alpha_mode) }
-        set { native.pointee.alpha_mode = newValue.native }
-    }
-
     /// The codec's id.
     public var codecId: AVCodecID {
         get { AVCodecID(native: native.pointee.codec_id) }
@@ -547,6 +541,12 @@ public extension AVCodecContext {
         get { native.pointee.pix_fmt }
         set { native.pointee.pix_fmt = newValue }
     }
+    
+    /// Indicates how the alpha channel of the video is represented.
+    var alphaMode: AVAlphaMode {
+        get { AVAlphaMode(native: native.pointee.alpha_mode) }
+        set { native.pointee.alpha_mode = newValue.native }
+    }
 
     /// The callback used to negotiate the pixel format.
     ///
@@ -562,7 +562,6 @@ public extension AVCodecContext {
         get { opaqueBox?.value.getFormat }
         set {
             opaqueBox = CodecContextBox((opaque: opaqueBox?.value.opaque, getFormat: newValue))
-
             var handler:
                 (
                     @convention(c) (
@@ -605,16 +604,17 @@ public extension AVCodecContext {
         set { native.pointee.mb_decision = Int32(newValue) }
     }
 
-    /// Sample aspect ratio (0/0 if unknown).
-    ///
-    /// That is the width of a pixel divided by the height of the pixel.
-    /// Numerator and denominator must be relatively prime and smaller than 256 for some video standards.
-    ///
-    /// - encoding: Set by user.
-    /// - decoding: Set by codec.
-    var sampleAspectRatio: AVRational {
-        get { native.pointee.sample_aspect_ratio }
-        set { native.pointee.sample_aspect_ratio = newValue }
+    /**
+     The sample aspect ratio, or `nil` if unknown.
+
+     The sample aspect ratio is the width of a pixel divided by its height.
+     */
+    var sampleAspectRatio: AVRational? {
+        get {
+            let ratio = native.pointee.sample_aspect_ratio
+            return ratio.num != 0 || ratio.den != 0 ? ratio : nil
+        }
+        set { native.pointee.sample_aspect_ratio = newValue ?? AVRational(num: 0, den: 0) }
     }
 
     /// low resolution decoding, 1->1/2 size, 2->1/4 size
@@ -625,14 +625,13 @@ public extension AVCodecContext {
         Int(native.pointee.lowres)
     }
 
-    /// The framerate of the video.
-    ///
-    /// - encoding: May be used to signal the framerate of CFR content to an encoder.
-    /// - decoding: For codecs that store a framerate value in the compressed bitstream,
-    ///   the decoder may export it here. 0/1 when unknown.
-    var framerate: AVRational {
-        get { native.pointee.framerate }
-        set { native.pointee.framerate = newValue }
+    /// The frame rate of the video, or `nil` if unknown.
+    var frameRate: AVRational? {
+        get {
+            let frameRate = native.pointee.framerate
+            return frameRate.num != 0 ? frameRate : nil
+        }
+        set { native.pointee.framerate = newValue ?? AVRational(num: 0, den: 1) }
     }
 }
 
