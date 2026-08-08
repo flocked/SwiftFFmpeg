@@ -5,6 +5,7 @@
 //  Created by Florian Zand on 07.08.26.
 //
 
+/*
 import CFFmpeg
 import Foundation
 
@@ -1092,3 +1093,4 @@ public extension AVPixelFormatAlt {
         av_pix_fmt_desc_get(native).map(AVPixelFormatDescriptor.init(native:))
     }
 }
+*/

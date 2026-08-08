@@ -9,14 +9,8 @@ import CFFmpeg
 
 public typealias AVPixelFormat = CFFmpeg.AVPixelFormat
 
-extension AVPixelFormat: @retroactive CustomStringConvertible {
-    /// Return the pixel format corresponding to name.
-    ///
-    /// If there is no pixel format with name name, then looks for a pixel format with the name
-    /// corresponding to the native endian format of name.
-    /// For example in a little-endian system, first looks for "gray16", then for "gray16le".
-    ///
-    /// Finally if no pixel format has been found, returns `nil`.
+extension AVPixelFormat: @retroactive CustomStringConvertible, @retroactive Hashable, @unchecked @retroactive Sendable {
+    /// Returns the pixel format for the specified name.
     public init?(name: String) {
         let type = av_get_pix_fmt(name)
         guard type != .none else {
@@ -35,71 +29,193 @@ extension AVPixelFormat: @retroactive CustomStringConvertible {
         max(Int(av_pix_fmt_count_planes(self)), 0)
     }
 
-    /// The number of components each pixel has.
-    public var numberOfComponents: Int? {
-        desc.map { Int($0.pointee.nb_components) }
-    }
-
-    /**
-     The number of bits per pixel used.
-
-     Note that this is not the same as the number of bits per sample. he returned number of bits refers to the number of bits actually used for storing the pixel information, that is padding bits are not counted.
-     */
-    public var bitsPerPixel: Int32? {
-        desc.map { av_get_bits_per_pixel($0) }
-    }
-
-    /// The number of bits per pixel, including any padding or unused bits.
-    public var bitsPerPixelPadded: Int32? {
-        desc.map { av_get_padded_bits_per_pixel($0) }
-    }
-
-    /// Alternative names.
-    public var alias: [String] {
-        String(cString: desc?.pointee.alias)?.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) } ?? []
-    }
-
-    /**
-     Amount to shift the luma width right to find the chroma width.
-     For YV12 this is 1 for example.
-
-     chroma_width = AV_CEIL_RSHIFT(luma_width, log2_chroma_w)
-     The note above is needed to ensure rounding up.
-     This value only refers to the chroma components.
-      */
-    public var log2ChromaW: Int? {
-        desc.map { Int($0.pointee.log2_chroma_w) }
-    }
-
-    /**
-     Amount to shift the luma height right to find the chroma height.
-
-     For YV12 this is 1 for example.
-     chroma_height= AV_CEIL_RSHIFT(luma_height, log2_chroma_h)
-     The note above is needed to ensure rounding up.
-     This value only refers to the chroma components.
-      */
-    public var log2ChromaH: Int? {
-        desc.map { Int($0.pointee.log2_chroma_h) }
-    }
-
-    public var desc: UnsafePointer<AVPixFmtDescriptor>? {
-        av_pix_fmt_desc_get(self)
-    }
-
-    /*
-     public var numberOfComponents: Int {
-       Int(native.pointee.nb_components)
-     }
-     */
-
-    /// The pixel format descriptor of the pixel format.
-    public var descriptor: AVPixelFormatDescriptor? {
-        av_pix_fmt_desc_get(self).map(AVPixelFormatDescriptor.init(native:))
+    /// The descriptor of the pixel format.
+    public var descriptor: Descriptor? {
+        av_pix_fmt_desc_get(self).map(Descriptor.init(native:))
     }
     
     public var description: String {
         name
+    }
+    
+    public static var all: [AVPixelFormat] {
+        var formats: [AVPixelFormat] = []
+        var descriptor: UnsafePointer<CFFmpeg.AVPixFmtDescriptor>?
+        while let next = av_pix_fmt_desc_next(descriptor) {
+            formats.append(av_pix_fmt_desc_get_id(next))
+            descriptor = next
+        }
+        return formats
+    }
+}
+
+extension AVPixelFormat {
+    /// The descriptor of a pixel format.
+    public struct Descriptor {
+        let native: UnsafePointer<AVPixFmtDescriptor>
+        
+        /// The name of the pixel format.
+        public var name: String {
+            String(cString: native.pointee.name) ?? "unknown"
+        }
+        
+        /// The number of components each pixel has.
+        public var numberOfComponents: Int {
+            Int(native.pointee.nb_components)
+        }
+        
+        /// Returns the chroma width for the given luma width.
+        public func chromaWidth(forLumaWidth width: Int) -> Int {
+            let shift = Int(native.pointee.log2_chroma_w)
+            return (width + (1 << shift) - 1) >> shift
+        }
+        
+        /// Returns the chroma height for the given luma height.
+        public func chromaHeight(forLumaHeight height: Int) -> Int {
+            let shift = Int(native.pointee.log2_chroma_h)
+            return (height + (1 << shift) - 1) >> shift
+        }
+        
+        /// Returns the chroma size for the given luma size.
+        public func chromaSize(forLumaSize size: (width: Int, height: Int)) -> (width: Int, height: Int) {
+            (chromaWidth(forLumaWidth: size.width), chromaHeight(forLumaHeight: size.height))
+        }
+        
+        /**
+         Parameters that describe how pixels are packed.
+         
+         - If the format has 1 or 2 components, then luma is 0.
+         - If the format has 3 or 4 components:
+         - if the ``Flags/rgb`` flag is set then 0 is red, 1 is green and 2 is blue;
+         - otherwise 0 is luma, 1 is chroma-U and 2 is chroma-V.
+         
+         If present, theaAlpha channel is always the last component.
+         */
+        public var components: [Component] {
+            [native.pointee.comp.0, native.pointee.comp.1, native.pointee.comp.2, native.pointee.comp.3].map { .init(native: $0) }
+        }
+        
+        /// The flags of the pixel format.
+        public var flags: Flags {
+            Flags(rawValue: native.pointee.flags)
+        }
+        
+        /// Alternative names of the pixel format.
+        public var alias: [String] {
+            String(cString: native.pointee.alias)?.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) } ?? []
+        }
+        
+        /**
+         Tthe number of bits per pixel used by the pixel format.
+         
+         Note that this is not the same as the number The returned number of bits refers to the number of bits actually used for storing the pixel information, that is padding bits are not counted.
+         */
+        public var bitsPerPixel: Int {
+            Int(av_get_bits_per_pixel(native))
+        }
+        
+        /// The number of bits per pixel for the pixel format, including any padding or unused bits.
+        public var bitsPerPixelPadded: Int {
+            Int(av_get_padded_bits_per_pixel(native))
+        }
+    }
+}
+
+extension AVPixelFormat.Descriptor {
+    /// The flags of a pixel format.
+    public struct Flags: OptionSet, Hashable, CustomStringConvertible, CustomDebugStringConvertible {
+        public let rawValue: UInt64
+        
+        public init(rawValue: UInt64) {
+            self.rawValue = rawValue
+        }
+        
+        /// Pixel format is big-endian.
+        public static let bigEndian = Self(rawValue: UInt64(AV_PIX_FMT_FLAG_BE))
+        
+        /// Pixel format has a palette in data[1], values are indexes in this palette.
+        public static let palette = Self(rawValue: UInt64(AV_PIX_FMT_FLAG_PAL))
+        
+        /// All values of a component are bit-wise packed end to end.
+        public static let bitstream = Self(rawValue: UInt64(AV_PIX_FMT_FLAG_BITSTREAM))
+        
+        /// Pixel format is an HW accelerated format.
+        public static let hwAccelerated = Self(rawValue: UInt64(AV_PIX_FMT_FLAG_HWACCEL))
+        
+        /// At least one pixel component is not in the first data plane.
+        public static let planar = Self(rawValue: UInt64(AV_PIX_FMT_FLAG_PLANAR))
+        
+        /// The pixel format contains RGB-like data (as opposed to YUV/grayscale).
+        public static let rgb = Self(rawValue: UInt64(AV_PIX_FMT_FLAG_RGB))
+        
+        /// The pixel format has an alpha channel. This is set on all formats that
+        /// support alpha in some way, including AV_PIX_FMT_PAL8. The alpha is always
+        /// straight, never pre-multiplied.
+        /// If a codec or a filter does not support alpha, it should set all alpha to
+        /// opaque, or use the equivalent pixel formats without alpha component, e.g.
+        /// AV_PIX_FMT_RGB0 (or AV_PIX_FMT_RGB24 etc.) instead of AV_PIX_FMT_RGBA.
+        public static let alpha = Self(rawValue: UInt64(AV_PIX_FMT_FLAG_ALPHA))
+        
+        /// The pixel format is following a Bayer pattern
+        public static let bayer = Self(rawValue: UInt64(AV_PIX_FMT_FLAG_BAYER))
+        
+        /// The pixel format contains IEEE-754 floating point values. Precision (double,
+        /// single, or half) should be determined by the pixel size (64, 32, or 16 bits).
+        public static let floatingPoint = Self(rawValue: UInt64(AV_PIX_FMT_FLAG_FLOAT))
+        
+        public var description: String {
+            "[\(elements().map { Self.names[$0]?.0 ?? "\($0.rawValue)" }.joined(separator: ", "))]"
+        }
+        
+        public var debugDescription: String {
+            "[\(elements().map { Self.names[$0]?.1 ?? "\($0.rawValue)" }.joined(separator: ", "))]"
+        }
+        
+        private static let names = [
+            Self.alpha: ("alpha", "AV_PIX_FMT_FLAG_ALPHA"),
+            .bayer: ("bayer", "AV_PIX_FMT_FLAG_BAYER"),
+            .floatingPoint: ("floatingPoint", "AV_PIX_FMT_FLAG_FLOAT"),
+            .bigEndian: ("bigEndian", "AV_PIX_FMT_FLAG_BE"),
+            .bitstream: ("bitstream", "AV_PIX_FMT_FLAG_BITSTREAM"),
+            .palette: ("palette", "AV_PIX_FMT_FLAG_PAL"),
+            .planar: ("planar", "AV_PIX_FMT_FLAG_PLANAR"),
+            .rgb: ("rgb", "AV_PIX_FMT_FLAG_RGB"),
+            .hwAccelerated: ("hwAccelerated", "AV_PIX_FMT_FLAG_HWACCEL"),
+        ]
+    }
+
+    /// Describes a component of a pixel format.
+    public struct Component {
+        /// The plane containing the component.
+        public let plane: Int32
+        
+        /**
+         The number of elements between two horizontally consecutive pixels.
+         
+         Elements are bits for bitstream formats and bytes otherwise.
+         */
+        public let step: Int32
+        
+        /**
+         The number of elements before the component of the first pixel.
+         
+         Elements are bits for bitstream formats and bytes otherwise.
+         */
+        public let offset: Int32
+        
+        /// The number of least significant bits that must be shifted away to obtain the value.
+        public let shift: Int32
+        
+        /// The number of bits in the component.
+        public let depth: Int32
+        
+        init(native: CFFmpeg.AVComponentDescriptor) {
+            self.depth = native.depth
+            self.shift = native.shift
+            self.offset = native.offset
+            self.step = native.step
+            self.plane = native.plane
+        }
     }
 }
 

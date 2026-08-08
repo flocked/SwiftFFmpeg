@@ -12,7 +12,7 @@ import CFFmpeg
 /// Rational number (pair of numerator and denominator).
 public typealias AVRational = CFFmpeg.AVRational
 
-extension AVRational: @retroactive Equatable {
+extension AVRational: @retroactive Hashable, @retroactive @unchecked Sendable {
     /// Convert an `AVRational` to a `Double`.
     public var toDouble: Double {
         av_q2d(self)
@@ -21,6 +21,11 @@ extension AVRational: @retroactive Equatable {
     /// Invert a rational. `1 / q`
     public var inverted: Self {
         av_inv_q(self)
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(den)
+        hasher.combine(num)
     }
     
     public static func == (lhs: Self, rhs: Self) -> Bool {

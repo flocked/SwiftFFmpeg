@@ -70,11 +70,11 @@ public struct AVOption {
                 self.min = Int64(clamping: native.min)
                 self.max = Int64(clamping: native.max)
                 self.defaultValue = native.default_val.i64
-            case .uInt:
+            case .uint:
                 self.min = UInt32(clamping: native.min)
                 self.max = UInt32(clamping: native.max)
                 self.defaultValue = UInt32(clamping: native.default_val.i64)
-            case .uInt64:
+            case .uint64:
                 self.min = UInt64(clamping: native.min)
                 self.max = UInt64(clamping: native.max)
                 self.defaultValue = UInt64(clamping: native.default_val.i64)
@@ -125,11 +125,11 @@ public struct AVOption {
             switch type.element {
             case .int:
                 self.defaultValue = array.values(as: Int32.self)
-            case .uInt:
+            case .uint:
                 self.defaultValue = array.values(as: UInt32.self)
             case .int64, .duration:
                 self.defaultValue = array.values(as: Int64.self)
-            case .uInt64:
+            case .uint64:
                 self.defaultValue = array.values(as: UInt64.self)
             case .double:
                 self.defaultValue = array.values(as: Double.self)
@@ -227,15 +227,18 @@ extension AVOption: CustomStringConvertible {
 // MARK: - AVOption.Kind
 
 public extension AVOption {
-    struct Kind: RawRepresentable, Hashable, CustomStringConvertible {
+    /// A type describing the value represented by an `AVOption`.
+    struct Kind: RawRepresentable, Hashable, CustomStringConvertible, Sendable {
         public let rawValue: UInt32
 
         private static let arrayFlag: UInt32 = 1 << 16
 
+        /// A Boolean value indicating whether the option represents an array.
         public var isArray: Bool {
             rawValue & Self.arrayFlag != 0
         }
         
+        /// The element type represented by the option.
         public var element: Element {
             Element(rawValue: rawValue & ~Self.arrayFlag)!
         }
@@ -244,27 +247,48 @@ public extension AVOption {
             .init(rawValue: rawValue)
         }
         
+        /// A flag value.
         public static let flags = Self(.flags)
+        /// A floating-point value.
         public static let float = Self(.float)
+        /// A double-precision floating-point value.
         public static let double = Self(.double)
+        /// A 32-bit signed integer value.
         public static let int = Self(.int)
+        /// A 64-bit signed integer value.
         public static let int64 = Self(.int64)
-        public static let uInt = Self(.uInt)
-        public static let uInt64 = Self(.uInt64)
+        /// A 32-bit unsigned integer value.
+        public static let uInt = Self(.uint)
+        /// A 64-bit unsigned integer value.
+        public static let uInt64 = Self(.uint64)
+        /// A string value.
         public static let string = Self(.string)
+        /// A rational value.
         public static let rational = Self(.rational)
+        /// Binary data.
         public static let binary = Self(.binary)
+        /// A dictionary value.
         public static let dict = Self(.dict)
+        /// A named constant.
         public static let const = Self(.const)
+        /// An image size.
         public static let imageSize = Self(.imageSize)
+        /// A pixel format.
         public static let pixelFormat = Self(.pixelFormat)
+        /// A sample format.
         public static let sampleFormat = Self(.sampleFormat)
+        /// A video rate.
         public static let videoRate = Self(.videoRate)
+        /// A duration.
         public static let duration = Self(.duration)
+        /// A color.
         public static let color = Self(.color)
+        /// A Boolean value.
         public static let bool = Self(.bool)
+        /// A channel layout.
         public static let channelLayout = Self(.channelLayout)
         
+        /// Returns an array option type containing elements of the specified type.
         public static func array(_ element: Element) -> Self {
             .init(element, isArray: true)
         }
@@ -285,31 +309,52 @@ public extension AVOption {
             isArray ? "[\(element.description)]" : element.description
         }
 
-        public enum Element: UInt32, CustomStringConvertible {
+        public enum Element: UInt32, CustomStringConvertible, Hashable, Sendable {
+            /// A flag value.
             case flags = 1
+            /// A 32-bit signed integer value.
             case int
+            /// A 64-bit signed integer value.
             case int64
+            /// A double-precision floating-point value.
             case double
+            /// A floating-point value.
             case float
+            /// A string value.
             case string
+            /// A rational value.
             case rational
+            /// Binary data.
             case binary
+            /// A dictionary value.
             case dict
-            case uInt64
+            /// A 64-bit unsigned integer value.
+            case uint64
+            /// A named constant.
             case const
+            /// An image size.
             case imageSize
+            /// A pixel format.
             case pixelFormat
+            /// A sample format.
             case sampleFormat
+            /// A video rate.
             case videoRate
+            /// A duration.
             case duration
+            /// A color.
             case color
+            /// A Boolean value.
             case bool
+            /// A channel layout.
             case channelLayout
-            case uInt
+            /// A 32-bit unsigned integer value.
+            case uint
 
+            /// A textual representation of the Swift type used for the element.
             public var description: String {
                 switch self {
-                case .flags: "AVOption.Flag"
+                case .flags: "AVOption.FlagValue"
                 case .int: "Int32"
                 case .int64: "Int64"
                 case .double: "Double"
@@ -318,7 +363,7 @@ public extension AVOption {
                 case .rational: "AVRational"
                 case .binary: "[UInt8]"
                 case .dict: "[String: String]"
-                case .uInt64: "UInt64"
+                case .uint64: "UInt64"
                 case .const: "Constant"
                 case .imageSize: "AVImageSize"
                 case .pixelFormat: "AVPixelFormat"
@@ -328,7 +373,7 @@ public extension AVOption {
                 case .color: "AVColor"
                 case .bool: "Bool"
                 case .channelLayout: "AVChannelLayout"
-                case .uInt: "UInt32"
+                case .uint: "UInt32"
                 }
             }
         }
@@ -336,7 +381,7 @@ public extension AVOption {
 }
 
 public extension AVOption {
-    struct Flag: OptionSet, Hashable {
+    struct Flag: OptionSet, Hashable, Sendable {
         /// A generic parameter which can be set by the user for muxing or encoding.
         public static let encoding = Flag(rawValue: AV_OPT_FLAG_ENCODING_PARAM)
         /// A generic parameter which can be set by the user for demuxing or decoding.
@@ -401,7 +446,7 @@ extension AVOption.Flag: CustomStringConvertible, CustomDebugStringConvertible {
 
 public extension AVOption {
     /// https://github.com/FFmpeg/FFmpeg/blob/master/libavutil/opt.h#L556
-    struct SearchFlag: OptionSet {
+    struct SearchFlag: OptionSet, Hashable, Sendable {
         /// Search in possible children of the given object first.
         public static let children = SearchFlag(rawValue: 1 << 0)
         /// The obj passed to `av_opt_find()` is fake – only a double pointer to `AVClass`
@@ -575,7 +620,7 @@ public extension AVOptionSupport {
      - Throws: An error if the option cannot be found or its values cannot be retrieved.
      */
     func uintValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [UInt32] {
-        try array(for: key, type: .array(.uInt), initial: 0, searchFlags: searchFlags)
+        try array(for: key, type: .array(.uint), initial: 0, searchFlags: searchFlags)
     }
     
     /**
@@ -601,7 +646,7 @@ public extension AVOptionSupport {
      - Throws: An error if the option cannot be found or its values cannot be retrieved.
      */
     func uint64Values(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [UInt64] {
-        try array(for: key, type: .array(.uInt64), initial: 0, searchFlags: searchFlags)
+        try array(for: key, type: .array(.uint64), initial: 0, searchFlags: searchFlags)
     }
     
     /**
@@ -1167,7 +1212,7 @@ public extension AVOptionSupport {
      - Throws: An error if the option cannot be found or its values cannot be set.
      */
     func set(_ values: [UInt32], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-        try set(values, for: key, startIndex: startIndex, type: .array(.uInt), searchFlags: searchFlags)
+        try set(values, for: key, startIndex: startIndex, type: .array(.uint), searchFlags: searchFlags)
     }
     
     /**
@@ -1181,7 +1226,7 @@ public extension AVOptionSupport {
      - Throws: An error if the option cannot be found or its values cannot be set.
      */
     func set(_ values: [UInt64], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-        try set(values, for: key, startIndex: startIndex, type: .array(.uInt64), searchFlags: searchFlags)
+        try set(values, for: key, startIndex: startIndex, type: .array(.uint64), searchFlags: searchFlags)
     }
     
     /**

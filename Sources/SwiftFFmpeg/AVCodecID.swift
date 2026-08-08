@@ -95,7 +95,6 @@ public struct AVCodecID: RawRepresentable, CustomStringConvertible, Hashable {
             result.append(String(cString: mimeType))
             current = current.advanced(by: 1)
         }
-
         return result
     }
     
@@ -104,12 +103,10 @@ public struct AVCodecID: RawRepresentable, CustomStringConvertible, Hashable {
         guard let profiles = descriptor?.pointee.profiles else { return [] }
         var result: [AVNamedProfile] = []
         var current = profiles
-
         while current.pointee.profile != AV_PROFILE_UNKNOWN {
             result.append(AVNamedProfile(native: current.pointee))
             current = current.advanced(by: 1)
         }
-
         return result
     }
     
@@ -161,7 +158,7 @@ public struct AVCodecID: RawRepresentable, CustomStringConvertible, Hashable {
         }
     }
     
-    /// All codecs known to libavcodec.
+    /// All codecs known to `libavcodec`.
     public static var all: [AVCodecID] {
         var result: [AVCodecID] = []
         var previous: UnsafePointer<CFFmpeg.AVCodecDescriptor>?
@@ -176,6 +173,7 @@ public struct AVCodecID: RawRepresentable, CustomStringConvertible, Hashable {
 extension AVCodecID {
     // MARK: - General
 
+    /// None.
     public static let none = Self(native: AV_CODEC_ID_NONE)
 
     // MARK: - Video Codecs

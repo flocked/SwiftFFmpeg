@@ -24,7 +24,7 @@ import CFFmpeg
 /// planes must be the same size. For packed sample formats, only the first data
 /// plane is used, and samples for each channel are interleaved. In this case,
 /// linesize is the buffer size, in bytes, for the 1 plane.
-public enum AVSampleFormat: Int32 {
+public enum AVSampleFormat: Int32, Hashable, Sendable {
   case none = -1 // AV_SAMPLE_FMT_NONE
   /// unsigned 8 bits
   case uint8 = 0 // AV_SAMPLE_FMT_U8
