@@ -51,25 +51,25 @@ public struct AVOption {
                 self.max = AVOption.Flag(rawValue: Int32(native.max))
                 self.defaultValue = AVOption.Flag(rawValue: Int32(clamping: native.default_val.i64))
             case .int:
-                self.min = Int32(clamping: Int64(native.min))
-                self.max = Int32(clamping: Int64(native.max))
+                self.min = Int32(clamping: native.min)
+                self.max = Int32(clamping: native.max)
                 self.defaultValue = Int32(clamping: native.default_val.i64)
             case .channelLayout:
                 Swift.print("channelLayout", String(cString: native.default_val.str) ?? "nil", native.default_val.i64)
-                self.min = Int64(native.min)
-                self.max = Int64(native.max)
+                self.min = Int64(clamping: native.min)
+                self.max = Int64(clamping: native.max)
                 self.defaultValue = native.default_val.i64
             case .int64, .const, .duration:
-                self.min = Int64(clamping: Int64(Swift.max(0, native.min)))
-                self.max = Int64(clamping: Int64(Swift.max(0, native.max)))
+                self.min = Int64(clamping: native.min)
+                self.max = Int64(clamping: native.max)
                 self.defaultValue = native.default_val.i64
             case .uInt:
-                self.min = UInt32(clamping: Int64(Swift.max(0, native.min)))
-                self.max = UInt32(clamping: Int64(Swift.max(0, native.max)))
+                self.min = UInt32(clamping: native.min)
+                self.max = UInt32(clamping: native.max)
                 self.defaultValue = UInt32(clamping: native.default_val.i64)
             case .uInt64:
-                self.min = UInt64(clamping: Int64(Swift.max(0, native.min)))
-                self.max = UInt64(clamping: Int64(Swift.max(0, native.max)))
+                self.min = UInt64(clamping: native.min)
+                self.max = UInt64(clamping: native.max)
                 self.defaultValue = UInt64(clamping: native.default_val.i64)
             case .double:
                 self.min = native.min
@@ -1066,5 +1066,19 @@ private extension UnsafePointer<UInt8> {
             data.append(high << 4 | low)
         }
         return data
+    }
+}
+
+fileprivate extension FixedWidthInteger {
+    init(clamping value: Double) {
+        if value.isNaN {
+            self = 0
+        } else if value <= Double(Self.min) {
+            self = .min
+        } else if value >= Double(Self.max) {
+            self = .max
+        } else {
+            self = Self(value)
+        }
     }
 }
