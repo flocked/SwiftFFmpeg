@@ -243,7 +243,7 @@ public final class AVCodecContext {
     ///
     /// - Parameter params: codec parameters
     public func setParameters(_ params: AVCodecParameters) {
-        abortIfFail(avcodec_parameters_to_context(native, params.native))
+        avcodec_parameters_to_context(native, params.native).abortIfFail()
     }
 
     /// Initialize the `AVCodecContext`.
@@ -258,7 +258,7 @@ public final class AVCodecContext {
         var pm = options?.avDict
         defer { av_dict_free(&pm) }
 
-        try throwIfFail(avcodec_open2(native, codec?.native ?? self.codec?.native, &pm))
+        try avcodec_open2(native, codec?.native ?? self.codec?.native, &pm).throwIfFail()
         dumpUnrecognizedOptions(pm)
     }
 
@@ -281,7 +281,7 @@ public final class AVCodecContext {
     ///     - `AVError.outOfMemory` if failed to add packet to internal queue, or similar.
     ///     - legitimate decoding errors
     public func sendPacket(_ packet: AVPacket?) throws {
-        try throwIfFail(avcodec_send_packet(native, packet?.native))
+        try avcodec_send_packet(native, packet?.native).throwIfFail()
     }
 
     /// Return decoded output data from a decoder.
@@ -294,7 +294,7 @@ public final class AVCodecContext {
     ///     - `AVError.invalidArgument` if codec not opened, or it is an encoder.
     ///     - legitimate decoding errors
     public func receiveFrame(_ frame: AVFrame) throws {
-        try throwIfFail(avcodec_receive_frame(native, frame.native))
+        try avcodec_receive_frame(native, frame.native).throwIfFail()
     }
 
     /// Supply a raw video or audio frame to the encoder.
@@ -314,7 +314,7 @@ public final class AVCodecContext {
     ///     - `AVError.outOfMemory` if failed to add packet to internal queue, or similar.
     ///     - legitimate decoding errors
     public func sendFrame(_ frame: AVFrame?) throws {
-        try throwIfFail(avcodec_send_frame(native, frame?.native))
+        try avcodec_send_frame(native, frame?.native).throwIfFail()
     }
 
     /// Read encoded data from the encoder.
@@ -326,7 +326,7 @@ public final class AVCodecContext {
     ///     - `AVError.invalidArgument` if codec not opened, or it is an encoder.
     ///     - legitimate decoding errors
     public func receivePacket(_ packet: AVPacket) throws {
-        try throwIfFail(avcodec_receive_packet(native, packet.native))
+        try avcodec_receive_packet(native, packet.native).throwIfFail()
     }
 
     /// Reset the internal decoder state / flush internal buffers. Should be called

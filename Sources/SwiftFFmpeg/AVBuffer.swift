@@ -53,7 +53,7 @@ public final class AVBuffer {
   /// - Parameter size: required new buffer size
   public func realloc(size: Int) {
     precondition(native != nil, "Buffer has been freed.")
-    abortIfFail(av_buffer_realloc(&native, size))
+    av_buffer_realloc(&native, size).abortIfFail()
   }
 
   /// Create a writable reference from a given buffer reference, avoiding data copy if possible.
@@ -61,7 +61,7 @@ public final class AVBuffer {
   /// Do nothing if the frame is writable, allocate new buffers and copy the data if it is not.
   public func makeWritable() {
     precondition(native != nil, "Buffer has been freed.")
-    abortIfFail(av_buffer_make_writable(&native))
+    av_buffer_make_writable(&native).abortIfFail()
   }
 
   /// Create a new reference to an `AVBuffer`.

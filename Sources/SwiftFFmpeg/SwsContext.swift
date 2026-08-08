@@ -116,9 +116,7 @@ public final class SwsContext {
     dst: UnsafePointer<UnsafeMutablePointer<UInt8>?>,
     dstStride: UnsafePointer<Int32>
   ) throws -> Int {
-    try throwIfFail(sws_scale(
-        native, src, srcStride, Int32(srcSliceY), Int32(srcSliceHeight), dst, dstStride
-      ))
+    try sws_scale(native, src, srcStride, Int32(srcSliceY), Int32(srcSliceHeight), dst, dstStride).throwIfFail()
   }
 }
 

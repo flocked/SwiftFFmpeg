@@ -113,12 +113,12 @@ public final class AVCodecParameters {
     
     /// Copy the contents from the supplied codec parameters.
     public func copy(from codecpar: AVCodecParameters) {
-        abortIfFail(avcodec_parameters_copy(native, codecpar.native))
+        avcodec_parameters_copy(native, codecpar.native).abortIfFail()
     }
     
     /// Fill the parameters struct based on the values from the supplied codec context.
     public func copy(from codecCtx: AVCodecContext) {
-        abortIfFail(avcodec_parameters_from_context(native, codecCtx.native))
+        avcodec_parameters_from_context(native, codecCtx.native).abortIfFail()
     }
 }
 

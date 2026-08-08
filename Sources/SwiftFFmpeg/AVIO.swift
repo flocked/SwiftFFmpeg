@@ -130,9 +130,9 @@ public final class AVIOContext {
 
     var pb: UnsafeMutablePointer<CAVIOContext>!
     if var cb = interruptCallback {
-      try throwIfFail(avio_open2(&pb, url, flags.rawValue, &cb, &pm))
+      try avio_open2(&pb, url, flags.rawValue, &cb, &pm).throwIfFail()
     } else {
-      try throwIfFail(avio_open2(&pb, url, flags.rawValue, nil, &pm))
+      try avio_open2(&pb, url, flags.rawValue, nil, &pm).throwIfFail()
     }
     self.init(native: pb)
     self.isOpen = true
@@ -156,21 +156,21 @@ public final class AVIOContext {
   ///
   /// - Throws: AVError
   public func seek(to offset: Int64, whence: SeekWhence) throws -> Int {
-    try throwIfFail(avio_seek(native, offset, whence.rawValue))
+    try avio_seek(native, offset, whence.rawValue).throwIfFail()
   }
 
   /// Skip given number of bytes forward.
   ///
   /// - Throws: AVError
   public func skip(to offset: Int64) throws -> Int {
-    try throwIfFail(avio_skip(native, offset))
+    try avio_skip(native, offset).throwIfFail()
   }
 
   /// Returns the file position indicator for the file stream.
   ///
   /// - Throws: AVError
   public func tell() throws -> Int {
-    try throwIfFail(avio_tell(native))
+    try avio_tell(native).throwIfFail()
   }
 
   /// Get the filesize.
@@ -178,7 +178,7 @@ public final class AVIOContext {
   /// - Throws: AVError
   public func size() throws -> Int64 {
     let ret = avio_size(native)
-    try throwIfFail(Int32(clamping: ret))
+    try Int32(clamping: ret).throwIfFail()
     return ret
   }
 
@@ -207,7 +207,7 @@ public final class AVIOContext {
   /// - Returns: The total number of bytes read into the buffer.
   /// - Throws: AVError
   public func read(_ buffer: UnsafeMutablePointer<UInt8>, size: Int) throws -> Int {
-    try throwIfFail(avio_read(native, buffer, Int32(size)))
+    try avio_read(native, buffer, Int32(size)).throwIfFail()
   }
 
   /// Read size bytes from `AVIOContext` into buffer. Unlike `read(_:size:)`, this is allowed to
@@ -221,7 +221,7 @@ public final class AVIOContext {
   /// - Returns: number of bytes read
   /// - Throws: AVError
   public func partialRead(_ buffer: UnsafeMutablePointer<UInt8>, size: Int) throws -> Int {
-    try throwIfFail(avio_read_partial(native, buffer, Int32(size)))
+    try avio_read_partial(native, buffer, Int32(size)).throwIfFail()
   }
 
   /// Pause playing.
@@ -230,7 +230,7 @@ public final class AVIOContext {
   ///
   /// - Throws: AVError
   public func pause() throws {
-    try throwIfFail(avio_pause(native, 1))
+    try avio_pause(native, 1).throwIfFail()
   }
 
   /// Resume playing.
@@ -239,7 +239,7 @@ public final class AVIOContext {
   ///
   /// - Throws: AVError
   public func resume() throws {
-    try throwIfFail(avio_pause(native, 0))
+    try avio_pause(native, 0).throwIfFail()
   }
 
     /**
@@ -255,7 +255,7 @@ public final class AVIOContext {
      - Throws: `AVError` if seeking fails.
      */
     public func seek(to timestamp: Int64, streamIndex: Int = -1, flags: AVFormatContext.SeekFlag = []) throws -> Int {
-        try throwIfFail(avio_seek_time(native, Int32(streamIndex), timestamp, flags.rawValue))
+        try avio_seek_time(native, Int32(streamIndex), timestamp, flags.rawValue).throwIfFail()
     }
 
     /**
@@ -295,7 +295,7 @@ public final class AVIOContext {
   /// - Throws: AVError
   public func accept() throws -> AVIOContext {
     var ptr: UnsafeMutablePointer<CAVIOContext>!
-    try throwIfFail(avio_accept(native, &ptr))
+    try avio_accept(native, &ptr).throwIfFail()
     return AVIOContext(native: ptr)
   }
 
@@ -314,7 +314,7 @@ public final class AVIOContext {
   /// - Throws: AVError
   public func handshake() throws -> Bool {
     let ret = avio_handshake(native)
-    try throwIfFail(ret)
+    try ret.throwIfFail()
     return ret == 0
   }
 

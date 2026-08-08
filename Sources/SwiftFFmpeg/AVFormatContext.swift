@@ -36,7 +36,7 @@ public final class AVFormatContext {
     ) throws {
         var pm: OpaquePointer? = options?.avDict
         defer { av_dict_free(&pm) }
-        try throwIfFail(avformat_open_input(&native, url, format?.native, &pm))
+        try avformat_open_input(&native, url, format?.native, &pm).throwIfFail()
         dumpUnrecognizedOptions(pm)
     }
 
@@ -60,9 +60,7 @@ public final class AVFormatContext {
         formatName: String? = nil,
         filename: String? = nil
     ) throws {
-        try throwIfFail(
-            avformat_alloc_output_context2(&native, format?.native, formatName, filename)
-        )
+        try avformat_alloc_output_context2(&native, format?.native, formatName, filename).throwIfFail()
     }
 
     deinit {
@@ -364,7 +362,7 @@ public extension AVFormatContext {
         var pm: OpaquePointer? = options?.avDict
         defer { av_dict_free(&pm) }
 
-        try throwIfFail(avformat_open_input(&native, url, format?.native, &pm))
+        try avformat_open_input(&native, url, format?.native, &pm).throwIfFail()
 
         dumpUnrecognizedOptions(pm)
     }
@@ -389,14 +387,14 @@ public extension AVFormatContext {
             for (i, opt) in options.enumerated() where i < streamCount {
                 pms[i] = opt.avDict
             }
-            try throwIfFail(avformat_find_stream_info(native, &pms))
+            try avformat_find_stream_info(native, &pms).throwIfFail()
             for pm in pms {
                 var pm = pm
                 dumpUnrecognizedOptions(pm)
                 av_dict_free(&pm)
             }
         } else {
-            try throwIfFail(avformat_find_stream_info(native, nil))
+            try avformat_find_stream_info(native, nil).throwIfFail()
         }
     }
 
@@ -456,7 +454,7 @@ public extension AVFormatContext {
     /// - Parameter packet: the packet used to store data
     /// - Throws: AVError
     func readFrame(into packet: AVPacket) throws {
-        try throwIfFail(av_read_frame(native, packet.native))
+        try av_read_frame(native, packet.native).throwIfFail()
     }
 
     /// Seek to the keyframe at timestamp.
@@ -469,7 +467,7 @@ public extension AVFormatContext {
     ///   - flags: flags which select direction and seeking mode
     /// - Throws: AVError
     func seekFrame(to timestamp: Int64, streamIndex: Int = -1, flags: SeekFlag = .backward) throws {
-        try throwIfFail(av_seek_frame(native, Int32(streamIndex), timestamp, flags.rawValue))
+        try av_seek_frame(native, Int32(streamIndex), timestamp, flags.rawValue).throwIfFail()
     }
     
     /// Seeks to the keyframe at the given timestamp in seconds.
@@ -497,7 +495,7 @@ public extension AVFormatContext {
     ///
     /// - Throws: AVError
     func play() throws {
-        try throwIfFail(av_read_play(native))
+        try av_read_play(native).throwIfFail()
     }
 
     /// Pause a network-based stream (e.g. RTSP stream).
@@ -506,7 +504,7 @@ public extension AVFormatContext {
     ///
     /// - Throws: AVError
     func pause() throws {
-        try throwIfFail(av_read_pause(native))
+        try av_read_pause(native).throwIfFail()
     }
 }
 
@@ -571,7 +569,7 @@ public extension AVFormatContext {
         var pm = options?.avDict
         defer { av_dict_free(&pm) }
 
-        try throwIfFail(avformat_write_header(native, &pm))
+        try avformat_write_header(native, &pm).throwIfFail()
 
         dumpUnrecognizedOptions(pm)
     }
@@ -603,7 +601,7 @@ public extension AVFormatContext {
     ///   `AVPacket.duration` should also be set if known.
     /// - Throws: AVError
     func writeFrame(_ pkt: AVPacket?) throws {
-        try throwIfFail(av_write_frame(native, pkt?.native))
+        try av_write_frame(native, pkt?.native).throwIfFail()
     }
 
     /// Write a packet to an output media file ensuring correct interleaving.
@@ -635,7 +633,7 @@ public extension AVFormatContext {
     /// - Throws: AVError
     /// - SeeAlso: writeFrame
     func interleavedWriteFrame(_ pkt: AVPacket?) throws {
-        try throwIfFail(av_interleaved_write_frame(native, pkt?.native))
+        try av_interleaved_write_frame(native, pkt?.native).throwIfFail()
     }
 
     /// Write the stream trailer to an output media file and free the file private data.
@@ -644,7 +642,7 @@ public extension AVFormatContext {
     ///
     /// - Throws: AVError
     func writeTrailer() throws {
-        try throwIfFail(av_write_trailer(native))
+        try av_write_trailer(native).throwIfFail()
     }
 }
 

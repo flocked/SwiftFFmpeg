@@ -94,7 +94,7 @@ static const int swift_AVERROR_HTTP_OTHER_4XX     = AVERROR_HTTP_OTHER_4XX;
 static const int swift_AVERROR_HTTP_SERVER_ERROR  = AVERROR_HTTP_SERVER_ERROR;
 
 static inline void swift_log(void *avcl, int level, const char *msg) {
-  av_log(avcl, level, msg);
+    av_log(avcl, level, "%s", msg);
 }
 
 static inline uint32_t swift_FOURCC(char a, char b, char c, char d) {

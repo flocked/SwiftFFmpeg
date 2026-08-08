@@ -63,14 +63,14 @@ public final class AVBitStreamFilterContext {
 
   /// Creates a null/pass-through context.
   public init() {
-    abortIfFail(av_bsf_get_null_filter(&native))
+    av_bsf_get_null_filter(&native).abortIfFail()
   }
 
   /// Creates a context for a given bitstream filter.
   ///
   /// - Parameter filter: The filter for which to allocate an instance.
   public init(filter: AVBitStreamFilter) {
-    abortIfFail(av_bsf_alloc(filter.native, &native))
+    av_bsf_alloc(filter.native, &native).abortIfFail()
   }
 
   /// Creates a context from the given bitstream filters description string.
@@ -81,7 +81,7 @@ public final class AVBitStreamFilterContext {
   ///
   /// - Parameter string: The bitstream filters description string.
   public init(description string: String) throws {
-    try throwIfFail(av_bsf_list_parse_str(string, &native))
+    try av_bsf_list_parse_str(string, &native).throwIfFail()
   }
 
   deinit {
@@ -112,7 +112,7 @@ public final class AVBitStreamFilterContext {
 
   /// Prepare the filter for use, after all the parameters and options have been set.
   public func initialize() throws {
-    try throwIfFail(av_bsf_init(native))
+    try av_bsf_init(native).throwIfFail()
   }
 
   /// Submit a packet for filtering.
@@ -127,7 +127,7 @@ public final class AVBitStreamFilterContext {
   ///   may have buffered internally.
   /// - Throws: AVError
   public func sendPacket(_ packet: AVPacket?) throws {
-    try throwIfFail(av_bsf_send_packet(native, packet?.native))
+    try av_bsf_send_packet(native, packet?.native).throwIfFail()
   }
 
   /// Retrieve a filtered packet.
@@ -149,7 +149,7 @@ public final class AVBitStreamFilterContext {
   ///   - `AVError.eof` if there will be no further output from the filter.
   ///   - othrer errors.
   public func receivePacket(_ packet: AVPacket) throws {
-    try throwIfFail(av_bsf_receive_packet(native, packet.native))
+    try av_bsf_receive_packet(native, packet.native).throwIfFail()
   }
 
   /// Reset the internal bitstream filter state / flush internal buffers.

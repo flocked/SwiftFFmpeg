@@ -98,7 +98,7 @@ public final class AVCodecParserContext {
             dts,
             pos
         )
-        try throwIfFail(ret)
+        try ret.throwIfFail()
         return (buf, Int(bufSize), Int(ret))
     }
 

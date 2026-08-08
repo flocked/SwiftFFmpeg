@@ -136,14 +136,14 @@ public final class AVImage {
 public extension AVImage {
     /// Compute the size in bytes of an image line with the specified format and width for the plane.
     static func lineSize(for pixelFormat: AVPixelFormat, width: Int, plane: Int) throws -> Int {
-        try throwIfFail(av_image_get_linesize(pixelFormat, Int32(width), Int32(plane)))
+        try av_image_get_linesize(pixelFormat, Int32(width), Int32(plane)).throwIfFail()
     }
 
     /// Returns the line sizes for the image planes with the specified pixel format and width.
     static func lineSizes(for pixelFormat: AVPixelFormat, width: Int) throws -> [Int] {
         var lineSizes = [Int32](repeating: 0, count: 4)
         try lineSizes.withUnsafeMutableBufferPointer { buffer in
-            try throwIfFail(av_image_fill_linesizes(buffer.baseAddress!, pixelFormat, Int32(width)))
+            try av_image_fill_linesizes(buffer.baseAddress!, pixelFormat, Int32(width)).throwIfFail()
         }
         return lineSizes.map(Int.init)
     }
@@ -167,7 +167,7 @@ public extension AVImage {
         buffer: UnsafeMutablePointer<UInt8>?,
         lineSizes: UnsafePointer<Int32>?
     ) throws -> Int {
-        try throwIfFail(av_image_fill_pointers(data, pixelFormat, Int32(height), buffer, lineSizes))
+        try av_image_fill_pointers(data, pixelFormat, Int32(height), buffer, lineSizes).throwIfFail()
     }
 
     /// Return the size in bytes of the amount of data required to store an image with the given parameters.
@@ -180,7 +180,7 @@ public extension AVImage {
     /// - Returns: the buffer size in bytes
     /// - Throws: AVError
     static func bufferSize(for pixelFormat: AVPixelFormat, width: Int, height: Int, align: Int = 1) throws -> Int {
-        try throwIfFail(av_image_get_buffer_size(pixelFormat, Int32(width), Int32(height), Int32(align)))
+        try av_image_get_buffer_size(pixelFormat, Int32(width), Int32(height), Int32(align)).throwIfFail()
     }
 }
 
@@ -215,7 +215,7 @@ public extension AVFrame {
     @discardableResult
     func copyImageData(to buffer: UnsafeMutablePointer<UInt8>, size: Int, align: Int = 1) throws -> Int {
         try data.withMemoryRebound(to: UnsafePointer<UInt8>?.self) { ptr -> Int in
-            try throwIfFail(av_image_copy_to_buffer(
+            try av_image_copy_to_buffer(
                 buffer,
                 Int32(size),
                 ptr.baseAddress,
@@ -224,7 +224,7 @@ public extension AVFrame {
                 Int32(width),
                 Int32(height),
                 Int32(align)
-            ))
+            ).throwIfFail()
         }
     }
     

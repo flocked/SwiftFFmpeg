@@ -29,7 +29,7 @@ public final class SwrContext {
     var ptr: OpaquePointer?
     var icl = inputChannelLayout
     var ocl = outputChannelLayout
-    try throwIfFail(swr_alloc_set_opts2(
+    try swr_alloc_set_opts2(
       &ptr,
       &ocl,
       outputSampleFormat.native,
@@ -39,7 +39,7 @@ public final class SwrContext {
       Int32(inputSampleRate),
       0,
       nil
-    ))
+    ).throwIfFail()
     self.native = ptr
   }
 
@@ -73,7 +73,7 @@ public final class SwrContext {
   ) throws {
     var icl = srcChannelLayout
     var ocl = dstChannelLayout
-    try throwIfFail(swr_alloc_set_opts2(
+    try swr_alloc_set_opts2(
       &native,
       &ocl,
       dstSampleFormat.native,
@@ -83,14 +83,14 @@ public final class SwrContext {
       Int32(srcSampleRate),
       0,
       nil
-    ))
+    ).throwIfFail()
   }
 
   /// Initialize context after user parameters have been set.
   ///
   /// - Throws: AVError
   public func initialize() throws {
-    try throwIfFail(swr_init(native))
+    try swr_init(native).throwIfFail()
   }
 
   /// Closes the context so that `isInitialized` returns `false`.
@@ -134,7 +134,7 @@ public final class SwrContext {
   ///   will output
   /// - Throws: AVError
   public func getOutSamples(_ sampleCount: Int64) throws -> Int {
-    try throwIfFail(swr_get_out_samples(native, Int32(sampleCount)))
+    try swr_get_out_samples(native, Int32(sampleCount)).throwIfFail()
   }
 
   /// Convert audio.
@@ -160,7 +160,7 @@ public final class SwrContext {
     src: UnsafeMutablePointer<UnsafePointer<UInt8>?>,
     srcCount: Int
   ) throws -> Int {
-    try throwIfFail(swr_convert(native, dst, Int32(dstCount), src, Int32(srcCount)))
+    try swr_convert(native, dst, Int32(dstCount), src, Int32(srcCount)).throwIfFail()
   }
 }
 

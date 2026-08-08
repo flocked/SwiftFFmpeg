@@ -260,7 +260,7 @@ public final class AVFilterContext {
   ///   or there are no options that need to be set. The default is `nil`.
   /// - Throws: AVError
   public func initialize(args: String? = nil) throws {
-    try throwIfFail(avfilter_init_str(native, args))
+    try avfilter_init_str(native, args).throwIfFail()
   }
 
   /// Initialize a filter with the supplied dictionary of options.
@@ -278,7 +278,7 @@ public final class AVFilterContext {
     var pm: OpaquePointer? = args.avDict
     defer { av_dict_free(&pm) }
 
-    try throwIfFail(avfilter_init_dict(native, &pm))
+    try avfilter_init_dict(native, &pm).throwIfFail()
 
     dumpUnrecognizedOptions(pm)
   }
@@ -297,7 +297,7 @@ public final class AVFilterContext {
     dst: AVFilterContext,
     dstPad: UInt = 0
   ) throws -> AVFilterContext {
-    try throwIfFail(avfilter_link(native, UInt32(srcPad), dst.native, UInt32(dstPad)))
+    try avfilter_link(native, UInt32(srcPad), dst.native, UInt32(dstPad)).throwIfFail()
     return dst
   }
 }
@@ -361,7 +361,7 @@ extension AVFilterContext {
   ///   - flags: a combination of `AVBufferSourceFlag` flags
   /// - Throws: AVError
   public func addFrame(_ frame: AVFrame?, flags: AVBufferSourceFlag = .init(rawValue: 0)) throws {
-    try throwIfFail(av_buffersrc_add_frame_flags(native, frame?.native, flags.rawValue))
+    try av_buffersrc_add_frame_flags(native, frame?.native, flags.rawValue).throwIfFail()
   }
 }
 
@@ -469,7 +469,7 @@ extension AVFilterContext {
   ///     - `AVError.eof` if there will be no more output frames on this sink.
   ///     - A different `AVError` in other failure cases.
   public func getFrame(_ frame: AVFrame, flags: AVBufferSinkFlag = .init(rawValue: 0)) throws {
-    try throwIfFail(av_buffersink_get_frame_flags(native, frame.native, flags.rawValue))
+    try av_buffersink_get_frame_flags(native, frame.native, flags.rawValue).throwIfFail()
   }
 }
 
@@ -608,7 +608,7 @@ public final class AVFilterGraph {
   public func addFilter(_ filter: AVFilter, name: String, args: String? = nil) throws -> AVFilterContext {
     var ptr: UnsafeMutablePointer<CAVFilterContext>!
     let ret = avfilter_graph_create_filter(&ptr, filter.native, name, args, nil, native)
-    try throwIfFail(ret)
+    try ret.throwIfFail()
     return AVFilterContext(native: ptr)
   }
 
@@ -632,14 +632,14 @@ public final class AVFilterGraph {
     outputs.owned = false
     var inputsPtr: UnsafeMutablePointer<CAVFilterInOut>? = inputs.native
     var outputPtr: UnsafeMutablePointer<CAVFilterInOut>? = outputs.native
-    try throwIfFail(avfilter_graph_parse_ptr(native, filters, &inputsPtr, &outputPtr, nil))
+    try avfilter_graph_parse_ptr(native, filters, &inputsPtr, &outputPtr, nil).throwIfFail()
   }
 
   /// Check validity and configure all the links and formats in the graph.
   ///
   /// - Throws: AVError
   public func configure() throws {
-    try throwIfFail(avfilter_graph_config(native, nil))
+    try avfilter_graph_config(native, nil).throwIfFail()
   }
 }
 

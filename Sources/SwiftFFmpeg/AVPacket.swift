@@ -121,7 +121,7 @@ public final class AVPacket {
     /// - Parameter src: the source packet
     /// - Throws: AVerror
     public func ref(from src: AVPacket) throws {
-        try throwIfFail(av_packet_ref(native, src.native))
+        try av_packet_ref(native, src.native).throwIfFail()
     }
 
     /// Wipe the packet.
@@ -153,7 +153,7 @@ public final class AVPacket {
     ///
     /// - Throws: AVError
     public func makeWritable() throws {
-        try throwIfFail(av_packet_make_writable(native))
+        try av_packet_make_writable(native).throwIfFail()
     }
 }
 

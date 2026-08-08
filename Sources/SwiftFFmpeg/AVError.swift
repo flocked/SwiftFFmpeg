@@ -112,42 +112,27 @@ public extension AVError {
     }
 }
 
-func throwIfFail(_ condition: @autoclosure () -> Int32) throws {
-    let code = condition()
-    if code < 0 {
-        throw AVError(code: code)
-    }
-}
-
 extension BinaryInteger {
     func throwIfFail<Output: BinaryInteger>() throws -> Output {
-        let code = Int32(self)
-        if code < 0 {
-            throw AVError(code: code)
-        }
+        guard self >= 0 else { throw AVError(code: Int32(self)) }
         return Output(self)
+    }
+    
+    @discardableResult
+    func throwIfFail() throws -> Self {
+        guard self >= 0 else { throw AVError(code: Int32(self)) }
+        return self
+    }
+    
+    @discardableResult
+    func abortIfFail() -> Self {
+        guard self >= 0 else { abort("error: \(AVError(code: Int32(self)))") }
+        return self
     }
 }
 
 extension Int32 {
-    func throwIfFail() throws {
-        guard self >= 0 else { throw AVError(code: self) }
-    }
-}
 
-func throwIfFail<Input: BinaryInteger, Output: BinaryInteger>(_ condition: @autoclosure () -> Input) throws -> Output {
-    let code = Int32(condition())
-    if code < 0 {
-        throw AVError(code: code)
-    }
-    return Output(code)
-}
-
-func abortIfFail(_ condition: @autoclosure () -> Int32) {
-    let code = condition()
-    if code < 0 {
-        abort("error: \(AVError(code: code))")
-    }
 }
 
 func abort(_ message: String) -> Never {

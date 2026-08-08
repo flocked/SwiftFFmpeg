@@ -102,7 +102,7 @@ extension AVSamples {
       sampleFormat.native,
       Int32(align)
     )
-    try throwIfFail(ret)
+    try ret.throwIfFail()
     return (Int(ret), Int(linesize))
   }
 
@@ -146,7 +146,7 @@ extension AVSamples {
       sampleFormat.native,
       Int32(align)
     )
-    try throwIfFail(ret)
+    try ret.throwIfFail()
     return (Int(ret), Int(linesize))
   }
 }

@@ -59,7 +59,7 @@ public enum FFmpeg {
     /// OpenSSL libraries is removed, and this function has no purpose
     /// anymore.
     public static func networkInit() throws {
-        try throwIfFail(avformat_network_init())
+        try avformat_network_init().throwIfFail()
     }
 
     /// Undo the initialization done by `networkInit()`.

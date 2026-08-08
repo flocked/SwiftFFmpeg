@@ -229,7 +229,7 @@ public final class AVFrame {
     ///   It is highly recommended to pass 0 here unless you know what you are doing.
     /// - Throws: AVError
     public func allocBuffer(align: Int = 0) throws {
-        try throwIfFail(av_frame_get_buffer(native, Int32(align)))
+        try av_frame_get_buffer(native, Int32(align)).throwIfFail()
     }
 
     /// Set up a new reference to the data described by the source frame.
@@ -244,7 +244,7 @@ public final class AVFrame {
     /// - Parameter src: the source frame
     /// - Throws: AVError
     public func ref(from src: AVFrame) throws {
-        try throwIfFail(av_frame_ref(native, src.native))
+        try av_frame_ref(native, src.native).throwIfFail()
     }
 
     /// Unreference all the buffers referenced by frame and reset the frame fields.
@@ -278,7 +278,7 @@ public final class AVFrame {
     ///
     /// - Throws: AVError
     public func makeWritable() throws {
-        try throwIfFail(av_frame_make_writable(native))
+        try av_frame_make_writable(native).throwIfFail()
     }
 
     /// Copy the frame data from `src` to this frame.
@@ -292,7 +292,7 @@ public final class AVFrame {
     /// - Parameter src: the source frame
     /// - Throws: AVError
     public func copy(from src: AVFrame) throws {
-        try throwIfFail(av_frame_copy(native, src.native))
+        try av_frame_copy(native, src.native).throwIfFail()
     }
 
     /// Copy only "metadata" fields from `src` to this frame.
@@ -305,7 +305,7 @@ public final class AVFrame {
     /// - Parameter src: the source frame
     /// - Throws: AVError
     public func copyProperties(from src: AVFrame) throws {
-        try throwIfFail(av_frame_copy_props(native, src.native))
+        try av_frame_copy_props(native, src.native).throwIfFail()
     }
 
     /// Get the buffer reference a given data plane is stored in.

@@ -198,7 +198,7 @@ public final class AVHWDeviceContext {
         var pm = options?.avDict
         defer { av_dict_free(&pm) }
 
-        try throwIfFail(av_hwdevice_ctx_create(&native, deviceType.native, device, pm, 0))
+        try av_hwdevice_ctx_create(&native, deviceType.native, device, pm, 0).throwIfFail()
         self.owned = true
     }
 
@@ -219,8 +219,7 @@ public final class AVHWDeviceContext {
     ///   - deviceContext: An existing `AVHWDeviceContext` which will be used to create the new device.
     /// - Throws: AVError
     public init(deviceType: AVHWDeviceType, deviceContext: AVHWDeviceContext) throws {
-        try throwIfFail(
-            av_hwdevice_ctx_create_derived(&native, deviceType.native, deviceContext.native, 0))
+        try av_hwdevice_ctx_create_derived(&native, deviceType.native, deviceContext.native, 0).throwIfFail()
         self.owned = true
     }
 
@@ -351,7 +350,7 @@ public final class AVHWFramesContext {
     ///
     /// - Throws: AVError
     public func initialize() throws {
-        try throwIfFail(av_hwframe_ctx_init(nativeBuffer))
+        try av_hwframe_ctx_init(nativeBuffer).throwIfFail()
     }
 
     /// Allocate a new frame attached to the given `AVHWFramesContext`.
@@ -360,7 +359,7 @@ public final class AVHWFramesContext {
     ///   newly allocated buffers.
     /// - Throws: AVError
     public func allocBuffer(frame: AVFrame) throws {
-        try throwIfFail(av_hwframe_get_buffer(nativeBuffer, frame.native, 0))
+        try av_hwframe_get_buffer(nativeBuffer, frame.native, 0).throwIfFail()
     }
 
     /// Get a list of possible source or target formats usable in `AVFrame.transferData(from:)`.
@@ -407,6 +406,6 @@ public extension AVFrame {
     /// - Parameter frame: the source frame
     /// - Throws: AVError
     func transferData(from frame: AVFrame) throws {
-        try throwIfFail(av_hwframe_transfer_data(native, frame.native, 0))
+        try av_hwframe_transfer_data(native, frame.native, 0).throwIfFail()
     }
 }
