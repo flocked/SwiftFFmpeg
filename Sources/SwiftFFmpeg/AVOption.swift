@@ -178,7 +178,7 @@ extension AVOption: CustomStringConvertible {
             strings.append("max: \(max)")
         }
         strings.append("flags: \(flags)")
-        strings.append("offset: \(offset)")
+      //  strings.append("offset: \(offset)")
         if let help = help {
             strings.append("help: \"\(help)\"")
         }
