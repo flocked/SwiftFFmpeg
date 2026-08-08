@@ -71,7 +71,11 @@ public struct AVOption {
             case .dict:
                 self.defaultValue = nil
             case .color:
-                self.defaultValue = String(cString: native.default_val.str)
+                if let name = String(cString: native.default_val.str), let color = AVColor(name: name) {
+                    self.defaultValue = color
+                } else {
+                    self.defaultValue = String(cString: native.default_val.str)
+                }
             case .imageSize:
                 if let name = String(cString: native.default_val.str), let size = AVImageSize(name: name) {
                     self.defaultValue = size

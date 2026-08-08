@@ -9,7 +9,7 @@ import Foundation
 import CFFmpeg
 
 /// A two-dimensional image size in pixels.
-public struct AVImageSize {
+public struct AVImageSize: CustomStringConvertible {
     /// The image width in pixels.
     public var width: Int
 
@@ -18,6 +18,10 @@ public struct AVImageSize {
     
     var nativeValues: [Int32] {
         [Int32(width), Int32(height)]
+    }
+    
+    public var description: String {
+        "(\(width), \(height))"
     }
     
     /// Creates an image size with the specified width and height, in pixels.
