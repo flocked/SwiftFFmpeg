@@ -24,10 +24,6 @@ extension AVPixelFormat: @retroactive CustomStringConvertible {
         }
         self = type
     }
-    
-    public init(_ rawValue: Int32) {
-        self = AVPixelFormat(rawValue: rawValue)
-    }
 
     /// The name of the pixel format.
     public var name: String {
@@ -807,8 +803,6 @@ extension AVPixelFormat {
     public static let gbrp12msbbe = AV_PIX_FMT_GBRP12MSBBE
     /// planar GBR 4:4:4 36bpp, lowest bits zero, little-endian
     public static let gbrp12msble = AV_PIX_FMT_GBRP12MSBLE
-    
-    public static let nb = AV_PIX_FMT_NB
 }
 
 // MARK: - AVColorPrimaries
