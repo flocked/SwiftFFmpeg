@@ -11,22 +11,23 @@ import Foundation
 // MARK: - AVOption
 
 public struct AVOption {
+    /// The name of the option.
     public let name: String
     /// The short English help text about the option.
     public let help: String?
     /// The offset relative to the context structure where the option value is stored.
-    /// It should be 0 for named constants.
     public let offset: Int
     /// The default value for scalar options.
     public let defaultValue: Any?
-    /// The minimum valid value for the option.
+    /// The minimum valid value of the option.
     public let min: Any?
-    /// The maximum valid value for the option.
+    /// The maximum valid value of the option.
     public let max: Any?
+    /// The flags of the option.
     public let flags: Flag
     /// The logical unit to which the option belongs.
-    /// Non-constant options and corresponding named constants share the same unit.
     public let unit: String?
+    /// The type of the option.
     public let type: Kind
 
     init(native: CFFmpeg.AVOption) {
@@ -50,14 +51,13 @@ public struct AVOption {
                 self.min = nil
                 self.max = nil
                 self.defaultValue = UInt32(exactly: native.default_val.i64).map(FlagValue.init(rawValue:))
-                /*
-    
-                if let rawValue = Int32(exactly: native.default_val.i64), rawValue >= 0 {
-                    self.defaultValue = AVOption.Flag(rawValue: rawValue)
-                } else {
-                    self.defaultValue = AVOption.Flag(rawValue: 0)
-                }
-                 */
+            /*
+             if let rawValue = Int32(exactly: native.default_val.i64), rawValue >= 0 {
+                 self.defaultValue = AVOption.Flag(rawValue: rawValue)
+             } else {
+                 self.defaultValue = AVOption.Flag(rawValue: 0)
+             }
+              */
             case .int:
                 self.min = Int32(clamping: native.min)
                 self.max = Int32(clamping: native.max)
@@ -65,7 +65,7 @@ public struct AVOption {
             case .channelLayout:
                 self.min = nil
                 self.max = nil
-                self.defaultValue = String(cString: native.default_val.str).flatMap({ AVChannelLayout(name: $0) })
+                self.defaultValue = String(cString: native.default_val.str).flatMap { AVChannelLayout(name: $0) }
             case .int64, .const, .duration:
                 self.min = Int64(clamping: native.min)
                 self.max = Int64(clamping: native.max)
@@ -109,27 +109,63 @@ public struct AVOption {
             case .color:
                 self.min = nil
                 self.max = nil
-                self.defaultValue = String(cString: native.default_val.str).flatMap({ AVColor(name: $0) })
+                self.defaultValue = String(cString: native.default_val.str).flatMap { AVColor(name: $0) }
             case .imageSize:
                 self.min = nil
                 self.max = nil
-                self.defaultValue = String(cString: native.default_val.str).flatMap({ AVImageSize(name: $0) })
+                self.defaultValue = String(cString: native.default_val.str).flatMap { AVImageSize(name: $0) }
             }
         } else {
-            /// Have to handle later
             self.min = nil
             self.max = nil
-            self.defaultValue = nil
+            guard let array = native.default_val.arr?.pointee else {
+                self.defaultValue = nil
+                return
+            }
+            switch type.element {
+            case .int:
+                self.defaultValue = array.values(as: Int32.self)
+            case .uInt:
+                self.defaultValue = array.values(as: UInt32.self)
+            case .int64, .duration:
+                self.defaultValue = array.values(as: Int64.self)
+            case .uInt64:
+                self.defaultValue = array.values(as: UInt64.self)
+            case .double:
+                self.defaultValue = array.values(as: Double.self)
+            case .float:
+                self.defaultValue = array.values(as: Float.self)
+            case .bool:
+                self.defaultValue = array.values(as: Int32.self)?.map { $0 != 0 }
+            case .string:
+                self.defaultValue = array.values
+            case .color:
+                self.defaultValue = array.values?.map(AVColor.init(name:))
+            case .imageSize:
+                self.defaultValue = array.values?.map(AVImageSize.init(name:))
+            case .channelLayout:
+                self.defaultValue = array.values?.map(AVChannelLayout.init(name:))
+            case .flags:
+                self.defaultValue = nil
+            case .rational, .videoRate:
+                self.defaultValue = nil
+            case .pixelFormat:
+                self.defaultValue = array.values?.compactMap(AVPixelFormat.init(name:))
+            case .sampleFormat:
+                self.defaultValue = array.values?.compactMap(AVSampleFormat.init(name:))
+            case .binary, .dict, .const:
+                self.defaultValue = nil
+            }
         }
     }
 }
 
 extension CFFmpeg.AVOptionArrayDef {
-    func values<V: LosslessStringConvertible>(as _: V.Type = V.self) -> [V]? {
+    var values: [String]? {
         guard let def else { return nil }
         let bytes = Array(String(cString: def).utf8)
         let separator = sep == 0 ? UInt8(ascii: ",") : UInt8(bitPattern: sep)
-        var values: [V] = []
+        var values: [String] = []
         var current: [UInt8] = []
         var isEscaped = false
         for byte in bytes {
@@ -142,10 +178,7 @@ extension CFFmpeg.AVOptionArrayDef {
             case UInt8(ascii: "\\"):
                 isEscaped = true
             case separator:
-                guard let value = V(String(decoding: current, as: UTF8.self)) else {
-                    return nil
-                }
-                values.append(value)
+                values.append(String(decoding: current, as: UTF8.self))
                 current.removeAll(keepingCapacity: true)
             default:
                 current.append(byte)
@@ -154,11 +187,12 @@ extension CFFmpeg.AVOptionArrayDef {
         if isEscaped {
             current.append(UInt8(ascii: "\\"))
         }
-        guard let value = V(String(decoding: current, as: UTF8.self)) else {
-            return nil
-        }
-        values.append(value)
+        values.append(String(decoding: current, as: UTF8.self))
         return values
+    }
+    
+    func values<V: LosslessStringConvertible>(as _: V.Type = V.self) -> [V]? {
+        values?.compactMap(V.init)
     }
 }
 
@@ -182,7 +216,7 @@ extension AVOption: CustomStringConvertible {
             strings.append("max: \(max)")
         }
         strings.append("flags: \(flags)")
-      //  strings.append("offset: \(offset)")
+        //  strings.append("offset: \(offset)")
         if let help = help {
             strings.append("help: \"\(help)\"")
         }
@@ -193,76 +227,6 @@ extension AVOption: CustomStringConvertible {
 // MARK: - AVOption.Kind
 
 public extension AVOption {
-    /*
-     /// https://github.com/FFmpeg/FFmpeg/blob/master/libavutil/opt.h#L221
-     enum Kind: UInt32, CustomStringConvertible {
-         case flags = 1
-         case int
-         case int64
-         case double
-         case float
-         case string
-         case rational
-         /// offset must point to a pointer immediately followed by an int for the length
-         case binary
-         case dict
-         case uint64
-         case const
-         /// offset must point to two consecutive integers
-         case imageSize
-         case pixelFormat
-         case sampleFormat
-         /// offset must point to `AVRational`
-         case videoRate
-         case duration
-         case color
-         case bool
-         case channelLayout
-         case uint
-         case flagArray = 65536
-        
-         init(native: CFFmpeg.AVOptionType) {
-             if let kind = Kind(rawValue: native.rawValue) {
-                 self = kind
-             } else if native.rawValue & Kind.flagArray.rawValue != 0 {
-                 self = .flagArray
-             } else {
-                 fatalError("Unknown option type: \(native.rawValue)")
-             }
-         }
-        
-         var native: CFFmpeg.AVOptionType {
-             .init(rawValue: rawValue)
-         }
-        
-         public var description: String {
-             switch self {
-             case .flags: "flags"
-             case .int: "Int32"
-             case .int64: "Int64"
-             case .uint: "UInt32"
-             case .uint64: "UInt64"
-             case .float: "Float"
-             case .double: "Double"
-             case .string: "String"
-             case .rational: "AVRational"
-             case .binary: "Data"
-             case .dict: "[String: String]"
-             case .const: "Constant"
-             case .imageSize: "image size"
-             case .pixelFormat: "AVPixelFormat"
-             case .sampleFormat: "AVSampleFormat"
-             case .videoRate: "AVRational (video rate)"
-             case .duration: "Int64 (duration)"
-             case .color: "color"
-             case .channelLayout: "AVChannelLayout"
-             case .bool: "Bool"
-             case .flagArray: "flag array"
-             }
-         }
-     }
-      */
-    
     struct Kind: RawRepresentable, Hashable, CustomStringConvertible {
         public let rawValue: UInt32
 
@@ -371,17 +335,7 @@ public extension AVOption {
     }
 }
 
-// MARK: - AVOption.Flag
-
 public extension AVOption {
-    struct FlagValue: RawRepresentable, OptionSet {
-        public let rawValue: UInt32
-        public init(rawValue: UInt32) {
-            self.rawValue = rawValue
-        }
-    }
-    
-    /// https://github.com/FFmpeg/FFmpeg/blob/master/libavutil/opt.h#L221
     struct Flag: OptionSet, Hashable {
         /// A generic parameter which can be set by the user for muxing or encoding.
         public static let encoding = Flag(rawValue: AV_OPT_FLAG_ENCODING_PARAM)
@@ -408,6 +362,13 @@ public extension AVOption {
         public let rawValue: Int32
 
         public init(rawValue: Int32) {
+            self.rawValue = rawValue
+        }
+    }
+    
+    struct FlagValue: RawRepresentable, OptionSet {
+        public let rawValue: UInt32
+        public init(rawValue: UInt32) {
             self.rawValue = rawValue
         }
     }
@@ -480,16 +441,93 @@ public extension AVOptionSupport {
             return options
         }
     }
+
+    /**
+     Returns the valid value ranges for the specified option.
+
+     Some options provide multiple valid ranges or ranges that depend on the current state of the object.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The valid value ranges for the option.
+     - Throws: An error if the option cannot be found or its ranges cannot be queried.
+     */
+    func ranges(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> (ranges: [AVOptionRange], componentCount: Int) {
+        try withUnsafeObjectPointer { ptr in
+            var ranges: UnsafeMutablePointer<CFFmpeg.AVOptionRanges>?
+            try throwIfFail(av_opt_query_ranges(&ranges, ptr, key, searchFlags.rawValue))
+            defer { av_opt_freep_ranges(&ranges) }
+            guard let ranges else {
+                throw AVError.invalidValue
+            }
+            return ((0..<Int(ranges.pointee.nb_ranges)).compactMap { index in
+                ranges.pointee.range[index].map { AVOptionRange(native: $0.pointee) }
+            }, Int(ranges.pointee.nb_components))
+        }
+    }
+    
+    /**
+     Returns whether the specified option is currently set to its default value.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: `true` if the option is set to its default value; otherwise, `false`.
+     - Throws: An error if the option cannot be found or its value cannot be queried.
+     */
+    func isSetToDefault(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> Bool {
+        try withUnsafeObjectPointer { ptr in
+            let result = av_opt_is_set_to_default_by_name(ptr, key, searchFlags.rawValue)
+            try throwIfFail(result)
+            return result != 0
+        }
+    }
+    
+    /**
+     Sets multiple options from a dictionary of option names and values.
+
+     Successfully applied options are removed from the dictionary. The returned dictionary contains any options that were not recognized or could not be applied.
+
+     - Parameters:
+       - options: A dictionary containing the option names and values to set.
+       - searchFlags: The flags that control how the options are searched.
+     - Returns: A dictionary containing the options that were not applied.
+     - Throws: An error if applying the options fails.
+     */
+    @discardableResult
+    func set(options: [String: String], searchFlags: AVOption.SearchFlag = .children) throws -> [String: String] {
+        try withUnsafeObjectPointer { ptr in
+            var dict = options.avDict
+            defer { av_dict_free(&dict) }
+            try throwIfFail(av_opt_set_dict2(ptr, &dict, searchFlags.rawValue))
+            return dict?.avDict ?? [:]
+        }
+    }
+    
+    func option(forKey key: String, unit: String? = nil, requiredFlags: AVOption.Flag = [], searchFlags: AVOption.SearchFlag = .children) -> AVOption? {
+        withUnsafeObjectPointer { ptr in
+            key.withCString { key in
+                if let unit {
+                    return unit.withCString { av_opt_find(ptr, key, $0, requiredFlags.rawValue, searchFlags.rawValue) }
+                } else {
+                    return av_opt_find(ptr, key, nil, requiredFlags.rawValue, searchFlags.rawValue)
+                }
+            }.map { AVOption(native: $0.pointee) }
+        }
+    }
 }
 
 public extension AVOptionSupport {
-    /// Returns the string value associated with the specified key.
-    ///
-    /// - Parameters:
-    ///   - key: The name of the option to get.
-    ///   - searchFlags: The flags passed to av_opt_find2.
-    /// - Returns: The string value associated with the specified key.
-    /// - Throws: AVError
+    /**
+     Returns the string value for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The string value of the option.
+     - Throws: An error if the option cannot be found or its value cannot be retrieved.
+     */
     func string(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> String {
         try withUnsafeObjectPointer { ptr in
             var value: UnsafeMutablePointer<UInt8>!
@@ -499,40 +537,121 @@ public extension AVOptionSupport {
         }
     }
     
+    /**
+     Returns the string values for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The string values of the option.
+     - Throws: An error if the option cannot be found or its values cannot be retrieved.
+     */
     func stringValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [String] {
         let values: [UnsafeMutablePointer<CChar>?] = try array(for: key, type: .array(.string), initial: nil, searchFlags: searchFlags)
         defer { values.forEach { av_free($0) } }
         return values.compactMap { String(cString: $0) }
     }
     
+    /**
+     Returns the unsigned 32-bit integer value for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The unsigned 32-bit integer value of the option.
+     - Throws: An error if the option cannot be found or its value cannot be retrieved.
+     */
     func uint(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> UInt32 {
         try integer(forKey: key, searchFlags: searchFlags)
     }
     
+    /**
+     Returns the unsigned 32-bit integer values for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The unsigned 32-bit integer values of the option.
+     - Throws: An error if the option cannot be found or its values cannot be retrieved.
+     */
     func uintValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [UInt32] {
         try array(for: key, type: .array(.uInt), initial: 0, searchFlags: searchFlags)
     }
     
+    /**
+     Returns the unsigned 64-bit integer value for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The unsigned 64-bit integer value of the option.
+     - Throws: An error if the option cannot be found or its value cannot be retrieved.
+     */
     func uint64(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> UInt64 {
         try integer(forKey: key, searchFlags: searchFlags)
     }
     
+    /**
+     Returns the unsigned 64-bit integer values for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The unsigned 64-bit integer values of the option.
+     - Throws: An error if the option cannot be found or its values cannot be retrieved.
+     */
     func uint64Values(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [UInt64] {
         try array(for: key, type: .array(.uInt64), initial: 0, searchFlags: searchFlags)
     }
     
+    /**
+     Returns the signed 32-bit integer value for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The signed 32-bit integer value of the option.
+     - Throws: An error if the option cannot be found or its value cannot be retrieved.
+     */
     func int32(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> Int32 {
         try integer(forKey: key, searchFlags: searchFlags)
     }
     
+    /**
+     Returns the signed 32-bit integer values for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The signed 32-bit integer values of the option.
+     - Throws: An error if the option cannot be found or its values cannot be retrieved.
+     */
     func int32Values(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [Int32] {
         try array(for: key, type: .array(.int), initial: 0, searchFlags: searchFlags)
     }
     
+    /**
+     Returns the signed 64-bit integer value for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The signed 64-bit integer value of the option.
+     - Throws: An error if the option cannot be found or its value cannot be retrieved.
+     */
     func int64(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> Int64 {
         try integer(forKey: key, searchFlags: searchFlags)
     }
     
+    /**
+     Returns the signed 64-bit integer values for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The signed 64-bit integer values of the option.
+     - Throws: An error if the option cannot be found or its values cannot be retrieved.
+     */
     func int64Values(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [Int64] {
         try array(for: key, type: .array(.int64), initial: 0, searchFlags: searchFlags)
     }
@@ -545,21 +664,41 @@ public extension AVOptionSupport {
         }
     }
     
+    /**
+     Returns the flag value for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The flag value of the option.
+     - Throws: An error if the option cannot be found or its value cannot be retrieved.
+     */
     func flags(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> AVOption.FlagValue {
         try .init(rawValue: integer(forKey: key, searchFlags: searchFlags))
     }
     
+    /**
+     Returns the flag values for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The flag values of the option.
+     - Throws: An error if the option cannot be found or its values cannot be retrieved.
+     */
     func flagsValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [AVOption.FlagValue] {
         try array(as: UInt32.self, for: key, type: .array(.flags), initial: 0, searchFlags: searchFlags).map { .init(rawValue: $0) }
     }
 
-    /// Returns the double value associated with the specified key.
-    ///
-    /// - Parameters:
-    ///   - key: The name of the option to get.
-    ///   - searchFlags: The flags passed to av_opt_find2.
-    /// - Returns: The double value associated with the specified key.
-    /// - Throws: AVError
+    /**
+     Returns the double-precision floating-point value for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The double-precision floating-point value of the option.
+     - Throws: An error if the option cannot be found or its value cannot be retrieved.
+     */
     func double(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> Double {
         try withUnsafeObjectPointer { ptr in
             var value: Double = 0
@@ -568,33 +707,80 @@ public extension AVOptionSupport {
         }
     }
     
+    /**
+     Returns the double-precision floating-point values for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The double-precision floating-point values of the option.
+     - Throws: An error if the option cannot be found or its values cannot be retrieved.
+     */
     func doubleValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [Double] {
         try array(for: key, type: .array(.double), initial: 0, searchFlags: searchFlags)
     }
     
+    /**
+     Returns the single-precision floating-point value for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The single-precision floating-point value of the option.
+     - Throws: An error if the option cannot be found or its value cannot be retrieved.
+     */
     func float(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> Float {
         try Float(double(forKey: key, searchFlags: searchFlags))
     }
     
+    /**
+     Returns the single-precision floating-point values for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The single-precision floating-point values of the option.
+     - Throws: An error if the option cannot be found or its values cannot be retrieved.
+     */
     func floatValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [Float] {
         try array(for: key, type: .array(.float), initial: 0, searchFlags: searchFlags)
     }
     
+    /**
+     Returns the Boolean value for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The Boolean value of the option.
+     - Throws: An error if the option cannot be found or its value cannot be retrieved.
+     */
     func bool(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> Bool {
         try integer(forKey: key, searchFlags: searchFlags, as: Int64.self) != 0
     }
     
+    /**
+     Returns the Boolean values for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The Boolean values of the option.
+     - Throws: An error if the option cannot be found or its values cannot be retrieved.
+     */
     func boolValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [Bool] {
         try array(as: Int32.self, for: key, type: .array(.bool), initial: 0, searchFlags: searchFlags).map { $0 != 0 }
     }
 
-    /// Returns the rational value associated with the specified key.
-    ///
-    /// - Parameters:
-    ///   - key: The name of the option to get.
-    ///   - searchFlags: The flags passed to av_opt_find2.
-    /// - Returns: The rational value associated with the specified key.
-    /// - Throws: AVError
+    /**
+     Returns the rational value for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The rational value of the option.
+     - Throws: An error if the option cannot be found or its value cannot be retrieved.
+     */
     func rational(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> AVRational {
         try withUnsafeObjectPointer { ptr in
             var value = AVRational(num: 0, den: 0)
@@ -603,17 +789,28 @@ public extension AVOptionSupport {
         }
     }
     
+    /**
+     Returns the rational values for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The rational values of the option.
+     - Throws: An error if the option cannot be found or its values cannot be retrieved.
+     */
     func rationalValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [AVRational] {
         try array(for: key, type: .array(.rational), initial: AVRational(num: 0, den: 1), searchFlags: searchFlags)
     }
 
-    /// Returns the image size associated with the specified key.
-    ///
-    /// - Parameters:
-    ///   - key: The name of the option to get.
-    ///   - searchFlags: The flags passed to av_opt_find2.
-    /// - Returns: The image size associated with the specified key.
-    /// - Throws: AVError
+    /**
+     Returns the image size for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The image size of the option.
+     - Throws: An error if the option cannot be found or its value cannot be retrieved.
+     */
     func imageSize(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> AVImageSize {
         try withUnsafeObjectPointer { ptr in
             var width: Int32 = 0
@@ -623,6 +820,15 @@ public extension AVOptionSupport {
         }
     }
     
+    /**
+     Returns the image sizes for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The image sizes of the option.
+     - Throws: An error if the option cannot be found or its values cannot be retrieved.
+     */
     func imageSizeValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [AVImageSize] {
         let values: [Int32] = try array(for: key, type: .array(.imageSize), initial: 0, storageElementsPerValue: 2, searchFlags: searchFlags)
         return stride(from: 0, to: values.count, by: 2).map {
@@ -630,13 +836,15 @@ public extension AVOptionSupport {
         }
     }
 
-    /// Returns the pixel format associated with the specified key.
-    ///
-    /// - Parameters:
-    ///   - key: The name of the option to get.
-    ///   - searchFlags: The flags passed to av_opt_find2.
-    /// - Returns: The pixel format associated with the specified key.
-    /// - Throws: AVError
+    /**
+     Returns the pixel format for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The pixel format of the option.
+     - Throws: An error if the option cannot be found or its value cannot be retrieved.
+     */
     func pixelFormat(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> AVPixelFormat {
         try withUnsafeObjectPointer { ptr in
             var value = AVPixelFormat.none
@@ -645,17 +853,28 @@ public extension AVOptionSupport {
         }
     }
     
+    /**
+     Returns the pixel formats for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The pixel formats of the option.
+     - Throws: An error if the option cannot be found or its values cannot be retrieved.
+     */
     func pixelFormatValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [AVPixelFormat] {
         try array(for: key, type: .array(.pixelFormat), initial: .none, searchFlags: searchFlags)
     }
 
-    /// Returns the sample format associated with the specified key.
-    ///
-    /// - Parameters:
-    ///   - key: The name of the option to get.
-    ///   - searchFlags: The flags passed to av_opt_find2.
-    /// - Returns: The sample format associated with the specified key.
-    /// - Throws: AVError
+    /**
+     Returns the sample format for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The sample format of the option.
+     - Throws: An error if the option cannot be found or its value cannot be retrieved.
+     */
     func sampleFormat(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> AVSampleFormat {
         try withUnsafeObjectPointer { ptr in
             var value = AV_SAMPLE_FMT_NONE
@@ -664,17 +883,28 @@ public extension AVOptionSupport {
         }
     }
     
+    /**
+     Returns the sample formats for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The sample formats of the option.
+     - Throws: An error if the option cannot be found or its values cannot be retrieved.
+     */
     func sampleFormatValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [AVSampleFormat] {
         try array(for: key, type: .array(.sampleFormat), initial: AV_SAMPLE_FMT_NONE, searchFlags: searchFlags).map(AVSampleFormat.init(native:))
     }
 
-    /// Returns the video rate associated with the specified key.
-    ///
-    /// - Parameters:
-    ///   - key: The name of the option to get.
-    ///   - searchFlags: The flags passed to av_opt_find2.
-    /// - Returns: The video rate associated with the specified key.
-    /// - Throws: AVError
+    /**
+     Returns the video rate for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The video rate of the option.
+     - Throws: An error if the option cannot be found or its value cannot be retrieved.
+     */
     func videoRate(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> AVRational {
         try withUnsafeObjectPointer { ptr in
             var value = AVRational(num: 0, den: 0)
@@ -683,17 +913,28 @@ public extension AVOptionSupport {
         }
     }
     
+    /**
+     Returns the video rates for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The video rates of the option.
+     - Throws: An error if the option cannot be found or its values cannot be retrieved.
+     */
     func videoRateValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [AVRational] {
         try array(for: key, type: .array(.videoRate), initial: AVRational(num: 0, den: 1), searchFlags: searchFlags)
     }
 
-    /// Returns the channel layout associated with the specified key.
-    ///
-    /// - Parameters:
-    ///   - key: The name of the option to get.
-    ///   - searchFlags: The flags passed to av_opt_find2.
-    /// - Returns: The channel layout associated with the specified key.
-    /// - Throws: AVError
+    /**
+     Returns the channel layout for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The channel layout of the option.
+     - Throws: An error if the option cannot be found or its value cannot be retrieved.
+     */
     func channelLayout(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> AVChannelLayout {
         try withUnsafeObjectPointer { ptr in
             var value = AVChannelLayout()
@@ -702,11 +943,28 @@ public extension AVOptionSupport {
         }
     }
     
+    /**
+     Returns the channel layouts for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The channel layouts of the option.
+     - Throws: An error if the option cannot be found or its values cannot be retrieved.
+     */
     func channelLayoutValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [AVChannelLayout] {
         try array(for: key, type: .array(.channelLayout), searchFlags: searchFlags)
     }
     
-    /// Returns the dictionary value associated with the specified key.
+    /**
+     Returns the dictionary value for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The dictionary value of the option.
+     - Throws: An error if the option cannot be found or its value cannot be retrieved.
+     */
     func dictionary(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [String: String] {
         try withUnsafeObjectPointer { ptr in
             var dict: OpaquePointer?
@@ -716,20 +974,56 @@ public extension AVOptionSupport {
         }
     }
     
+    /**
+     Returns the dictionary values for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The dictionary values of the option.
+     - Throws: An error if the option cannot be found or its values cannot be retrieved.
+     */
     func dictionaryValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [[String: String]] {
         var dictionaries: [OpaquePointer?] = try array(for: key, type: .array(.dict), searchFlags: searchFlags)
         defer { dictionaries.indices.forEach { av_dict_free(&dictionaries[$0]) } }
-        return dictionaries.map({ $0?.avDict ?? [:] })
+        return dictionaries.map { $0?.avDict ?? [:] }
     }
     
+    /**
+     Returns the duration for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The duration value of the option.
+     - Throws: An error if the option cannot be found or its value cannot be retrieved.
+     */
     func duration(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> Int64 {
         try integer(forKey: key, searchFlags: searchFlags, as: Int64.self)
     }
     
+    /**
+     Returns the durations for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The duration values of the option.
+     - Throws: An error if the option cannot be found or its values cannot be retrieved.
+     */
     func durationValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [Int64] {
         try array(for: key, type: .array(.duration), initial: 0, searchFlags: searchFlags)
     }
     
+    /**
+     Returns the binary data for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The binary data of the option.
+     - Throws: An error if the option cannot be found, its value cannot be retrieved, or the binary data is invalid.
+     */
     func data(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> Data {
         try withUnsafeObjectPointer { ptr in
             var value: UnsafeMutablePointer<UInt8>?
@@ -774,8 +1068,6 @@ public extension AVOptionSupport {
     }
 }
 
-// MARK: - Option Setter
-
 public extension AVOptionSupport {
     /// Sets the value of the specified key.
     ///
@@ -803,27 +1095,58 @@ public extension AVOptionSupport {
         }
     }
     
+    /**
+     Sets the string values for the specified option.
+
+     - Parameters:
+       - values: The string values to set.
+       - key: The name of the option.
+       - startIndex: The index of the first array element to set.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its values cannot be set.
+     */
     func set(_ values: [String], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         let cStrings = values.map { strdup($0) }
         defer { cStrings.forEach { free($0) } }
         try set(cStrings, for: key, startIndex: startIndex, type: .array(.string), searchFlags: searchFlags)
     }
     
+    /**
+     Sets the Boolean value for the specified option.
+
+     - Parameters:
+       - value: The Boolean value to set.
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its value cannot be set.
+     */
     func set(_ value: Bool, forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(Int32(value ? 1 : 0), forKey: key, searchFlags: searchFlags)
     }
     
+    /**
+     Sets the Boolean values for the specified option.
+
+     - Parameters:
+       - values: The Boolean values to set.
+       - key: The name of the option.
+       - startIndex: The index of the first array element to set.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its values cannot be set.
+     */
     func set(_ values: [Bool], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(values.map { Int32($0 ? 1 : 0) }, for: key, startIndex: startIndex, type: .array(.bool), searchFlags: searchFlags)
     }
+    
+    /**
+     Sets the integer value for the specified option.
 
-    /// Sets the value of the specified key to the integer value.
-    ///
-    /// - Parameters:
-    ///   - value: The integer value.
-    ///   - key: The key with which to associate the value.
-    ///   - searchFlags: The flags passed to `av_opt_find2`.
-    /// - Throws: AVError
+     - Parameters:
+       - value: The integer value to set.
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found, the value cannot be represented as a signed 64-bit integer, or the value cannot be set.
+     */
     func set<T: FixedWidthInteger>(_ value: T, forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
         guard let value = Int64(exactly: value) else {
             throw AVError.invalidValue
@@ -833,72 +1156,183 @@ public extension AVOptionSupport {
         }
     }
     
+    /**
+     Sets the unsigned 32-bit integer values for the specified option.
+
+     - Parameters:
+       - values: The unsigned 32-bit integer values to set.
+       - key: The name of the option.
+       - startIndex: The index of the first array element to set.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its values cannot be set.
+     */
     func set(_ values: [UInt32], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(values, for: key, startIndex: startIndex, type: .array(.uInt), searchFlags: searchFlags)
     }
     
+    /**
+     Sets the unsigned 64-bit integer values for the specified option.
+
+     - Parameters:
+       - values: The unsigned 64-bit integer values to set.
+       - key: The name of the option.
+       - startIndex: The index of the first array element to set.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its values cannot be set.
+     */
     func set(_ values: [UInt64], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(values, for: key, startIndex: startIndex, type: .array(.uInt64), searchFlags: searchFlags)
     }
     
+    /**
+     Sets the signed 32-bit integer values for the specified option.
+
+     - Parameters:
+       - values: The signed 32-bit integer values to set.
+       - key: The name of the option.
+       - startIndex: The index of the first array element to set.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its values cannot be set.
+     */
     func set(_ values: [Int32], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(values, for: key, startIndex: startIndex, type: .array(.int), searchFlags: searchFlags)
     }
     
+    /**
+     Sets the signed 64-bit integer values for the specified option.
+
+     - Parameters:
+       - values: The signed 64-bit integer values to set.
+       - key: The name of the option.
+       - startIndex: The index of the first array element to set.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its values cannot be set.
+     */
     func set(_ values: [Int64], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(values, for: key, startIndex: startIndex, type: .array(.int64), searchFlags: searchFlags)
     }
     
+    /**
+     Sets the flag value for the specified option.
+
+     - Parameters:
+       - value: The flag value to set.
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its value cannot be set.
+     */
     func set(_ value: AVOption.FlagValue, forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(value.rawValue, forKey: key, searchFlags: searchFlags)
     }
     
+    /**
+     Sets the flag values for the specified option.
+
+     - Parameters:
+       - values: The flag values to set.
+       - key: The name of the option.
+       - startIndex: The index of the first array element to set.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its values cannot be set.
+     */
     func set(_ values: [AVOption.FlagValue], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(values.map(\.rawValue), for: key, startIndex: startIndex, type: .array(.flags), searchFlags: searchFlags)
     }
 
-    /// Sets the value of the specified key to the double value.
-    ///
-    /// - Parameters:
-    ///   - value: The double value.
-    ///   - key: The key with which to associate the value.
-    ///   - searchFlags: The flags passed to `av_opt_find2`.
-    /// - Throws: AVError
+    /**
+     Sets the double-precision floating-point value for the specified option.
+
+     - Parameters:
+       - value: The double-precision floating-point value to set.
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its value cannot be set.
+     */
     func set(_ value: Double, forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
         try withUnsafeObjectPointer { ptr in
             try throwIfFail(av_opt_set_double(ptr, key, value, searchFlags.rawValue))
         }
     }
     
+    /**
+     Sets the double-precision floating-point values for the specified option.
+
+     - Parameters:
+       - values: The double-precision floating-point values to set.
+       - key: The name of the option.
+       - startIndex: The index of the first array element to set.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its values cannot be set.
+     */
     func set(_ values: [Double], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(values, for: key, startIndex: startIndex, type: .array(.double), searchFlags: searchFlags)
     }
     
+    /**
+     Sets the single-precision floating-point value for the specified option.
+
+     - Parameters:
+       - value: The single-precision floating-point value to set.
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its value cannot be set.
+     */
     func set(_ value: Float, forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
-       try set(Double(value), forKey: key, searchFlags: searchFlags)
+        try set(Double(value), forKey: key, searchFlags: searchFlags)
     }
     
+    /**
+     Sets the single-precision floating-point values for the specified option.
+
+     - Parameters:
+       - values: The single-precision floating-point values to set.
+       - key: The name of the option.
+       - startIndex: The index of the first array element to set.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its values cannot be set.
+     */
     func set(_ values: [Float], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(values, for: key, startIndex: startIndex, type: .array(.float), searchFlags: searchFlags)
     }
 
-    /// Sets the value of the specified key to the rational value.
-    ///
-    /// - Parameters:
-    ///   - value: The rational value.
-    ///   - key: The key with which to associate the value.
-    ///   - searchFlags: The flags passed to `av_opt_find2`.
-    /// - Throws: AVError
+    /**
+     Sets the rational value for the specified option.
+
+     - Parameters:
+       - value: The rational value to set.
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its value cannot be set.
+     */
     func set(_ value: AVRational, forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
         try withUnsafeObjectPointer { ptr in
             try throwIfFail(av_opt_set_q(ptr, key, value, searchFlags.rawValue))
         }
     }
     
+    /**
+     Sets the rational values for the specified option.
+
+     - Parameters:
+       - values: The rational values to set.
+       - key: The name of the option.
+       - startIndex: The index of the first array element to set.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its values cannot be set.
+     */
     func set(_ values: [AVRational], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(values, for: key, startIndex: startIndex, type: .array(.rational), searchFlags: searchFlags)
     }
     
+    /**
+     Sets the color value for the specified option.
+
+     - Parameters:
+       - value: The color value to set.
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its value cannot be set.
+     */
     func set(_ value: AVColor, forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
         try value.rgbaBytes.withUnsafeBufferPointer { buffer in
             try withUnsafeObjectPointer { ptr in
@@ -907,16 +1341,36 @@ public extension AVOptionSupport {
         }
     }
     
+    /**
+     Sets the color values for the specified option.
+
+     - Parameters:
+       - values: The color values to set.
+       - key: The name of the option.
+       - startIndex: The index of the first array element to set.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its values cannot be set.
+     */
     func set(_ values: [AVColor], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(values.flatMap(\.rgbaBytes), for: key, startIndex: startIndex, type: .array(.color), storageCountPerElement: 4, searchFlags: searchFlags)
     }
 
+    
     private func set(_ value: UnsafeBufferPointer<UInt8>, forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
         try withUnsafeObjectPointer { ptr in
             try throwIfFail(av_opt_set_bin(ptr, key, value.baseAddress, Int32(value.count), searchFlags.rawValue))
         }
     }
     
+    /**
+     Sets the binary data for the specified option.
+
+     - Parameters:
+       - value: The binary data to set.
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its value cannot be set.
+     */
     func set(_ value: Data, forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
         try value.withUnsafeBytes { bytes in
             let buffer = bytes.bindMemory(to: UInt8.self)
@@ -928,81 +1382,131 @@ public extension AVOptionSupport {
         }
     }
 
-    /// Sets the value of the specified key to the image size.
-    ///
-    /// - Parameters:
-    ///   - imageSize: The image size.
-    ///   - key: The key with which to associate the value.
-    ///   - searchFlags: The flags passed to `av_opt_find2`.
-    /// - Throws: AVError
+    /**
+     Sets the image size for the specified option.
+
+     - Parameters:
+       - value: The image size to set.
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its value cannot be set.
+     */
     func set(_ value: AVImageSize, forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
         try withUnsafeObjectPointer { ptr in
             try throwIfFail(av_opt_set_image_size(ptr, key, Int32(value.width), Int32(value.height), searchFlags.rawValue))
         }
     }
     
+    /**
+     Sets the image sizes for the specified option.
+
+     - Parameters:
+       - values: The image sizes to set.
+       - key: The name of the option.
+       - startIndex: The index of the first array element to set.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its values cannot be set.
+     */
     func set(_ values: [AVImageSize], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(values.flatMap(\.nativeValues), for: key, startIndex: startIndex, type: .array(.imageSize), storageCountPerElement: 2, searchFlags: searchFlags)
     }
 
-    /// Sets the value of the specified key to the pixel format.
-    ///
-    /// - Parameters:
-    ///   - value: The pixel format.
-    ///   - key: The key with which to associate the value.
-    ///   - searchFlags: The flags passed to `av_opt_find2`.
-    /// - Throws: AVError
+    /**
+     Sets the pixel format for the specified option.
+
+     - Parameters:
+       - value: The pixel format to set.
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its value cannot be set.
+     */
     func set(_ value: AVPixelFormat, forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
         try withUnsafeObjectPointer { ptr in
             try throwIfFail(av_opt_set_pixel_fmt(ptr, key, value, searchFlags.rawValue))
         }
     }
     
+    /**
+     Sets the pixel formats for the specified option.
+
+     - Parameters:
+       - values: The pixel formats to set.
+       - key: The name of the option.
+       - startIndex: The index of the first array element to set.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its values cannot be set.
+     */
     func set(_ values: [AVPixelFormat], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(values, for: key, startIndex: startIndex, type: .array(.pixelFormat), searchFlags: searchFlags)
     }
 
-    /// Sets the value of the specified key to the sample format.
-    ///
-    /// - Parameters:
-    ///   - value: The sample format.
-    ///   - key: The key with which to associate the value.
-    ///   - searchFlags: The flags passed to `av_opt_find2`.
-    /// - Throws: AVError
+    /**
+     Sets the sample format for the specified option.
+
+     - Parameters:
+       - value: The sample format to set.
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its value cannot be set.
+     */
     func set(_ value: AVSampleFormat, forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
         try withUnsafeObjectPointer { ptr in
             try throwIfFail(av_opt_set_sample_fmt(ptr, key, value.native, searchFlags.rawValue))
         }
     }
     
+    /**
+     Sets the sample formats for the specified option.
+
+     - Parameters:
+       - values: The sample formats to set.
+       - key: The name of the option.
+       - startIndex: The index of the first array element to set.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its values cannot be set.
+     */
     func set(_ values: [AVSampleFormat], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(values, for: key, startIndex: startIndex, type: .array(.sampleFormat), searchFlags: searchFlags)
     }
 
-    /// Sets the value of the specified key to the video rate.
-    ///
-    /// - Parameters:
-    ///   - value: The video rate.
-    ///   - key: The key with which to associate the value.
-    ///   - searchFlags: The flags passed to `av_opt_find2`.
-    /// - Throws: AVError
+    /**
+     Sets the video rate for the specified option.
+
+     - Parameters:
+       - value: The video rate to set.
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its value cannot be set.
+     */
     func set(videoRate value: AVRational, forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
         try withUnsafeObjectPointer { ptr in
             try throwIfFail(av_opt_set_video_rate(ptr, key, value, searchFlags.rawValue))
         }
     }
     
+    /**
+     Sets the video rates for the specified option.
+
+     - Parameters:
+       - videoRates: The video rates to set.
+       - key: The name of the option.
+       - startIndex: The index of the first array element to set.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its values cannot be set.
+     */
     func set(videoRates: [AVRational], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(videoRates, for: key, startIndex: startIndex, type: .array(.videoRate), searchFlags: searchFlags)
     }
 
-    /// Sets the value of the specified key to the channel layout.
-    ///
-    /// - Parameters:
-    ///   - value: The channel layout.
-    ///   - key: The key with which to associate the value.
-    ///   - searchFlags: The flags passed to `av_opt_find2`.
-    /// - Throws: AVError
+    /**
+     Sets the channel layout for the specified option.
+
+     - Parameters:
+       - value: The channel layout to set.
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its value cannot be set.
+     */
     func set(_ value: AVChannelLayout, forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
         try withUnsafeObjectPointer { ptr in
             try withUnsafePointer(to: value) { chl in
@@ -1011,30 +1515,46 @@ public extension AVOptionSupport {
         }
     }
     
+    /**
+     Sets the channel layouts for the specified option.
+
+     - Parameters:
+       - values: The channel layouts to set.
+       - key: The name of the option.
+       - startIndex: The index of the first array element to set.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its values cannot be set.
+     */
     func set(_ values: [AVChannelLayout], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(values, for: key, startIndex: startIndex, type: .array(.channelLayout), searchFlags: searchFlags)
     }
 
-    /// Sets the value of the specified key to the integer array.
-    ///
-    /// - Parameters:
-    ///   - value: The integer array.
-    ///   - key: The key with which to associate the value.
-    ///   - searchFlags: The flags passed to `av_opt_find2`.
-    /// - Throws: AVError
+    /**
+     Sets the binary representation of the integer values for the specified option.
+
+     The values are passed using their native in-memory byte representation.
+
+     - Parameters:
+       - value: The integer values whose binary representation is set.
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its value cannot be set.
+     */
     func set<T: FixedWidthInteger>(binary value: [T], forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
         try value.withUnsafeBytes { bytes in
             try set(bytes.bindMemory(to: UInt8.self), forKey: key, searchFlags: searchFlags)
         }
     }
 
-    /// Sets the value of the specified key to the dictionary value.
-    ///
-    /// - Parameters:
-    ///   - value: The dictionary value.
-    ///   - key: The key with which to associate the value.
-    ///   - searchFlags: The flags passed to `av_opt_find2`.
-    /// - Throws: AVError
+    /**
+     Sets the dictionary value for the specified option.
+
+     - Parameters:
+       - value: The dictionary value to set.
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its value cannot be set.
+     */
     func set(_ value: [String: String], forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
         try withUnsafeObjectPointer { ptr in
             var dict = value.avDict
@@ -1043,12 +1563,32 @@ public extension AVOptionSupport {
         }
     }
     
+    /**
+     Sets the dictionaries for the specified option.
+
+     - Parameters:
+       - values: The dictionary values to set.
+       - key: The name of the option.
+       - startIndex: The index of the first array element to set.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its values cannot be set.
+     */
     func set(_ values: [[String: String]], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         var dictionaries = values.map(\.avDict)
         defer { dictionaries.indices.forEach { av_dict_free(&dictionaries[$0]) } }
         try set(dictionaries, for: key, startIndex: startIndex, type: .array(.dict), searchFlags: searchFlags)
     }
     
+    /**
+     Sets the duration values for the specified option.
+
+     - Parameters:
+       - values: The duration values to set.
+       - key: The name of the option.
+       - startIndex: The index of the first array element to set.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its values cannot be set.
+     */
     func set(durations values: [Int64], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(values, for: key, startIndex: startIndex, type: .array(.duration), searchFlags: searchFlags)
     }
@@ -1085,7 +1625,7 @@ private extension UnsafePointer<UInt8> {
     }
 }
 
-fileprivate extension FixedWidthInteger {
+private extension FixedWidthInteger {
     init(clamping value: Double) {
         if value.isNaN {
             self = 0
