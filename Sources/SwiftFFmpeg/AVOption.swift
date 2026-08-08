@@ -156,7 +156,7 @@ public struct AVOption {
             case .binary, .dict, .const:
                 self.defaultValue = nil
             }
-            if let values = array.values {
+            if let values = String(cString: array.def), !values.isEmpty {
                 Swift.print(name, "VAL:", values)
             }
         }
