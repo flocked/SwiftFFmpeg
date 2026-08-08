@@ -15,111 +15,120 @@ typealias CAVFormatContext = CFFmpeg.AVFormatContext
 /// Format I/O context.
 public final class AVFormatContext {
     var native: UnsafeMutablePointer<CAVFormatContext>!
-    var ioContext: AVIOContext?
+    var _ioContext: AVIOContext?
 
     /// Create an `AVFormatContext`.
     public init() {
         self.native = avformat_alloc_context()
     }
 
-    /// Open an input stream and read the header. The codecs are not opened.
-    ///
-    /// - Parameters:
-    ///   - url: URL of the stream to open.
-    ///   - format: If non-nil, this parameter forces a specific input format. Otherwise the format is autodetected.
-    ///   - options: A dictionary filled with `AVFormatContext` and demuxer-private options.
-    /// - Throws: AVError
-    public init(
-        url: String,
-        format: AVInputFormat? = nil,
-        options: [String: String]? = nil
-    ) throws {
-        var pm: OpaquePointer? = options?.avDict
+    /**
+     Opens an input and creates a format context.
+
+     - Parameters:
+       - url: The URL or file path of the input.
+       - format: The input format, or `nil` to automatically detect the format.
+       - options: The options to use when opening the input.
+     */
+    public init(url: String, format: AVInputFormat? = nil, options: [String: String]? = nil) throws {
+        var pm = options?.avDict
         defer { av_dict_free(&pm) }
         try avformat_open_input(&native, url, format?.native, &pm).throwIfFail()
-        dumpUnrecognizedOptions(pm)
+        pm?.dumpUnrecognizedOptions()
     }
 
-    public convenience init(
-        url: URL,
-        format: AVInputFormat? = nil,
-        options: [String: String]? = nil
-    ) throws {
-        try self.init(url: url.isFileURL ? url.path : url.absoluteString, format: format, options: options)
+    /**
+     Opens an input and creates a format context.
+
+     - Parameters:
+       - url: The URL of the input.
+       - format: The input format, or `nil` to automatically detect the format.
+       - options: The options to use when opening the input.
+     */
+    public convenience init(url: URL, format: AVInputFormat? = nil, options: [String: String]? = nil) throws {
+        try self.init(url: url.pathOrURLString, format: format, options: options)
     }
 
-    /// Allocate an `AVFormatContext` for an output format.
-    ///
-    /// - Parameters:
-    ///   - format: the format to use for allocating the context, if `nil` formatName and filename are used instead
-    ///   - formatName: the name of output format to use for allocating the context, if `nil` filename is used instead
-    ///   - filename: the name of the filename to use for allocating the context, may be `nil`
-    /// - Throws: AVError
-    public init(
-        format: AVOutputFormat?,
-        formatName: String? = nil,
-        filename: String? = nil
-    ) throws {
-        try avformat_alloc_output_context2(&native, format?.native, formatName, filename).throwIfFail()
+    /**
+     Creates an output format context with the specified output format.
+
+     - Parameters:
+       - format: The output format.
+       - filename: The output filename, if available.
+     */
+    public init(format: AVOutputFormat, filename: String? = nil) throws {
+        try avformat_alloc_output_context2(&native, format.native, nil, filename).throwIfFail()
+    }
+
+    /**
+     Creates an output format context with the specified format name.
+
+     - Parameters:
+       - formatName: The short name of the output format.
+       - filename: The output filename, if available.
+     */
+    public init(formatName: String, filename: String? = nil) throws {
+        try avformat_alloc_output_context2(&native, nil, formatName, filename).throwIfFail()
+    }
+
+    /// Creates an output format context by determining the output format from the specified filename.
+    public init(filename: String) throws {
+        try avformat_alloc_output_context2(&native, nil, nil, filename).throwIfFail()
     }
 
     deinit {
         avformat_close_input(&native)
     }
 
-    /// Input or output URL.
-    ///
-    /// - demuxing: Set by `openInput(_ url:format:options:)`, initialized to an empty string
-    ///   if `url` parameter was `nil` in `openInput(_ url:format:options:)`.
-    /// - muxing: May be set by the caller before calling `writeHeader(options:)` to a string.
-    ///   Set to an empty string if it was `nil` in `writeHeader(options:)`.
+    /**
+     The input or output URL associated with the format context.
+
+     When demuxing, this value is set when the input is opened; when muxing, it may be set by the caller before writing the header.
+     */
     public var url: String? {
-        get { String(cString: native.pointee.url) }
+        get { native.pointee.url?.string }
         set { native.pointee.url = av_strdup(newValue) }
     }
 
-    /// I/O context.
-    ///
-    /// - demuxing: Either set by the user before `openInput(_ url:format:options:)` (then the user must close it manually)
-    ///   or set by `openInput(_ url:format:options:)`.
-    /// - muxing: Set by the user before `writeHeader(options:)`. The caller must take care of closing the IO context.
-    public var pb: AVIOContext? {
+    /**
+     The I/O context used to read or write media data.
+
+     When demuxing, the context may be provided by the caller before opening the input or created by libavformat; when muxing, it must normally be provided by the caller before writing the header.
+
+     The caller is responsible for closing an I/O context it provides.
+     */
+    public var ioContext: AVIOContext? {
         get { native.pointee.pb.map(AVIOContext.init(native:)) }
         set {
-            ioContext = newValue
-            return native.pointee.pb = newValue?.native
+            _ioContext = newValue
+            native.pointee.pb = newValue?.native
         }
     }
 
-    /// The number of streams in the file.
+    /// The number of streams in the format context.
     public var streamCount: Int {
         Int(native.pointee.nb_streams)
     }
 
-    /// The duration field can be estimated through various ways, and this field can be used
-    /// to know how the duration was estimated.
-    ///
-    /// - encoding: unused
-    /// - decoding: Read by user
+    /**
+     The method used to estimate the duration of the input.
+
+     This value is available when demuxing and indicates how libavformat determined the duration.
+     */
     public var durationEstimationMethod: AVDurationEstimationMethod {
         AVDurationEstimationMethod(rawValue: native.pointee.duration_estimation_method)
     }
 
-    /// A list of all streams in the file. New streams are created with `addStream(codec:)`.
-    ///
-    /// - demuxing: Streams are created by libavformat in `openInput(_ url:format:options:)`.
-    ///   If `AVFMTCTX_NOHEADER` is set in `ctx_flags`, then new streams may also appear in `readFrame(into:)`.
-    /// - muxing: Streams are created by the user before `writeHeader(options:)`.
+    /**
+     The streams in the format context.
+
+     When demuxing, streams are created by libavformat and additional streams may appear while reading packets for formats without a header; when muxing, streams are created by the caller before writing the header.
+     */
     public var streams: [AVStream] {
-        var list = [AVStream]()
-        for i in 0 ..< streamCount {
-            let stream = native.pointee.streams.advanced(by: i).pointee!
-            list.append(AVStream(native: stream))
-        }
-        return list
+        native.pointee.streams?.buffer(count: native.pointee.nb_streams).map { AVStream(native: $0!) } ?? []
     }
 
-    /// The streams grouped by language.
+    /// The streams grouped by their language metadata.
     public var streamsByLanguage: [String: [AVStream]] {
         streams.reduce(into: [:]) { dic, stream in
             guard let language = stream.language, !language.isEmpty else { return }
@@ -127,45 +136,38 @@ public final class AVFormatContext {
         }
     }
 
-    /// The flags used to modify the (de)muxer behaviour.
-    ///
-    /// - demuxing: Set by the caller before `openInput(_ url:format:options:)`.
-    /// - muxing: Set by the caller before `writeHeader(options:)`.
+    /**
+     The flags that control demuxing or muxing behavior.
+
+     Set this value before opening an input or writing an output header.
+     */
     public var flags: Flag {
         get { Flag(rawValue: native.pointee.flags) }
         set { native.pointee.flags = newValue.rawValue }
     }
 
-    /// Maximum size of the data read from input for determining the input container format.
-    ///
-    /// Demuxing only, set by the caller before avformat_open_input().
+    /**
+     The maximum amount of input data, in bytes, used to probe the container format.
+
+     This value applies only to demuxing and should be set before opening the input.
+     */
     public var probeSize: Int64 {
         get { native.pointee.probesize }
         set { native.pointee.probesize = newValue }
     }
 
-    /// When muxing, chapters are normally written in the file header,
-    /// so nb_chapters should normally be initialized before `writeHeader`
-    /// is called. Some muxers (e.g. mov and mkv) can also write chapters
-    /// in the trailer. To write chapters in the trailer, nb_chapters
-    /// must be zero when `writeHeader` is called and non-zero when
-    /// `writeTrailer` is called.
-    ///
-    /// - muxing: set by user
-    /// - demuxing: set by libavformat
+    /**
+     The chapters in the format context.
+
+     When demuxing, chapters are populated by libavformat; when muxing, chapters are provided by the caller and are normally set before writing the header.
+
+     Some muxers can write chapters in the trailer when no chapters are present while writing the header and chapters are added before writing the trailer.
+     */
     public var chapters: [AVChapter] {
-        get {
-            var list = [AVChapter]()
-            for i in 0 ..< native.pointee.nb_chapters {
-                let chapter = native.pointee.chapters.advanced(by: Int(i)).pointee!
-                list.append(AVChapter(native: chapter))
-            }
-            return list
-        }
+        get { native.pointee.chapters.buffer(count: native.pointee.nb_chapters).map({ AVChapter(native: $0!) }) }
         set {
             let cchapters = UnsafeMutablePointer<UnsafeMutablePointer<CAVChapter>?>.allocate(
-                capacity: newValue.count
-            )
+                capacity: newValue.count)
             for (index, chapter) in newValue.enumerated() {
                 let cchapter = UnsafeMutablePointer<CAVChapter>.allocate(capacity: 1)
                 cchapter.initialize(to: chapter.native)
@@ -176,53 +178,46 @@ public final class AVFormatContext {
         }
     }
 
-    /// Metadata that applies to the whole file.
-    ///
-    /// - demuxing: Set by libavformat in `openInput(_ url:format:options:)`.
-    /// - muxing: May be set by the caller before `writeHeader(options:)`.
+    /**
+     The metadata that applies to the entire file.
+
+     When demuxing, metadata is populated by libavformat; when muxing, it may be set by the caller before writing the header.
+     */
     public var metadata: [String: String] {
-        get {
-            var result: [String: String] = [:]
-            var entry: UnsafePointer<AVDictionaryEntry>?
-
-            while let next = av_dict_get(
-                native.pointee.metadata,
-                "",
-                entry,
-                AV_DICT_IGNORE_SUFFIX
-            ) {
-                result[String(cString: next.pointee.key)] =
-                    String(cString: next.pointee.value)
-
-                entry = UnsafePointer(next)
-            }
-
-            return result
-        }
-
-        set {
-            native.pointee.metadata = newValue.avDict
-        }
+        get { native.pointee.metadata?.avDict ?? [:] }
+        set { native.pointee.metadata.replace(with: newValue) }
     }
-    
-    /// Custom interrupt callbacks for the I/O layer.
-    ///
-    /// - demuxing: Set by the user before `openInput(_ url:format:options:)`.
-    /// - muxing: Set by the user before `writeHeader(options:)` (mainly useful for `AVOutputFormat.Flag.noFile` formats).
-    ///   The callback should also be passed to `avio_open2()` if it's used to open the file.
+
+    /**
+     The callback used to interrupt blocking I/O operations.
+
+     Set this callback before opening an input or writing an output header; when opening output I/O separately, pass the callback to the corresponding I/O operation as well.
+     */
     public var interruptCallback: AVIOInterruptCallback {
         get { native.pointee.interrupt_callback }
         set { native.pointee.interrupt_callback = newValue }
     }
 
-    /// Print detailed information about the input or output format, such as duration, bitrate, tracks,
-    /// container, programs, metadata, side data, codec and timebase.
-    ///
-    /// - Parameters:
-    ///   - url: the URL to print, such as source or destination file
-    ///   - isOutput: Select whether the specified context is an input(false) or output(true).
-    public func dumpFormat(url: String? = nil, isOutput: Bool = false) {
+    /**
+     Prints detailed information about the input or output format.
+
+     - Parameters:
+       - url: The URL displayed for the input or output, or `nil` to use the context's URL.
+       - isOutput: A Boolean value indicating whether the context represents an output.
+     */
+    public func dumpFormat(at url: String? = nil, isOutput: Bool = false) {
         av_dump_format(native, 0, url ?? self.url, isOutput ? 1 : 0)
+    }
+    
+    /**
+     Prints detailed information about the input or output format.
+
+     - Parameters:
+       - url: The URL displayed for the input or output.
+       - isOutput: A Boolean value indicating whether the context represents an output.
+     */
+    public func dumpFormat(at url: URL, isOutput: Bool = false) {
+        dumpFormat(at: url.pathOrURLString, isOutput: isOutput)
     }
 }
 
@@ -356,7 +351,7 @@ public extension AVFormatContext {
 
     /// The size of the file.
     var size: Int64 {
-        (try? pb?.size()) ?? 0
+        (try? ioContext?.size()) ?? 0
     }
 
     /// Open an input stream and read the header.
@@ -366,17 +361,15 @@ public extension AVFormatContext {
     ///   - format: If non-nil, this parameter forces a specific input format. Otherwise the format is autodetected.
     ///   - options: A dictionary filled with `AVFormatContext` and demuxer-private options.
     /// - Throws: AVError
-    func openInput(
-        _ url: String? = nil,
-        format: AVInputFormat? = nil,
-        options: [String: String]? = nil
-    ) throws {
-        var pm: OpaquePointer? = options?.avDict
+    func openInput(at url: String? = nil, format: AVInputFormat? = nil, options: [String: String]? = nil) throws {
+        var pm = options?.avDict
         defer { av_dict_free(&pm) }
-
         try avformat_open_input(&native, url, format?.native, &pm).throwIfFail()
-
-        dumpUnrecognizedOptions(pm)
+        pm?.dumpUnrecognizedOptions()
+    }
+    
+    func openInput(at url: URL, format: AVInputFormat? = nil, options: [String: String]? = nil) throws {
+        try openInput(at: url.pathOrURLString, format: format, options: options)
     }
 
     /// Read packets of a media file to get stream information.
@@ -394,20 +387,25 @@ public extension AVFormatContext {
     ///   will be filled with options that were not found.
     /// - Throws: AVError
     func findStreamInfo(options: [[String: String]]? = nil) throws {
-        if let options = options, !options.isEmpty {
-            var pms = [OpaquePointer?](repeating: nil, count: streamCount)
-            for (i, opt) in options.enumerated() where i < streamCount {
-                pms[i] = opt.avDict
-            }
-            try avformat_find_stream_info(native, &pms).throwIfFail()
-            for pm in pms {
-                var pm = pm
-                dumpUnrecognizedOptions(pm)
-                av_dict_free(&pm)
-            }
-        } else {
+        guard let options, !options.isEmpty else {
             try avformat_find_stream_info(native, nil).throwIfFail()
+            return
         }
+        
+        var dictionaries = [OpaquePointer?](repeating: nil, count: streams.count)
+
+        for (index, options) in options.prefix(dictionaries.count).enumerated() {
+            dictionaries[index] = options.avDict
+        }
+
+        defer {
+            for index in dictionaries.indices {
+                dictionaries[index]?.dumpUnrecognizedOptions()
+                av_dict_free(&dictionaries[index])
+            }
+        }
+
+        try avformat_find_stream_info(native, &dictionaries).throwIfFail()
     }
 
     /// Find the "best" stream in the file.
@@ -478,12 +476,12 @@ public extension AVFormatContext {
     ///     is automatically converted from `AVTimestamp.timebase` units to the stream specific timebase.
     ///   - flags: flags which select direction and seeking mode
     /// - Throws: AVError
-    func seekFrame(to timestamp: Int64, streamIndex: Int = -1, flags: SeekFlag = .backward) throws {
+    func seekFrame(to timestamp: Int64, streamIndex: Int = -1, flags: SeekFlag = []) throws {
         try av_seek_frame(native, Int32(streamIndex), timestamp, flags.rawValue).throwIfFail()
     }
     
     /// Seeks to the keyframe at the given timestamp in seconds.
-    func seekFrame(toSeconds seconds: Double, streamIndex: Int = -1, flags: SeekFlag = .backward) throws {
+    func seekFrame(toSeconds seconds: Double, streamIndex: Int = -1, flags: SeekFlag = []) throws {
         let timestamp = streamIndex >= 0 ? Int64(seconds / streams[streamIndex].timebase.toDouble) :  Int64(seconds * Double(AVTimestamp.timebase))
         try seekFrame(to: timestamp, streamIndex: streamIndex, flags: flags)
     }
@@ -556,8 +554,12 @@ public extension AVFormatContext {
     ///   - url: resource to access
     ///   - flags: flags which control how the resource indicated by url is to be opened
     /// - Throws: AVError
-    func openOutput(url: String, flags: AVIOContext.Flag) throws {
-        pb = try AVIOContext(url: url, flags: flags)
+    func openOutput(at url: String, flags: AVIOContext.Flag) throws {
+        ioContext = try AVIOContext(url: url, flags: flags)
+    }
+    
+    func openOutput(at url: URL, flags: AVIOContext.Flag) throws {
+        try openOutput(at: url.pathOrURLString, flags: flags)
     }
 
     /// Add a new stream to a media file.
@@ -580,10 +582,8 @@ public extension AVFormatContext {
     func writeHeader(options: [String: String]? = nil) throws {
         var pm = options?.avDict
         defer { av_dict_free(&pm) }
-
         try avformat_write_header(native, &pm).throwIfFail()
-
-        dumpUnrecognizedOptions(pm)
+        pm?.dumpUnrecognizedOptions()
     }
 
     /// Write a packet to an output media file.

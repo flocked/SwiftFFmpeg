@@ -27,7 +27,7 @@ public struct AVError: Error, Equatable {
         let buf = UnsafeMutablePointer<Int8>.allocate(capacity: Int(AV_ERROR_MAX_STRING_SIZE))
         buf.initialize(repeating: 0, count: Int(AV_ERROR_MAX_STRING_SIZE))
         defer { buf.deallocate() }
-        return String(cString: av_make_error_string(buf, Int(AV_ERROR_MAX_STRING_SIZE), code))
+        return av_make_error_string(buf, Int(AV_ERROR_MAX_STRING_SIZE), code).string
     }
 }
 

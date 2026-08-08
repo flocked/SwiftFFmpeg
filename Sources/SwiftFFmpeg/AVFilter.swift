@@ -20,7 +20,7 @@ public struct AVFilterPad {
 
   /// The name of the filter pad.
   public var name: String {
-    String(cString: avfilter_pad_get_name(native, Int32(index)))
+      avfilter_pad_get_name(native, Int32(index)).string
   }
 
   /// The media type of the filter pad.
@@ -60,7 +60,7 @@ public struct AVFilter {
 
   /// The name of the filter.
   public var name: String {
-    String(cString: native.pointee.name)
+      native.pointee.name.string
   }
 
   /// The inputs of the filter.
@@ -110,7 +110,7 @@ public struct AVFilter {
 extension AVFilter: CustomStringConvertible {
 
   public var description: String {
-    "\(name): \(String(cString: native.pointee.description) ?? "")"
+      "\(name): \(native.pointee.description?.string ?? "")"
   }
 }
 
@@ -216,7 +216,7 @@ public final class AVFilterContext {
 
   /// The name of this filter instance.
   public var name: String {
-    String(cString: native.pointee.name)
+      native.pointee.name.string
   }
 
   /// The input links of this filter instance.
@@ -275,12 +275,10 @@ public final class AVFilterContext {
   /// - Parameter args: A Dictionary filled with options for this filter.
   /// - Throws: AVError
   public func initialize(args: [String: String]) throws {
-    var pm: OpaquePointer? = args.avDict
+    var pm = args.avDict
     defer { av_dict_free(&pm) }
-
     try avfilter_init_dict(native, &pm).throwIfFail()
-
-    dumpUnrecognizedOptions(pm)
+      pm?.dumpUnrecognizedOptions()
   }
 
   /// Link two filters together.
@@ -648,7 +646,7 @@ extension AVFilterGraph: CustomStringConvertible {
   public var description: String {
     let cstr = avfilter_graph_dump(native, nil)
     defer { av_free(cstr) }
-    return String(cString: cstr!)
+      return cstr?.string ?? ""
   }
 }
 
@@ -692,7 +690,7 @@ public final class AVFilterInOut {
 
   /// The unique name for this input/output in the list.
   public var name: String {
-    get { String(cString: native.pointee.name) }
+      get { native.pointee.name.string }
     set { native.pointee.name = av_strdup(newValue) }
   }
 

@@ -153,10 +153,10 @@ public final class AVFrame {
         Int(native.pointee.nb_extended_buf)
     }
 
-    public var sideData: [AVFrameSideData] {
-        var list = [AVFrameSideData]()
+    public var sideData: [SideData] {
+        var list = [SideData]()
         for i in 0 ..< sideDataCount {
-            list.append(AVFrameSideData(native: native.pointee.side_data[i]!))
+            list.append(SideData(native: native.pointee.side_data[i]!))
         }
         return list
     }
@@ -184,22 +184,8 @@ public final class AVFrame {
     /// - encoding: Set by user.
     /// - decoding: Set by libavcodec.
     public var metadata: [String: String] {
-        get {
-            var dict = [String: String]()
-            var tag: UnsafeMutablePointer<AVDictionaryEntry>?
-            while let next = av_dict_get(native.pointee.metadata, "", tag, AV_DICT_IGNORE_SUFFIX) {
-                dict[String(cString: next.pointee.key)] = String(cString: next.pointee.value)
-                tag = next
-            }
-            return dict
-        }
-        set {
-            var ptr = native.pointee.metadata
-            for (k, v) in newValue {
-                av_dict_set(&ptr, k, v, AV_OPT_SEARCH_CHILDREN)
-            }
-            native.pointee.metadata = ptr
-        }
+        get { native.pointee.metadata?.avDict ?? [:] }
+        set { native.pointee.metadata.replace(with: newValue) }
     }
 
     /// A Boolean value indicating whether the frame data is writable.

@@ -13,7 +13,7 @@ private func makeMuxer(stream: AVStream) throws -> (AVFormatContext, AVStream) {
     "\(input[..<(input.firstIndex(of: ".") ?? input.endIndex)])_\(stream.index).\(stream.codecParameters.codecId.name)"
   print(output)
 
-  let muxer = try AVFormatContext(format: nil, filename: String(output))
+  let muxer = try AVFormatContext(filename: String(output))
   guard let ostream = muxer.addStream() else {
     fatalError("Failed allocating output stream.")
   }

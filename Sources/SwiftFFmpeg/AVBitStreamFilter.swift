@@ -32,7 +32,7 @@ public struct AVBitStreamFilter {
 
   /// The name of the filter.
   public var name: String {
-    String(cString: native.pointee.name)
+      native.pointee.name.string
   }
 
   /// The list of codec ids supported by the filter.

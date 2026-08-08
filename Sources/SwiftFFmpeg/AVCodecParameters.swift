@@ -113,7 +113,7 @@ public final class AVCodecParameters {
     }
     
     public var profileName: String? {
-        String(cString: avcodec_profile_name(native.pointee.codec_id, profile))
+        avcodec_profile_name(native.pointee.codec_id, profile)?.string
     }
     
     public var level: Int32 {

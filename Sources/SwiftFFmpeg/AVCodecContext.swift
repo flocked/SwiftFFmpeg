@@ -264,9 +264,8 @@ public final class AVCodecContext {
     public func openCodec(_ codec: AVCodec? = nil, options: [String: String]? = nil) throws {
         var pm = options?.avDict
         defer { av_dict_free(&pm) }
-
         try avcodec_open2(native, codec?.native ?? self.codec?.native, &pm).throwIfFail()
-        dumpUnrecognizedOptions(pm)
+        pm?.dumpUnrecognizedOptions()
     }
 
     /// Supply raw packet data as input to a decoder.

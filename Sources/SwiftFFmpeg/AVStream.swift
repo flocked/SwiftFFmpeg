@@ -118,16 +118,8 @@ public final class AVStream {
     
     /// The metadata of the stream.
     public var metadata: [String: String] {
-        get {
-            var dict = [String: String]()
-            var prev: UnsafeMutablePointer<AVDictionaryEntry>?
-            while let tag = av_dict_get(native.pointee.metadata, "", prev, AV_DICT_IGNORE_SUFFIX) {
-                dict[String(cString: tag.pointee.key)] = String(cString: tag.pointee.value)
-                prev = tag
-            }
-            return dict
-        }
-        set { native.pointee.metadata = newValue.avDict }
+        get { native.pointee.metadata?.avDict ?? [:] }
+        set { native.pointee.metadata.replace(with: newValue) }
     }
     
     /// Returns the metadata value for the specified key.

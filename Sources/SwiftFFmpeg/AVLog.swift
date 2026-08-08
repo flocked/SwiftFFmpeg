@@ -47,7 +47,7 @@ public enum AVLog {
         }
         av_log_set_callback { _, level, format, args in
             guard let format, let args, let handler = AVLog.handler else { return }
-            let message = NSString(format: String(cString: format), arguments: args) as String
+            let message = NSString(format: format.string, arguments: args) as String
             handler(Level(rawValue: level), message)
         }
     }

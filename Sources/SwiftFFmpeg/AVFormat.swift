@@ -33,22 +33,22 @@ public struct AVInputFormat {
     
     /// The short names of the format.
     public var names: [String] {
-        String(cString: native.pointee.name).components(separatedBy: ",")
+        native.pointee.name.string.components(separatedBy: ",")
     }
 
     /// The human-readable name of the format.
     public var longName: String {
-        String(cString: native.pointee.long_name)
+        native.pointee.long_name.string
     }
 
     /// The filename extensions supported by the format.
     public var extensions: [String] {
-        String(cString: native.pointee.extensions)?.components(separatedBy: ",") ?? []
+        native.pointee.extensions?.string.components(separatedBy: ",") ?? []
     }
 
     /// The MIME types supported by the format.
     public var mimeTypes: [String] {
-        String(cString: native.pointee.mime_type)?.components(separatedBy: ",") ?? []
+        native.pointee.mime_type?.string.components(separatedBy: ",") ?? []
     }
 
     /// The flags of the input format.
@@ -147,9 +147,7 @@ public struct AVOutputFormat {
         self.native = native
     }
     
-    /// Find `AVOutputFormat` based on the short name of the output format.
-    ///
-    /// - Parameter name: name of the input format
+    /// Creates an ountput format with the specified short name.
     public init?(name: String) {
         guard let ptr = av_guess_format(name, nil, nil) else {
             return nil
@@ -157,39 +155,47 @@ public struct AVOutputFormat {
         self.init(native: ptr)
     }
     
-    /// The name of the format.
+    /// The short name of the format.
     public var name: String {
-        String(cString: native.pointee.name)
+        names[safe: 0] ?? "unknown"
+    }
+    
+    /// The short names of the format.
+    public var names: [String] {
+        native.pointee.name.string.components(separatedBy: ",")
     }
     
     /// The human-readable name of the format.
     public var longName: String {
-        String(cString: native.pointee.long_name)
+        native.pointee.long_name.string
     }
     
     /// The filename extensions supported by the format.
     public var extensions: [String] {
-        String(cString: native.pointee.extensions)?.components(separatedBy: ",") ?? []
+        native.pointee.extensions?.string.components(separatedBy: ",") ?? []
     }
     
     /// The MIME types supported by the format.
     public var mimeTypes: [String] {
-        String(cString: native.pointee.mime_type)?.components(separatedBy: ",") ?? []
+        native.pointee.mime_type?.string.components(separatedBy: ",") ?? []
     }
     
     /// The default audio codec of the format.
-    public var audioCodec: AVCodecID {
-        AVCodecID(native: native.pointee.audio_codec)
+    public var audioCodec: AVCodecID? {
+        let coddec = AVCodecID(native: native.pointee.audio_codec)
+        return coddec != .none ? coddec : nil
     }
     
     /// The default video codec of the format.
-    public var videoCodec: AVCodecID {
-        AVCodecID(native: native.pointee.video_codec)
+    public var videoCodec: AVCodecID? {
+        let coddec = AVCodecID(native: native.pointee.video_codec)
+        return coddec != .none ? coddec : nil
     }
     
     /// The default subtitle codec of the format.
-    public var subtitleCodec: AVCodecID {
-        AVCodecID(native: native.pointee.subtitle_codec)
+    public var subtitleCodec: AVCodecID? {
+        let coddec = AVCodecID(native: native.pointee.subtitle_codec)
+        return coddec != .none ? coddec : nil
     }
     
     /// The flags of the output format.
@@ -223,7 +229,7 @@ public struct AVOutputFormat {
 
 public extension AVOutputFormat {
     /// Flags used by `flags`.
-    struct Flag: OptionSet, Hashable {
+    struct Flag: OptionSet, Hashable, CustomStringConvertible, CustomDebugStringConvertible {
         /// Muxer will use avio_open, no opened file should be provided by the caller.
         public static let noFile = Flag(rawValue: AVFMT_NOFILE)
         /// Needs '%d' in filename.
@@ -250,34 +256,28 @@ public extension AVOutputFormat {
         public init(rawValue: Int32) {
             self.rawValue = rawValue
         }
+        
+        public var description: String {
+            "[\(elements().map { Self.names[$0]?.swift ?? "\($0.rawValue)" }.joined(separator: ", "))]"
+        }
+
+        public var debugDescription: String {
+            "[\(elements().map { Self.names[$0]?.native ?? "\($0.rawValue)" }.joined(separator: ", "))]"
+        }
+
+        private static let names: [Self: (swift: String, native: String)] = [
+            .noFile: ("noFile", "AVFMT_NOFILE"),
+            .needNumber: ("needNumber", "AVFMT_NEEDNUMBER"),
+            .globalHeader: ("globalHeader", "AVFMT_GLOBALHEADER"),
+            .noTimestamps: ("noTimestamps", "AVFMT_NOTIMESTAMPS"),
+            .variableFPS: ("variableFPS", "AVFMT_VARIABLE_FPS"),
+            .noDimensions: ("noDimensions", "AVFMT_NODIMENSIONS"),
+            .noStreams: ("noStreams", "AVFMT_NOSTREAMS"),
+            .tsNonstrict: ("tsNonstrict", "AVFMT_TS_NONSTRICT"),
+            .tsNegative: ("tsNegative", "AVFMT_TS_NEGATIVE"),
+        ]
     }
 }
-
-// MARK: - AVOutputFormat.Flag + CustomStringConvertible
-
-extension AVOutputFormat.Flag: CustomStringConvertible, CustomDebugStringConvertible {
-    public var description: String {
-        "[\(elements().map { Self.names[$0]?.swift ?? "\($0.rawValue)" }.joined(separator: ", "))]"
-    }
-
-    public var debugDescription: String {
-        "[\(elements().map { Self.names[$0]?.native ?? "\($0.rawValue)" }.joined(separator: ", "))]"
-    }
-
-    private static let names: [Self: (swift: String, native: String)] = [
-        .noFile: ("noFile", "AVFMT_NOFILE"),
-        .needNumber: ("needNumber", "AVFMT_NEEDNUMBER"),
-        .globalHeader: ("globalHeader", "AVFMT_GLOBALHEADER"),
-        .noTimestamps: ("noTimestamps", "AVFMT_NOTIMESTAMPS"),
-        .variableFPS: ("variableFPS", "AVFMT_VARIABLE_FPS"),
-        .noDimensions: ("noDimensions", "AVFMT_NODIMENSIONS"),
-        .noStreams: ("noStreams", "AVFMT_NOSTREAMS"),
-        .tsNonstrict: ("tsNonstrict", "AVFMT_TS_NONSTRICT"),
-        .tsNegative: ("tsNegative", "AVFMT_TS_NEGATIVE"),
-    ]
-}
-
-// MARK: - AVOutputFormat + AVOptionSupport
 
 extension AVOutputFormat: AVOptionSupport {
     public func withUnsafeObjectPointer<T>(_ body: (UnsafeMutableRawPointer) throws -> T) rethrows -> T {

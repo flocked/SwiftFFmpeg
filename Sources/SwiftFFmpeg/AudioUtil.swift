@@ -76,7 +76,7 @@ extension AVChannelLayout: @retroactive Equatable, @retroactive CustomStringConv
         let r = withUnsafePointer(to: self) { p in
             av_channel_layout_describe(p, buf, 256)
         }
-        return r >= 0 ? String(cString: buf) : "Invalid"
+        return r >= 0 ? buf.string : "Invalid"
     }
 }
 

@@ -22,7 +22,7 @@ public struct AVOptionRange {
     public let isRange: Bool
     
     init(native: CFFmpeg.AVOptionRange) {
-        self.string = native.str.map(String.init(cString:))
+        self.string = native.str?.string
         self.minimum = native.value_min
         self.maximum = native.value_max
         self.componentMinimum = native.component_min

@@ -76,7 +76,7 @@ public struct AVColor: Hashable, Sendable, CustomStringConvertible {
             var rgb: UnsafePointer<UInt8>?
             guard let cName = av_get_known_color_name(index, &rgb) else { return nil }
             if let rgb, rgb[0] == red, rgb[1] == green, rgb[2] == blue {
-                return String(cString: cName)
+                return cName.string
             }
             index += 1
         }
@@ -87,7 +87,7 @@ public struct AVColor: Hashable, Sendable, CustomStringConvertible {
         var names: [String] = []
         var index: Int32 = 0
         while let name = av_get_known_color_name(index, nil) {
-            names.append(String(cString: name))
+            names.append(name.string)
             index += 1
         }
         return names

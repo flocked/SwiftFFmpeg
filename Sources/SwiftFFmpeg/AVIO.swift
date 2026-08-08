@@ -127,7 +127,6 @@ public final class AVIOContext {
   ) throws {
     var pm = options?.avDict
     defer { av_dict_free(&pm) }
-
     var pb: UnsafeMutablePointer<CAVIOContext>!
     if var cb = interruptCallback {
       try avio_open2(&pb, url, flags.rawValue, &cb, &pm).throwIfFail()
@@ -136,8 +135,7 @@ public final class AVIOContext {
     }
     self.init(native: pb)
     self.isOpen = true
-
-    dumpUnrecognizedOptions(pm)
+      pm?.dumpUnrecognizedOptions()
   }
 
   deinit {
@@ -330,7 +328,7 @@ public final class AVIOContext {
   ///
   /// - Returns: The name of the protocol or nil.
   public static func protocolName(for url: String) -> String? {
-    String(cString: avio_find_protocol_name(url))
+      avio_find_protocol_name(url)?.string
   }
 
   /// Returns an array of the input protocols supported by the `AVIOContext`.
@@ -338,7 +336,7 @@ public final class AVIOContext {
     var protocols = [String]()
     var prev: UnsafeMutableRawPointer?
     while let cString = avio_enum_protocols(&prev, 0) {
-      protocols.append(String(cString: cString))
+        protocols.append(cString.string)
     }
     return protocols
   }
@@ -348,7 +346,7 @@ public final class AVIOContext {
     var protocols = [String]()
     var prev: UnsafeMutableRawPointer?
     while let cString = avio_enum_protocols(&prev, 1) {
-      protocols.append(String(cString: cString))
+        protocols.append(cString.string)
     }
     return protocols
   }

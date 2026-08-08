@@ -35,7 +35,7 @@ public struct AVClass {
     }
 
     init(native: UnsafePointer<CFFmpeg.AVClass>) {
-        self.name = String(cString: native.pointee.class_name)
+        self.name = native.pointee.class_name.string
         self.category = Category(rawValue: native.pointee.category.rawValue)!
         self.version = native.pointee.version
         self.options = Array(native.pointee.option, until: { $0.name == nil }).map(AVOption.init(native:))

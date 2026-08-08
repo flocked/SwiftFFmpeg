@@ -11,6 +11,16 @@ extension UnsafePointer {
     var mutable: UnsafeMutablePointer<Pointee> {
         UnsafeMutablePointer(mutating: self)
     }
+    
+    func buffer<I: BinaryInteger>(count: I) -> UnsafeBufferPointer<Pointee> {
+        UnsafeBufferPointer(start: self, count: Int(count))
+    }
+}
+
+extension UnsafeMutablePointer {
+    func buffer<I: BinaryInteger>(count: I) -> UnsafeBufferPointer<Pointee> {
+        UnsafeBufferPointer(start: self, count: Int(count))
+    }
 }
 
 extension UnsafeBufferPointer {
@@ -34,12 +44,15 @@ public extension UnsafeBufferPointer where Element == UInt8 {
     }
 }
 
-extension String {
-    init?(cString: UnsafePointer<CChar>?) {
-        guard let cString = cString else {
-            return nil
-        }
-        self.init(cString: cString)
+extension UnsafePointer<CChar> {
+    var string: String {
+        String(cString: self)
+    }
+}
+
+extension UnsafeMutablePointer<CChar> {
+    var string: String {
+        String(cString: self)
     }
 }
 
@@ -50,6 +63,35 @@ extension Dictionary where Key == String, Value == String {
             av_dict_set(&pm, k, v, 0)
         }
         return pm
+    }
+}
+
+extension OpaquePointer {
+    var avDict: [String: String] {
+        var dict = [String: String]()
+        var prev: UnsafeMutablePointer<AVDictionaryEntry>?
+        while let tag = av_dict_get(self, "", prev, AV_DICT_IGNORE_SUFFIX) {
+          dict[String(cString: tag.pointee.key)] = String(cString: tag.pointee.value)
+          prev = tag
+        }
+        return dict
+    }
+    
+    func dumpUnrecognizedOptions() {
+        var prev: UnsafeMutablePointer<AVDictionaryEntry>?
+        while let tag = av_dict_get(self, "", prev, AV_DICT_IGNORE_SUFFIX) {
+            AVLog.log("Option '\(tag.pointee.key?.string ?? "unknown")' not found.", at: .warning)
+          prev = tag
+        }
+    }
+}
+
+extension Optional where Wrapped == OpaquePointer {
+    mutating func replace(with dictionary: [String: String]) {
+        av_dict_free(&self)
+        for (k, v) in dictionary {
+            av_dict_set(&self, k, v, 0)
+        }
     }
 }
 
@@ -75,5 +117,54 @@ extension Collection {
     subscript(safe index: Index) -> Element? {
         guard !isEmpty, index >= startIndex, index < endIndex else { return nil }
         return self[index]
+    }
+}
+
+extension Array {
+    init(_ ptr: UnsafePointer<Element>?, until end: Element) where Element: Equatable {
+        self.init(ptr, until: { $0 == end })
+    }
+    
+    init(_ ptr: UnsafePointer<Element>?, until predicate: (Element) -> Bool) {
+        guard let start = ptr else {
+            self = []
+          return
+        }
+
+        var end = start
+        while !predicate(end.pointee) {
+          end = end.advanced(by: 1)
+        }
+        self = end > start ? Array(UnsafeBufferPointer(start: start, count: end - start)) : []
+    }
+}
+
+extension UInt32 {
+    /// The four-character code string represented by this value.
+    var fourCC: String? {
+        let bytes = [UInt8(self & 0xFF), UInt8((self >> 8) & 0xFF), UInt8((self >> 16) & 0xFF), UInt8((self >> 24) & 0xFF)]
+        guard bytes.allSatisfy({ (0x20...0x7E).contains($0) }) else { return nil }
+        return String(bytes: bytes, encoding: .ascii)
+    }
+}
+
+extension String {
+    /// The four-character code represented by this string.
+    var fourCC: UInt32? {
+        let bytes = Array(utf8)
+        guard bytes.count == 4, bytes.allSatisfy({ (0x20...0x7E).contains($0) }) else {
+            return nil
+        }
+        return bytes.enumerated().reduce(0) {
+            $0 | UInt32($1.element) << ($1.offset * 8)
+        }
+    }
+}
+
+import Foundation
+
+extension URL {
+    var pathOrURLString: String {
+        isFileURL ? path : absoluteString
     }
 }

@@ -31,7 +31,7 @@ public struct AVCodecID: RawRepresentable, CustomStringConvertible, Hashable {
     
     /// The name of the codec.
     public var name: String {
-      String(cString: avcodec_get_name(native))
+        avcodec_get_name(native).string
     }
 
     /// The media type of the codec.
@@ -79,7 +79,7 @@ public struct AVCodecID: RawRepresentable, CustomStringConvertible, Hashable {
     
     /// A more descriptive name of the codec.
     public var longName: String? {
-        String(cString: descriptor?.pointee.long_name)
+        descriptor?.pointee.long_name.string
     }
     
     /// The MIME types associated with this codec.
@@ -88,7 +88,7 @@ public struct AVCodecID: RawRepresentable, CustomStringConvertible, Hashable {
         var result: [String] = []
         var current = mimeTypes
         while let mimeType = current.pointee {
-            result.append(String(cString: mimeType))
+            result.append(mimeType.string)
             current = current.advanced(by: 1)
         }
         return result

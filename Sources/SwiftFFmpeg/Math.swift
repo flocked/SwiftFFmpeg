@@ -13,7 +13,7 @@ import CFFmpeg
 public typealias AVRational = CFFmpeg.AVRational
 
 extension AVRational: @retroactive @unchecked Sendable {
-    /// Convert an `AVRational` to a `Double`.
+    /// Converts the rational to a Double value.
     public var toDouble: Double {
         av_q2d(self)
     }
@@ -89,26 +89,6 @@ extension AVRational: @retroactive Hashable {
 }
 */
 
-// MARK: - AVRounding
-
-/// Rounding methods.
-public enum AVRounding: UInt32 {
-    /// Round toward zero.
-    case zero = 0
-    /// Round away from zero.
-    case inf = 1
-    /// Round toward -infinity.
-    case down = 2
-    /// Round toward +infinity.
-    case up = 3
-    /// Round to nearest and halfway cases away from zero.
-    case nearInf = 5
-    
-    func ffmpeg(passMinMax: Bool) -> CFFmpeg.AVRounding {
-        .init(rawValue: passMinMax ? rawValue | AV_ROUND_PASS_MINMAX.rawValue : rawValue)
-    }
-}
-
 public enum AVMath {
     /// Rescale a integer with specified rounding.
     ///
@@ -140,5 +120,25 @@ public enum AVMath {
 
     public static func rescale_rnd<T: BinaryInteger>(_ a: T, _ b: T) -> Int64 {
         av_gcd(Int64(a), Int64(a))
+    }
+}
+
+extension AVMath {
+    /// Rounding methods.
+    public enum AVRounding: UInt32 {
+        /// Round toward zero.
+        case zero = 0
+        /// Round away from zero.
+        case inf = 1
+        /// Round toward -infinity.
+        case down = 2
+        /// Round toward +infinity.
+        case up = 3
+        /// Round to nearest and halfway cases away from zero.
+        case nearInf = 5
+        
+        func ffmpeg(passMinMax: Bool) -> CFFmpeg.AVRounding {
+            .init(rawValue: passMinMax ? rawValue | AV_ROUND_PASS_MINMAX.rawValue : rawValue)
+        }
     }
 }

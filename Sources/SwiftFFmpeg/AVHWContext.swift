@@ -65,7 +65,7 @@ public enum AVHWDeviceType: UInt32 {
 
     /// The name of the device type.
     public var name: String? {
-        String(cString: av_hwdevice_get_type_name(native))
+        av_hwdevice_get_type_name(native)?.string
     }
 
     /// Get all supported device types.

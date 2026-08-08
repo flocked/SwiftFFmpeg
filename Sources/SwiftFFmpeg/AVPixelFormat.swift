@@ -21,7 +21,7 @@ extension AVPixelFormat: @retroactive CustomStringConvertible, @retroactive Hash
 
     /// The name of the pixel format.
     public var name: String {
-        String(cString: av_get_pix_fmt_name(self)) ?? "\(rawValue)"
+        av_get_pix_fmt_name(self)?.string ?? "\(rawValue)"
     }
 
     /// The number of planes in the pixel format.
@@ -56,7 +56,7 @@ extension AVPixelFormat {
         
         /// The name of the pixel format.
         public var name: String {
-            String(cString: native.pointee.name) ?? "unknown"
+            native.pointee.name?.string ?? "unknown"
         }
         
         /// The number of components each pixel has.
@@ -102,7 +102,7 @@ extension AVPixelFormat {
         
         /// Alternative names of the pixel format.
         public var alias: [String] {
-            String(cString: native.pointee.alias)?.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) } ?? []
+            native.pointee.alias?.string.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) } ?? []
         }
         
         /**
@@ -981,7 +981,7 @@ public enum AVColorPrimaries: UInt32 {
 
     /// The name of the color primaries.
     public var name: String {
-        String(cString: av_color_primaries_name(native))
+        av_color_primaries_name(native).string
     }
 }
 
@@ -1012,7 +1012,7 @@ public enum AVAlphaMode: UInt32 {
 
     /// The name of the alpha mode.
     public var name: String {
-        String(cString: av_alpha_mode_name(native))
+        av_alpha_mode_name(native).string
     }
 }
 
@@ -1082,7 +1082,7 @@ public enum AVColorTransferCharacteristic: UInt32 {
 
     /// The name of the color transfer characteristic.
     public var name: String {
-        String(cString: av_color_transfer_name(native))
+        av_color_transfer_name(native).string
     }
 }
 
@@ -1150,7 +1150,7 @@ public enum AVColorSpace: UInt32 {
 
     /// The name of the color space.
     public var name: String {
-        String(cString: av_color_space_name(native))
+        av_color_space_name(native).string
     }
 }
 
@@ -1186,7 +1186,7 @@ public enum AVColorRange: UInt32 {
 
     /// The name of the color range.
     public var name: String {
-        String(cString: av_color_range_name(native))
+        av_color_range_name(native).string
     }
 }
 
@@ -1241,6 +1241,6 @@ public enum AVChromaLocation: UInt32 {
 
     /// The name of the chroma location.
     public var name: String {
-        String(cString: av_chroma_location_name(native))
+        av_chroma_location_name(native).string
     }
 }

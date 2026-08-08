@@ -33,7 +33,7 @@ public struct AVNamedProfile: Hashable, CustomStringConvertible {
 
     init(native: CFFmpeg.AVProfile) {
         self.profile = AVProfile(rawValue: native.profile)
-        self.name = String(cString: native.name)
+        self.name = native.name.string
     }
 
     public var description: String {

@@ -34,7 +34,7 @@ func remuxing() throws {
   try ifmtCtx.findStreamInfo()
   ifmtCtx.dumpFormat(isOutput: false)
 
-  let ofmtCtx = try AVFormatContext(format: nil, filename: output)
+  let ofmtCtx = try AVFormatContext(filename: output)
 
   var streamMapping = [Int](repeating: 0, count: ifmtCtx.streamCount)
   var streamIndex = 0

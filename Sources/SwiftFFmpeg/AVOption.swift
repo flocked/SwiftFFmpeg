@@ -31,9 +31,9 @@ public struct AVOption {
     public let type: Kind
 
     init(native: CFFmpeg.AVOption) {
-        self.name = String(cString: native.name)
-        self.help = String(cString: native.help)
-        self.unit = String(cString: native.unit)
+        self.name = native.name.string
+        self.help = native.help?.string
+        self.unit = native.unit?.string
         self.offset = Int(native.offset)
         self.flags = Flag(rawValue: native.flags)
         self.type = Kind(native: native.type)
@@ -65,7 +65,7 @@ public struct AVOption {
             case .channelLayout:
                 self.min = nil
                 self.max = nil
-                self.defaultValue = String(cString: native.default_val.str).flatMap { AVChannelLayout(name: $0) }
+                self.defaultValue = native.default_val.str.flatMap { AVChannelLayout(name: $0.string) }
             case .int64, .const, .duration:
                 self.min = Int64(clamping: native.min)
                 self.max = Int64(clamping: native.max)
@@ -93,7 +93,7 @@ public struct AVOption {
             case .string:
                 self.min = nil
                 self.max = nil
-                self.defaultValue = String(cString: native.default_val.str)
+                self.defaultValue = native.default_val.str?.string
             case .rational, .videoRate:
                 self.min = native.min
                 self.max = native.max
@@ -109,11 +109,11 @@ public struct AVOption {
             case .color:
                 self.min = nil
                 self.max = nil
-                self.defaultValue = String(cString: native.default_val.str).flatMap { AVColor(name: $0) }
+                self.defaultValue = native.default_val.str.flatMap { AVColor(name: $0.string) }
             case .imageSize:
                 self.min = nil
                 self.max = nil
-                self.defaultValue = String(cString: native.default_val.str).flatMap { AVImageSize(name: $0) }
+                self.defaultValue = native.default_val.str.flatMap { AVImageSize(name: $0.string) }
             }
         } else {
             self.min = nil
@@ -163,7 +163,7 @@ public struct AVOption {
 extension CFFmpeg.AVOptionArrayDef {
     var values: [String]? {
         guard let def else { return nil }
-        let bytes = Array(String(cString: def).utf8)
+        let bytes = Array(def.string.utf8)
         let separator = sep == 0 ? UInt8(ascii: ",") : UInt8(bitPattern: sep)
         var values: [String] = []
         var current: [UInt8] = []
@@ -594,7 +594,7 @@ public extension AVOptionSupport {
     func stringValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [String] {
         let values: [UnsafeMutablePointer<CChar>?] = try array(for: key, type: .array(.string), initial: nil, searchFlags: searchFlags)
         defer { values.forEach { av_free($0) } }
-        return values.compactMap { String(cString: $0) }
+        return values.compactMap { $0?.string }
     }
     
     /**

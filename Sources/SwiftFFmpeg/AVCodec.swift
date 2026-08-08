@@ -48,17 +48,17 @@ public struct AVCodec {
 
     /// The codec's name.
     public var name: String {
-        String(cString: native.pointee.name)
+        native.pointee.name.string
     }
 
     /// The codec's descriptive name, meant to be more human readable than name.
     public var longName: String {
-        String(cString: native.pointee.long_name)
+        native.pointee.long_name.string
     }
     
     /// The external wrapper backing this codec implementation, or `nil` for native libavcodec codecs.
     public var wrapperName: String? {
-        String(cString: native.pointee.wrapper_name)
+        native.pointee.wrapper_name?.string
     }
     
     /// The class describing this codec implementation's private options, or `nil` if none exists.

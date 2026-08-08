@@ -28,7 +28,7 @@ public struct AVChapter {
     self.timeBase = native.pointee.time_base
     self.start = native.pointee.start
     self.end = native.pointee.end
-      self.metadata = native.pointee.metadata.avDict
+      self.metadata = native.pointee.metadata?.avDict ?? [:]
   }
 
   public init(id: Int, timeBase: AVRational, start: Int64, end: Int64, metadata: [String: String] = [:]) {

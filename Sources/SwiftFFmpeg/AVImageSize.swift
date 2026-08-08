@@ -43,3 +43,25 @@ public struct AVImageSize: CustomStringConvertible {
         self.init(width: Int(width), height: Int(height))
     }
 }
+
+/*
+struct AVVideoRate {
+    var num: Int32
+    var den: Int32
+
+    init(native: CFFmpeg.AVRational) {
+        self.num = native.num
+        self.den = native.den
+    }
+    
+    var native: CFFmpeg.AVRational {
+        .init(num: num, den: den)
+    }
+    
+    public init?(name: String) {
+        var rational = CFFmpeg.AVRational(num: 0, den: 0)
+        guard av_parse_video_rate(&rational, name) >= 0 else { return nil }
+        self.init(native: rational)
+    }
+}
+*/

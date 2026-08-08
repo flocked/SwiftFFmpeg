@@ -44,7 +44,7 @@ public struct AVMasteringDisplayMetadata {
   }
 }
 
-public extension AVFrameSideData {
+public extension AVFrame.SideData {
   var masteringDisplayMetadata: AVMasteringDisplayMetadata? {
     guard type == .masteringDisplayMetadata else { return nil }
 
@@ -74,7 +74,7 @@ public struct AVContentLightMetadata {
   }
 }
 
-public extension AVFrameSideData {
+public extension AVFrame.SideData {
   var contentLightMetadata: AVContentLightMetadata? {
     guard type == .contentLightLevel else { return nil }
 

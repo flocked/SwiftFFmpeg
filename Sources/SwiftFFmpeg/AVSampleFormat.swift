@@ -75,7 +75,7 @@ public enum AVSampleFormat: Int32, Hashable, Sendable {
 
   /// The name of the sample format, or `nil` if sample format is not recognized.
   public var name: String? {
-    String(cString: av_get_sample_fmt_name(native))
+      av_get_sample_fmt_name(native)?.string
   }
 
   /// The number of bytes per sample or zero if unknown for the given sample format.
