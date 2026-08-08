@@ -39,16 +39,16 @@ public struct AVOption {
         if !type.isArray {
             switch type.element {
             case .pixelFormat:
-                self.min = AVPixelFormat(rawValue: Int32(native.min))
-                self.max = AVPixelFormat(rawValue: Int32(native.max))
+                self.min = AVPixelFormat(rawValue: Int32(clamping: native.min))
+                self.max = AVPixelFormat(rawValue: Int32(clamping: native.max))
                 self.defaultValue = AVPixelFormat(rawValue: Int32(clamping: native.default_val.i64))
             case .sampleFormat:
-                self.min = AVSampleFormat(rawValue: Int32(native.min))
-                self.max = AVSampleFormat(rawValue: Int32(native.max))
+                self.min = AVSampleFormat(rawValue: Int32(clamping: native.min))
+                self.max = AVSampleFormat(rawValue: Int32(clamping: native.max))
                 self.defaultValue = AVSampleFormat(rawValue: Int32(clamping: native.default_val.i64))
             case .flags:
-                self.min = AVOption.Flag(rawValue: Int32(native.min))
-                self.max = AVOption.Flag(rawValue: Int32(native.max))
+                self.min = AVOption.Flag(rawValue: Int32(clamping: native.min))
+                self.max = AVOption.Flag(rawValue: Int32(clamping: native.max))
                 self.defaultValue = AVOption.Flag(rawValue: Int32(clamping: native.default_val.i64))
             case .int:
                 self.min = Int32(clamping: native.min)
