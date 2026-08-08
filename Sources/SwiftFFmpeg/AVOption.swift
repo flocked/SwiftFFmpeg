@@ -71,7 +71,6 @@ public struct AVOption {
             case .dict:
                 self.defaultValue = nil
             case .color:
-                Swift.print(String(cString: native.default_val.arr.pointee.def) ?? "nil")
                 self.defaultValue = String(cString: native.default_val.str)
             case .imageSize:
                 self.defaultValue = String(cString: native.default_val.str)
