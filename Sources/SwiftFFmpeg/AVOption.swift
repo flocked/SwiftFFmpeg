@@ -73,17 +73,11 @@ public struct AVOption {
             case .color:
                 self.defaultValue = String(cString: native.default_val.str)
             case .imageSize:
-                self.defaultValue = String(cString: native.default_val.str)
-
-                /*
-                var width: Int32 = 0
-                var height: Int32 = 0
-                if av_parse_video_size(&width, &height, native.default_val.str) >= 0 {
-                    self.defaultValue = AVImageSize(Int(width), Int(height))
+                if let name = String(cString: native.default_val.str), let size = AVImageSize(name: name) {
+                    self.defaultValue = size
                 } else {
                     self.defaultValue = String(cString: native.default_val.str)
                 }
-                */
             }
         } else {
             self.defaultValue = nil
