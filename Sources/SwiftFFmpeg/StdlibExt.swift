@@ -42,12 +42,15 @@ extension String {
     self.init(cString: cString)
   }
     
+    /*
     init?(cString: UnsafeMutablePointer<CChar>?) {
       guard let cString = cString else {
         return nil
       }
+        UnsafePointer.init(cString)
       self.init(cString: cString)
     }
+    */
 }
 
 extension Dictionary where Key == String, Value == String {
