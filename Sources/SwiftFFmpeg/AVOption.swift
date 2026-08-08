@@ -49,7 +49,7 @@ public struct AVOption {
             case .flags:
                 self.min = nil
                 self.max = nil
-                self.defaultValue = AVOption.Flag(rawValue: Int32(clamping: native.default_val.i64))
+                self.defaultValue = AVOption.Flag(rawValue: Int32(native.default_val.i64))
             case .int:
                 self.min = Int32(clamping: native.min)
                 self.max = Int32(clamping: native.max)
