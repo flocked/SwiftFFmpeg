@@ -20,9 +20,9 @@ public struct AVOption {
     /// The default value for scalar options.
     public let defaultValue: Any?
     /// The minimum valid value for the option.
-    public let min: Double
+    public let min: Any?
     /// The maximum valid value for the option.
-    public let max: Double
+    public let max: Any?
     public let flags: Flag
     /// The logical unit to which the option belongs.
     /// Non-constant options and corresponding named constants share the same unit.
@@ -34,47 +34,82 @@ public struct AVOption {
         self.help = String(cString: native.help)
         self.unit = String(cString: native.unit)
         self.offset = Int(native.offset)
-        self.min = native.min
-        self.max = native.max
         self.flags = Flag(rawValue: native.flags)
         self.type = Kind(native: native.type)
         if !type.isArray {
             switch type.element {
             case .pixelFormat:
+                self.min = AVPixelFormat(rawValue: Int32(native.min))
+                self.max = AVPixelFormat(rawValue: Int32(native.max))
                 self.defaultValue = AVPixelFormat(rawValue: Int32(clamping: native.default_val.i64))
             case .sampleFormat:
+                self.min = AVSampleFormat(rawValue: Int32(native.min))
+                self.max = AVSampleFormat(rawValue: Int32(native.max))
                 self.defaultValue = AVSampleFormat(rawValue: Int32(clamping: native.default_val.i64))
             case .flags:
+                self.min = AVOption.Flag(rawValue: Int32(native.min))
+                self.max = AVOption.Flag(rawValue: Int32(native.max))
                 self.defaultValue = AVOption.Flag(rawValue: Int32(clamping: native.default_val.i64))
             case .int:
+                self.min = Int32(clamping: Int64(native.min))
+                self.max = Int32(clamping: Int64(native.max))
                 self.defaultValue = Int32(clamping: native.default_val.i64)
-            case .int64, .const, .duration, .channelLayout:
+            case .channelLayout:
+                Swift.print("channelLayout", String(cString: native.default_val.str) ?? "nil", native.default_val.i64)
+                self.min = Int64(native.min)
+                self.max = Int64(native.max)
+                self.defaultValue = native.default_val.i64
+            case .int64, .const, .duration:
+                self.min = Int64(native.min)
+                self.max = Int64(native.max)
                 self.defaultValue = native.default_val.i64
             case .uInt:
+                self.min = UInt32(clamping: Int64(Swift.max(0, native.min)))
+                self.max = UInt32(clamping: Int64(Swift.max(0, native.max)))
                 self.defaultValue = UInt32(clamping: native.default_val.i64)
             case .uInt64:
+                self.min = UInt64(native.min)
+                self.max = UInt64(native.max)
                 self.defaultValue = UInt64(clamping: native.default_val.i64)
             case .double:
+                self.min = native.min
+                self.max = native.max
                 self.defaultValue = native.default_val.dbl
             case .float:
+                self.min = Float(native.min)
+                self.max = Float(native.max)
                 self.defaultValue = Float(native.default_val.dbl)
             case .bool:
+                self.min = nil
+                self.max = nil
                 self.defaultValue = native.default_val.i64 != 0
             case .string:
+                self.min = nil
+                self.max = nil
                 self.defaultValue = String(cString: native.default_val.str)
             case .rational, .videoRate:
+                self.min = nil
+                self.max = nil
                 self.defaultValue = native.default_val.q
             case .binary:
+                self.min = nil
+                self.max = nil
                 self.defaultValue = nil
             case .dict:
+                self.min = nil
+                self.max = nil
                 self.defaultValue = nil
             case .color:
+                self.min = nil
+                self.max = nil
                 if let name = String(cString: native.default_val.str), let color = AVColor(name: name) {
                     self.defaultValue = color
                 } else {
                     self.defaultValue = String(cString: native.default_val.str)
                 }
             case .imageSize:
+                self.min = nil
+                self.max = nil
                 if let name = String(cString: native.default_val.str), let size = AVImageSize(name: name) {
                     self.defaultValue = size
                 } else {
@@ -82,6 +117,9 @@ public struct AVOption {
                 }
             }
         } else {
+            /// Have to handle later
+            self.min = nil
+            self.max = nil
             self.defaultValue = nil
         }
     }
