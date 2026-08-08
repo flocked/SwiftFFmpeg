@@ -135,19 +135,17 @@ public final class AVImage {
 
 public extension AVImage {
     /// Compute the size in bytes of an image line with the specified format and width for the plane.
-    static func getLinesize(for pixelFormat: AVPixelFormat, width: Int, plane: Int) throws -> Int {
+    static func lineSize(for pixelFormat: AVPixelFormat, width: Int, plane: Int) throws -> Int {
         try throwIfFail(av_image_get_linesize(pixelFormat, Int32(width), Int32(plane)))
     }
 
-    /// Fill plane linesizes for an image with pixel format and width.
-    ///
-    /// - Throws: AVError
-    static func fillLinesizes(
-        _ linesizes: UnsafeMutablePointer<Int32>,
-        pixelFormat: AVPixelFormat,
-        width: Int
-    ) throws {
-        try throwIfFail(av_image_fill_linesizes(linesizes, pixelFormat, Int32(width)))
+    /// Returns the line sizes for the image planes with the specified pixel format and width.
+    static func lineSizes(for pixelFormat: AVPixelFormat, width: Int) throws -> [Int] {
+        var lineSizes = [Int32](repeating: 0, count: 4)
+        try lineSizes.withUnsafeMutableBufferPointer { buffer in
+            try throwIfFail(av_image_fill_linesizes(buffer.baseAddress!, pixelFormat, Int32(width)))
+        }
+        return lineSizes.map(Int.init)
     }
 
     /// Fill plane data pointers for an image with pixel format and height.
@@ -167,9 +165,9 @@ public extension AVImage {
         pixelFormat: AVPixelFormat,
         height: Int,
         buffer: UnsafeMutablePointer<UInt8>?,
-        linesizes: UnsafePointer<Int32>?
+        lineSizes: UnsafePointer<Int32>?
     ) throws -> Int {
-        try throwIfFail(av_image_fill_pointers(data, pixelFormat, Int32(height), buffer, linesizes))
+        try throwIfFail(av_image_fill_pointers(data, pixelFormat, Int32(height), buffer, lineSizes))
     }
 
     /// Return the size in bytes of the amount of data required to store an image with the given parameters.
@@ -181,12 +179,7 @@ public extension AVImage {
     ///   - align: the assumed linesize alignment
     /// - Returns: the buffer size in bytes
     /// - Throws: AVError
-    static func bufferSize(for
-        pixelFormat: AVPixelFormat,
-        width: Int,
-        height: Int,
-        align: Int = 1
-    ) throws -> Int {
+    static func bufferSize(for pixelFormat: AVPixelFormat, width: Int, height: Int, align: Int = 1) throws -> Int {
         try throwIfFail(av_image_get_buffer_size(pixelFormat, Int32(width), Int32(height), Int32(align)))
     }
 }
@@ -241,11 +234,6 @@ public extension AVFrame {
      - Parameter align: The assumed line-size alignment for the destination buffer.
      */
     func bufferSize(align: Int = 1) throws -> Int {
-        try throwIfFail(av_image_get_buffer_size(
-            pixelFormat,
-            Int32(width),
-            Int32(height),
-            Int32(align)
-        ))
+        try av_image_get_buffer_size(pixelFormat, Int32(width),  Int32(height), Int32(align)).throwIfFail()
     }
 }

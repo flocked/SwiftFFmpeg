@@ -119,6 +119,22 @@ func throwIfFail(_ condition: @autoclosure () -> Int32) throws {
     }
 }
 
+extension BinaryInteger {
+    func throwIfFail<Output: BinaryInteger>() throws -> Output {
+        let code = Int32(self)
+        if code < 0 {
+            throw AVError(code: code)
+        }
+        return Output(self)
+    }
+}
+
+extension Int32 {
+    func throwIfFail() throws {
+        guard self >= 0 else { throw AVError(code: self) }
+    }
+}
+
 func throwIfFail<Input: BinaryInteger, Output: BinaryInteger>(_ condition: @autoclosure () -> Input) throws -> Output {
     let code = Int32(condition())
     if code < 0 {

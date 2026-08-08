@@ -163,13 +163,15 @@ public struct AVCodec {
         av_codec_is_encoder(native) != 0
     }
 
-    /// Retrieve supported hardware configurations for a codec.
-    ///
-    /// Values of index from zero to some maximum return the indexed configuration descriptor;
-    /// all other values return `nil`.
-    /// If the codec does not support any hardware configurations then it will always return `nil`.
-    public func hwConfig(at index: Int) -> AVCodecHWConfig? {
-        avcodec_get_hw_config(native, Int32(index)).map(AVCodecHWConfig.init(native:))
+    /// The hardware configurations supported by the codec.
+    public var hwConfigs: [AVCodecHWConfig] {
+        var configs: [AVCodecHWConfig] = []
+        var index: Int32 = 0
+        while let config = avcodec_get_hw_config(native, index).map(AVCodecHWConfig.init(native:)) {
+            configs.append(config)
+            index += 1
+        }
+        return configs
     }
 
     /// Returns a name for the specified profile, if available.
