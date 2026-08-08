@@ -90,6 +90,12 @@ public final class AVCodecContext {
         get { native.pointee.codec_tag }
         set { native.pointee.codec_tag = newValue }
     }
+    
+    /// The codec tag as a four-character String code.
+    public var codecTagString: String? {
+        get { codecTag.fourCC }
+        set { codecTag = newValue?.fourCC ?? 0 }
+    }
 
     /// Private data of the user, can be used to carry app specific stuff.
     ///
@@ -571,7 +577,7 @@ public extension AVCodecContext {
                     .takeUnretainedValue()
                     .value
                     .getFormat!
-                    let list = Array(fmts, until: .none) ?? []
+                    let list = Array(fmts, until: .none)
                     return handler(AVCodecContext(native: ctx!), list)
                 }
             }

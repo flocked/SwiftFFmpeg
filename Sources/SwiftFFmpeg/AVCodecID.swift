@@ -52,10 +52,6 @@ public struct AVCodecID: RawRepresentable, CustomStringConvertible, Hashable {
     public var encoder: AVCodec? {
         avcodec_find_encoder(native).map({ AVCodec(native: $0) })
     }
-    
-    public func profileName(for profile: AVProfile) -> String? {
-        String(cString: avcodec_profile_name(native, profile.rawValue))
-    }
 
     /**
      The approximate number of bits per sample for this codec.

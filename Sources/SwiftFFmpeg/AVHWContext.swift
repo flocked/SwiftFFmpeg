@@ -366,11 +366,11 @@ public final class AVHWFramesContext {
     ///
     /// - Parameter direction: the direction of the transfer
     /// - Returns: supported pixel formats
-    public func getPixelFormats(_ direction: AVHWFrameTransferDirection) -> [AVPixelFormat]? {
+    public func getPixelFormats(_ direction: AVHWFrameTransferDirection) -> [AVPixelFormat] {
         var ptr: UnsafeMutablePointer<AVPixelFormat>?
         defer { av_free(ptr) }
         if av_hwframe_transfer_get_formats(nativeBuffer, direction.native, &ptr, 0) != 0 {
-            return nil
+            return []
         }
         return Array(ptr, until: .none)
     }

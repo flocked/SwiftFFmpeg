@@ -49,6 +49,12 @@ public final class AVCodecParameters {
         set { native.pointee.codec_tag = newValue }
     }
     
+    /// The codec tag as a four-character String code.
+    public var codecTagString: String? {
+        get { codecTag.fourCC }
+        set { codecTag = newValue?.fourCC ?? 0 }
+    }
+    
     /// Extra binary data needed for initializing the decoder, codec-dependent.
     ///
     /// Must be allocated with `AVIO.malloc(size:)` and will be freed by
@@ -106,6 +112,10 @@ public final class AVCodecParameters {
         set { native.pointee.profile = newValue }
     }
     
+    public var profileName: String? {
+        String(cString: avcodec_profile_name(native.pointee.codec_id, profile))
+    }
+    
     public var level: Int32 {
         get { native.pointee.level }
         set { native.pointee.level = newValue }
@@ -124,33 +134,33 @@ public final class AVCodecParameters {
 
 // MARK: - Video
 
-extension AVCodecParameters {
+public extension AVCodecParameters {
     /// The pixel format of the video frame.
-    public var pixelFormat: AVPixelFormat {
+    var pixelFormat: AVPixelFormat {
         get { AVPixelFormat(native.pointee.format) }
         set { native.pointee.format = newValue.rawValue }
     }
     
     /// The alpha mode of the video frame.
-    public var alphaMode: AVAlphaMode {
+    var alphaMode: AVAlphaMode {
         get { AVAlphaMode(native: native.pointee.alpha_mode) }
         set { native.pointee.alpha_mode = newValue.native }
     }
     
     /// The width of the video frame in pixels.
-    public var width: Int {
+    var width: Int {
         get { Int(native.pointee.width) }
         set { native.pointee.width = Int32(newValue) }
     }
     
     /// The height of the video frame in pixels.
-    public var height: Int {
+    var height: Int {
         get { Int(native.pointee.height) }
         set { native.pointee.height = Int32(newValue) }
     }
     
     /// The video dimensions, or `nil` for non-video streams or unknown dimensions.
-    public var size: CGSize? {
+    var size: CGSize? {
         guard mediaType == .video, width > 0, height > 0 else { return nil }
         return CGSize(width: width, height: height)
     }
@@ -159,7 +169,7 @@ extension AVCodecParameters {
     ///
     /// When the aspect ratio is unknown / undefined, the numerator should be set to 0
     /// (the denominator may have any value).
-    public var sampleAspectRatio: AVRational {
+    var sampleAspectRatio: AVRational {
         get { native.pointee.sample_aspect_ratio }
         set { native.pointee.sample_aspect_ratio = newValue }
     }
@@ -172,49 +182,49 @@ extension AVCodecParameters {
     /// headers and is typically overridden by container/transport-layer
     /// timestamps, when available. It should thus be used only as a last resort,
     /// when no higher-level timing information is available.
-    public var framerate: AVRational {
+    var framerate: AVRational {
         get { native.pointee.framerate }
         set { native.pointee.framerate = newValue }
     }
     
     /// The field order of the video frame.
-    public var fieldOrder: AVFieldOrder {
+    var fieldOrder: AVFieldOrder {
         get { .init(native: native.pointee.field_order) }
         set { native.pointee.field_order = newValue.native }
     }
     
     /// The color range of the video frame.
-    public var colorRange: AVColorRange {
+    var colorRange: AVColorRange {
         get { AVColorRange(native: native.pointee.color_range) }
         set { native.pointee.color_range = newValue.native }
     }
     
     /// The color primaries of the video frame.
-    public var colorPrimaries: AVColorPrimaries {
+    var colorPrimaries: AVColorPrimaries {
         get { AVColorPrimaries(native: native.pointee.color_primaries) }
         set { native.pointee.color_primaries = newValue.native }
     }
     
     /// The color transfer characteristic of the video frame.
-    public var colorTransferCharacteristic: AVColorTransferCharacteristic {
+    var colorTransferCharacteristic: AVColorTransferCharacteristic {
         get { AVColorTransferCharacteristic(native: native.pointee.color_trc) }
         set { native.pointee.color_trc = newValue.native }
     }
     
     /// The color space of the video frame.
-    public var colorSpace: AVColorSpace {
+    var colorSpace: AVColorSpace {
         get { AVColorSpace(native: native.pointee.color_space) }
         set { native.pointee.color_space = newValue.native }
     }
     
     /// The chroma location of the video frame.
-    public var chromaLocation: AVChromaLocation {
+    var chromaLocation: AVChromaLocation {
         get { AVChromaLocation(native: native.pointee.chroma_location) }
         set { native.pointee.chroma_location = newValue.native }
     }
     
     /// Number of delayed frames.
-    public var videoDelay: Int {
+    var videoDelay: Int {
         get { Int(native.pointee.video_delay) }
         set { native.pointee.video_delay = Int32(newValue) }
     }
@@ -222,28 +232,28 @@ extension AVCodecParameters {
 
 // MARK: - Audio
 
-extension AVCodecParameters {
+public extension AVCodecParameters {
     /// The sample format of audio.
-    public var sampleFormat: AVSampleFormat {
+    var sampleFormat: AVSampleFormat {
         get { AVSampleFormat(rawValue: native.pointee.format)! }
         set { native.pointee.format = newValue.rawValue }
     }
     
     /// The channel layout bitmask. May be 0 if the channel layout is unknown or unspecified,
     /// otherwise the number of bits set must be equal to the channels field.
-    public var channelLayout: AVChannelLayout {
+    var channelLayout: AVChannelLayout {
         get { native.pointee.ch_layout }
         set { native.pointee.ch_layout = newValue }
     }
     
     /// The number of audio samples per second.
-    public var sampleRate: Int {
+    var sampleRate: Int {
         get { Int(native.pointee.sample_rate) }
         set { native.pointee.sample_rate = Int32(newValue) }
     }
     
     /// Audio frame size, if known. Required by some formats to be static.
-    public var frameSize: Int {
+    var frameSize: Int {
         get { Int(native.pointee.frame_size) }
         set { native.pointee.frame_size = Int32(newValue) }
     }

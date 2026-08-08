@@ -25,13 +25,14 @@ func dumpUnrecognizedOptions(_ dict: OpaquePointer?) {
 }
 
 extension Array {
-    init?(_ ptr: UnsafePointer<Element>?, until end: Element) where Element: Equatable {
+    init(_ ptr: UnsafePointer<Element>?, until end: Element) where Element: Equatable {
         self.init(ptr, until: { $0 == end })
     }
     
-    init?(_ ptr: UnsafePointer<Element>?, until predicate: (Element) -> Bool) {
+    init(_ ptr: UnsafePointer<Element>?, until predicate: (Element) -> Bool) {
         guard let start = ptr else {
-          return nil
+            self = []
+          return
         }
 
         var end = start
@@ -51,5 +52,27 @@ extension OpaquePointer {
           prev = tag
         }
         return dict
+    }
+}
+
+extension UInt32 {
+    /// The four-character code string represented by this value.
+    var fourCC: String? {
+        let bytes = [UInt8(self & 0xFF), UInt8((self >> 8) & 0xFF), UInt8((self >> 16) & 0xFF), UInt8((self >> 24) & 0xFF)]
+        guard bytes.allSatisfy({ (0x20...0x7E).contains($0) }) else { return nil }
+        return String(bytes: bytes, encoding: .ascii)
+    }
+}
+
+extension String {
+    /// The four-character code represented by this string.
+    var fourCC: UInt32? {
+        let bytes = Array(utf8)
+        guard bytes.count == 4, bytes.allSatisfy({ (0x20...0x7E).contains($0) }) else {
+            return nil
+        }
+        return bytes.enumerated().reduce(0) {
+            $0 | UInt32($1.element) << ($1.offset * 8)
+        }
     }
 }

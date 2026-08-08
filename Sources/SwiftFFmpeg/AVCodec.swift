@@ -65,11 +65,6 @@ public struct AVCodec {
     public var privateClass: AVClass? {
         native.pointee.priv_class.map { AVClass(native: $0) }
     }
-    
-    /// Return a name for the specified profile, if available.
-    public func profileName(for profile: AVProfile) -> String? {
-        av_get_profile_name(native, profile.rawValue).map { String(cString: $0) }
-    }
 
     /// The codec's media type.
     public var mediaType: AVMediaType {
@@ -172,11 +167,6 @@ public struct AVCodec {
             index += 1
         }
         return configs
-    }
-
-    /// Returns a name for the specified profile, if available.
-    public func profileName(profile: Int32) -> String? {
-        av_get_profile_name(native, profile).map { String(cString: $0) }
     }
 
     /// Get all registered codecs.
