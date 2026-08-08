@@ -6,10 +6,31 @@
 //
 
 import CFFmpeg
+import Foundation
+import os
+
 
 // MARK: - AVLog
 
 public enum AVLog {
+    func sdsd() {
+        av_log_set_callback { context, level, format, args in
+            let level = AVLog.Level(rawValue: level)
+            guard let format = String(cString: format), let message = args.map({ NSString(format: format, arguments: $0) as String }) else {
+                return
+            }
+            guard AVLog.level.contains(level) else { return }
+            Swift.print(message)
+        }
+        
+        av_log_set_callback { _, level, format, args in
+         //   guard AVLog.level.contains(AVLog.Level(rawValue: level)) else { return }
+            guard let rawFormat = format, let args else { return }
+            let message = NSString(format: String(cString: rawFormat), arguments: args) as String
+            Swift.print(message, terminator: "")
+        }
+    }
+    
     /// Get/set the log level.
     public static var level: Level {
         get { Level(rawValue: av_log_get_level()) }

@@ -93,6 +93,8 @@ static const int swift_AVERROR_HTTP_NOT_FOUND     = AVERROR_HTTP_NOT_FOUND;
 static const int swift_AVERROR_HTTP_OTHER_4XX     = AVERROR_HTTP_OTHER_4XX;
 static const int swift_AVERROR_HTTP_SERVER_ERROR  = AVERROR_HTTP_SERVER_ERROR;
 
+void swift_initialize_ffmpeg_logging(void);
+
 static inline void swift_log(void *avcl, int level, const char *msg) {
     av_log(avcl, level, "%s", msg);
 }
