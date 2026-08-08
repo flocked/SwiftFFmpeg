@@ -26,6 +26,13 @@ public struct AVClass {
         options.append(contentsOf: childClasses.flatMap(\.allOptions))
         return options
     }
+    
+    /// All child classes, including the child classes of descendant classes.
+    public var allChildClasses: [AVClass] {
+        var result = childClasses
+        result.append(contentsOf: childClasses.flatMap(\.allChildClasses))
+        return result
+    }
 
     init(native: UnsafePointer<CFFmpeg.AVClass>) {
         self.name = String(cString: native.pointee.class_name)
