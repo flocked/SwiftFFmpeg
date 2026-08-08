@@ -182,17 +182,29 @@ public final class AVFormatContext {
     /// - muxing: May be set by the caller before `writeHeader(options:)`.
     public var metadata: [String: String] {
         get {
-            var dict = [String: String]()
-            var prev: UnsafeMutablePointer<AVDictionaryEntry>?
-            while let tag = av_dict_get(native.pointee.metadata, "", prev, AV_DICT_IGNORE_SUFFIX) {
-                dict[String(cString: tag.pointee.key)] = String(cString: tag.pointee.value)
-                prev = tag
-            }
-            return dict
-        }
-        set { native.pointee.metadata = newValue.avDict }
-    }
+            var result: [String: String] = [:]
+            var entry: UnsafePointer<AVDictionaryEntry>?
 
+            while let next = av_dict_get(
+                native.pointee.metadata,
+                "",
+                entry,
+                AV_DICT_IGNORE_SUFFIX
+            ) {
+                result[String(cString: next.pointee.key)] =
+                    String(cString: next.pointee.value)
+
+                entry = UnsafePointer(next)
+            }
+
+            return result
+        }
+
+        set {
+            native.pointee.metadata = newValue.avDict
+        }
+    }
+    
     /// Custom interrupt callbacks for the I/O layer.
     ///
     /// - demuxing: Set by the user before `openInput(_ url:format:options:)`.
