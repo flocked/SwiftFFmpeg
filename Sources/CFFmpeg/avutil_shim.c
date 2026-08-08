@@ -9,6 +9,9 @@ static void swift_ffmpeg_log_callback(
     const char *format,
     va_list args
 ) {
+    if (level > av_log_get_level()) {
+        return;
+    }
     vfprintf(stderr, format, args);
 }
 
