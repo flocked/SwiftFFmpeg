@@ -17,10 +17,8 @@ public struct AVInputFormat {
     init(native: UnsafePointer<CAVInputFormat>) {
         self.native = native
     }
-
-    /// Find `AVInputFormat` based on the short name of the input format.
-    ///
-    /// - Parameter name: name of the input format
+    
+    /// Creates an input format with the specified short name.
     public init?(name: String) {
         guard let ptr = av_find_input_format(name) else {
             return nil
@@ -28,38 +26,43 @@ public struct AVInputFormat {
         self.init(native: ptr)
     }
 
-    /// A comma separated list of short names for the format.
+    /// The short name of the format.
     public var name: String {
-        String(cString: native.pointee.name)
+        names[safe: 0] ?? "unknown"
+    }
+    
+    /// The short names of the format.
+    public var names: [String] {
+        String(cString: native.pointee.name).components(separatedBy: ",")
     }
 
-    /// Descriptive name for the format, meant to be more human-readable than name.
+    /// The human-readable name of the format.
     public var longName: String {
         String(cString: native.pointee.long_name)
     }
 
-    /// If extensions are defined, then no probe is done.
-    /// You should usually not use extension format guessing because it is not reliable enough.
-    public var extensions: String? {
-        String(cString: native.pointee.extensions)
+    /// The filename extensions supported by the format.
+    public var extensions: [String] {
+        String(cString: native.pointee.extensions)?.components(separatedBy: ",") ?? []
     }
 
-    /// Comma-separated list of mime types.
-    public var mimeType: String? {
-        String(cString: native.pointee.mime_type)
+    /// The MIME types supported by the format.
+    public var mimeTypes: [String] {
+        String(cString: native.pointee.mime_type)?.components(separatedBy: ",") ?? []
     }
 
+    /// The flags of the input format.
     public var flags: Flag {
         Flag(rawValue: native.pointee.flags)
     }
 
-    /// `AVClass` for the private context.
+    /// The class for the private format context.
     public var privClass: AVClass? {
         native.pointee.priv_class.map(AVClass.init(native:))
     }
 
-    /// Get all registered demuxers.
-    public static var supportedFormats: [AVInputFormat] {
+    /// All registered input formats.
+    public static var registeredFormats: [AVInputFormat] {
         var list = [AVInputFormat]()
         var state: UnsafeMutableRawPointer?
         while let ptr = av_demuxer_iterate(&state) {
@@ -137,15 +140,13 @@ extension AVInputFormat: AVOptionSupport {
 
 // MARK: - AVOutputFormat
 
-typealias CAVOutputFormat = CFFmpeg.AVOutputFormat
-
 public struct AVOutputFormat {
-    var native: UnsafePointer<CAVOutputFormat>
-
-    init(native: UnsafePointer<CAVOutputFormat>) {
+    var native: UnsafePointer<CFFmpeg.AVOutputFormat>
+    
+    init(native: UnsafePointer<CFFmpeg.AVOutputFormat>) {
         self.native = native
     }
-
+    
     /// Find `AVOutputFormat` based on the short name of the output format.
     ///
     /// - Parameter name: name of the input format
@@ -155,54 +156,60 @@ public struct AVOutputFormat {
         }
         self.init(native: ptr)
     }
-
-    /// A comma separated list of short names for the format.
+    
+    /// The name of the format.
     public var name: String {
         String(cString: native.pointee.name)
     }
-
-    /// Descriptive name for the format, meant to be more human-readable than name.
+    
+    /// The human-readable name of the format.
     public var longName: String {
         String(cString: native.pointee.long_name)
     }
-
-    /// If extensions are defined, then no probe is done. You should usually not use extension format guessing
-    /// because it is not reliable enough.
-    public var extensions: String? {
-        String(cString: native.pointee.extensions)
+    
+    /// The filename extensions supported by the format.
+    public var extensions: [String] {
+        String(cString: native.pointee.extensions)?.components(separatedBy: ",") ?? []
     }
-
-    /// Comma-separated list of mime types.
-    public var mimeType: String? {
-        String(cString: native.pointee.mime_type)
+    
+    /// The MIME types supported by the format.
+    public var mimeTypes: [String] {
+        String(cString: native.pointee.mime_type)?.components(separatedBy: ",") ?? []
     }
-
-    /// The default audio codec of the muxer.
+    
+    /// The default audio codec of the format.
     public var audioCodec: AVCodecID {
         AVCodecID(native: native.pointee.audio_codec)
     }
-
-    /// The default video codec of the muxer.
+    
+    /// The default video codec of the format.
     public var videoCodec: AVCodecID {
         AVCodecID(native: native.pointee.video_codec)
     }
-
-    /// The default subtitle codec of the muxer.
+    
+    /// The default subtitle codec of the format.
     public var subtitleCodec: AVCodecID {
         AVCodecID(native: native.pointee.subtitle_codec)
     }
-
+    
+    /// The flags of the output format.
     public var flags: Flag {
         Flag(rawValue: native.pointee.flags)
     }
-
-    /// `AVClass` for the private context.
+    
+    /// The class for the private format context.
     public var privClass: AVClass? {
         native.pointee.priv_class.map(AVClass.init(native:))
     }
+    
+    /// Returns the preferred codec tag for the specified codec identifier.
+    public func codecTag(for codecID: AVCodecID) -> UInt32? {
+        let tag = av_codec_get_tag(native.pointee.codec_tag, codecID.native)
+        return tag != 0 ? tag : nil
+    }
 
-    /// Get all registered muxers.
-    public static var supportedFormats: [AVOutputFormat] {
+    /// All registered output formats.
+    public static var registeredFormats: [AVOutputFormat] {
         var list = [AVOutputFormat]()
         var state: UnsafeMutableRawPointer?
         while let ptr = av_muxer_iterate(&state) {

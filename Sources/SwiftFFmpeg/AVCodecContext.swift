@@ -86,15 +86,16 @@ public final class AVCodecContext {
     ///
     /// - encoding: Set by user, if not then the default based on `codecId` will be used.
     /// - decoding: Set by user, will be converted to uppercase by libavcodec during init.
-    public var codecTag: UInt32 {
-        get { native.pointee.codec_tag }
-        set { native.pointee.codec_tag = newValue }
+    /// The codec tag, or `nil` if no tag is specified.
+    public var codecTag: UInt32? {
+        get { native.pointee.codec_tag != 0 ? native.pointee.codec_tag : nil }
+        set { native.pointee.codec_tag = newValue ?? 0 }
     }
     
-    /// The codec tag as a four-character String code.
+    /// The codec tag represented as a four-character string.
     public var codecTagString: String? {
-        get { codecTag.fourCC }
-        set { codecTag = newValue?.fourCC ?? 0 }
+        get { codecTag?.fourCC }
+        // set { codecTag = newValue?.fourCC ?? 0 }
     }
 
     /// Private data of the user, can be used to carry app specific stuff.
@@ -106,7 +107,7 @@ public final class AVCodecContext {
         set { opaqueBox = CodecContextBox((opaque: newValue, getFormat: opaqueBox?.value.getFormat)) }
     }
 
-    /// The average bitrate.
+    /// The average bitrate of the codec.
     ///
     /// - encoding: Set by user, unused for constant quantizer encoding.
     /// - decoding: Set by user, may be overwritten by libavcodec if this info is available in the stream.
