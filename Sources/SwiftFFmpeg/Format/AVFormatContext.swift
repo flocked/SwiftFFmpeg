@@ -483,6 +483,14 @@ public extension AVFormatContext {
         return true
     }
     
+    func readFrames(handler: (AVPacket) throws ->()) throws {
+        let packet = AVPacket()
+        while try readFrameIfAvailable(into: packet) {
+            defer { packet.unref() }
+            try handler(packet)
+        }
+    }
+    
     /// Seek to the keyframe at timestamp.
     ///
     /// - Parameters:
