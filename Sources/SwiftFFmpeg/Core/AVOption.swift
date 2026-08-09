@@ -1233,6 +1233,43 @@ public extension AVOptionSupport {
             return data
         }
     }
+    
+    /**
+     Returns the color value for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The color value of the option.
+     - Throws: An error if the option cannot be found or its value cannot be retrieved.
+     */
+    func color(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> AVColor {
+        try withUnsafeObjectPointer { ptr in
+            var value: UnsafeMutablePointer<UInt8>?
+            defer { av_free(value) }
+            try av_opt_get(ptr, key, searchFlags.rawValue, &value).throwIfFail()
+            guard let value else {
+                throw AVError.invalidValue
+            }
+            return AVColor([value[0], value[1], value[2], value[3], ])
+        }
+    }
+
+    /**
+     Returns the color values for the specified option.
+
+     - Parameters:
+       - key: The name of the option.
+       - searchFlags: The flags that control how the option is searched.
+     - Returns: The color values of the option.
+     - Throws: An error if the option cannot be found or its values cannot be retrieved.
+     */
+    func colorValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [AVColor] {
+        let values: [UInt8] = try array(for: key, type: .array(.color), initial: 0, storageElementsPerValue: 4, searchFlags: searchFlags)
+        return stride(from: 0, to: values.count, by: 4).map {
+            AVColor([values[$0], values[$0 + 1], values[$0 + 2], values[$0 + 3], ])
+        }
+    }
 
     private func array<T>(as _: T.Type = T.self, for key: String, type: AVOption.Kind, initial: T, storageElementsPerValue: Int = 1, searchFlags: AVOption.SearchFlag) throws -> [T] {
         let totalCount = try totalCount(for: key, searchFlags: searchFlags)
