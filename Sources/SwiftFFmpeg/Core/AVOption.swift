@@ -510,10 +510,9 @@ public protocol AVOptionSupport {
     func withUnsafeObjectPointer<T>(_ body: (UnsafeMutableRawPointer) throws -> T) rethrows -> T
 }
 
-public extension AVOptionSupport {
-    /// Returns an array of the options supported by the type.
-    var supportedOptions: [AVOption] {
-        let options = rawOptions
+extension Array where Element == AVOption {
+    func withConstants() -> [AVOption] {
+        let options = self
         let constOptions = options.filter({ $0.type == .const}).grouped(by: \.unit)
        return options.filter({ $0.type != .const }).map({
            if let unit = $0.unit {
@@ -522,6 +521,13 @@ public extension AVOptionSupport {
                return $0
            }
         })
+    }
+}
+
+public extension AVOptionSupport {
+    /// Returns an array of the options supported by the type.
+    var supportedOptions: [AVOption] {
+        rawOptions.withConstants()
     }
     
     var rawOptions: [AVOption] {

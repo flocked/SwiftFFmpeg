@@ -38,7 +38,7 @@ public struct AVClass {
         self.name = native.pointee.class_name.string
         self.category = Category(rawValue: native.pointee.category.rawValue)!
         self.version = native.pointee.version
-        self.options = Array(native.pointee.option, until: { $0.name == nil }).map(AVOption.init(native:))
+        self.options = Array(native.pointee.option, until: { $0.name == nil }).map(AVOption.init(native:)).withConstants()
         var childClasses: [AVClass] = []
         if let iterate = native.pointee.child_class_iterate {
             var state: UnsafeMutableRawPointer?
