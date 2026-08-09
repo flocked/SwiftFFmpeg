@@ -139,7 +139,7 @@ func demuxing_decoding() throws {
   let pkt = AVPacket()
 
   // read frames from the file
-  while let _ = try? fmtCtx.readFrame(into: pkt) {
+  while try fmtCtx.readFrameIfAvailable(into: pkt) {
     if pkt.streamIndex == videoIndex {
       try decode_video_packet(
         codecCtx: videoCodecCtx, pkt: pkt, frame: frame, image: image, file: videoOutputFile)

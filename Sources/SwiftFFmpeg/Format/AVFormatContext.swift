@@ -473,7 +473,16 @@ public extension AVFormatContext {
     func readFrame(into packet: AVPacket) throws {
         try av_read_frame(native, packet.native).throwIfFail()
     }
-
+    
+    func readFrameIfAvailable(into packet: AVPacket) throws -> Bool {
+        let result = av_read_frame(native, packet.native)
+        if result == swift_AVERROR_EOF {
+            return false
+        }
+        try result.throwIfFail()
+        return true
+    }
+    
     /// Seek to the keyframe at timestamp.
     ///
     /// - Parameters:

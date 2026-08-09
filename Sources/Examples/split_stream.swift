@@ -45,7 +45,7 @@ func split_stream() throws {
   }
 
   let pkt = AVPacket()
-  while let _ = try? fmtCtx.readFrame(into: pkt) {
+    while try fmtCtx.readFrameIfAvailable(into: pkt) {
     if let (muxer, ostream) = streamMapping[pkt.streamIndex] {
       let istream = fmtCtx.streams[pkt.streamIndex]
       pkt.pts = AVMath.rescale(

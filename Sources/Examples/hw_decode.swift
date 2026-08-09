@@ -107,7 +107,7 @@ func hw_decode() throws {
 
     // actual decoding and dump the raw data
     let pkt = AVPacket()
-    while let _ = try? fmtCtx.readFrame(into: pkt) {
+    while try fmtCtx.readFrameIfAvailable(into: pkt) {
         defer {
             pkt.unref()
         }

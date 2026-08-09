@@ -68,7 +68,7 @@ func remuxing() throws {
   try ofmtCtx.writeHeader()
 
   let pkt = AVPacket()
-  while let _ = try? ifmtCtx.readFrame(into: pkt) {
+    while try ifmtCtx.readFrameIfAvailable(into: pkt) {
     defer {
       pkt.unref()
     }

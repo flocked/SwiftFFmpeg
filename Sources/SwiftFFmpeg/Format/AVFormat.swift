@@ -237,6 +237,11 @@ public struct AVOutputFormat {
         }
         return list
     }
+    
+    /// Returns a Boolean value indicating whether the output format supports the specified codec.
+    public func supports(_ codecID: AVCodecID) -> Bool {
+        avformat_query_codec(native, codecID.native, FF_COMPLIANCE_NORMAL) > 0
+    }
 }
 
 // MARK: - AVOutputFormat.Flag

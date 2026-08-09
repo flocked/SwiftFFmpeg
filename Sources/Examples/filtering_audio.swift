@@ -112,7 +112,8 @@ func filtering_audio() throws {
   let filterFrame = AVFrame()
 
   // read all packets
-  while let _ = try? fmtCtx.readFrame(into: pkt) {
+    
+    while try fmtCtx.readFrameIfAvailable(into: pkt) {
     defer { pkt.unref() }
 
     if pkt.streamIndex != streamIndex {
