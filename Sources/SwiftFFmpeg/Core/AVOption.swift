@@ -53,7 +53,7 @@ public struct AVOption {
         public let help: String?
         /// A Boolean value indicating whether this constant is the parent option's default value.
         public let isDefault: Bool
-
+        /// The flags describing where this constant is applicable.
         public let flags: Flag
 
         public var description: String {
@@ -239,24 +239,11 @@ extension AVOption: CustomStringConvertible {
         if let unit = unit {
             strings.append("unit: \"\(unit)\"")
         }
-        if let defaultValue {
-            if let string = defaultValue as? String {
-                strings.append("default: \"\(string)\"")
-            } else {
-                let defaultConstants = constants.filter(\.isDefault)
-                if !defaultConstants.isEmpty {
-                    let names = defaultConstants.map { "\"\($0.name)\"" }.joined(separator: ", ")
-                    strings.append("default: \(defaultValue) (\(names))")
-                } else {
-                    strings.append("default: \(defaultValue)")
-                }
-            }
+        if let defaultDescription {
+            strings.append("default: " + defaultDescription)
         }
-        if let min = min {
-            strings.append("min: \(min)")
-        }
-        if let max = max {
-            strings.append("max: \(max)")
+        if let minMax = minMaxDescription {
+            strings.append(minMax)
         }
 
         if !constants.isEmpty {
@@ -270,6 +257,74 @@ extension AVOption: CustomStringConvertible {
             strings.append("help: \"\(help)\"")
         }
         return "(\(strings.joined(separator: ", ")))"
+    }
+    
+    fileprivate var defaultDescription: String? {
+        guard let defaultValue = defaultValue else { return nil }
+        if let string = defaultValue as? String {
+           return "\"\(string)\""
+        } else {
+            let defaultConstants = constants.filter(\.isDefault)
+            if !defaultConstants.isEmpty {
+                let names = defaultConstants.map { "\"\($0.name)\"" }.joined(separator: ", ")
+               return "\(defaultValue) (\(names))"
+            } else {
+                return "\(defaultValue)"
+            }
+        }
+    }
+    
+    fileprivate var minMaxDescription: String? {
+        if let min, let max {
+           return "range: \(min)...\(max)"
+        } else if let min {
+       return "min: \(min)"
+        } else if let max {
+          return "max: \(max)"
+        }
+        return nil
+    }
+}
+
+extension AVOption: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        var lines = ["\"\(name)\""]
+        lines.append("  type: \(type)")
+        if let unit {
+            lines.append("  unit: \"\(unit)\"")
+        }
+        if let defaultDescription {
+            lines.append("  default: \(defaultDescription)")
+        }
+        if let minMax = minMaxDescription {
+            lines.append(" " + minMax)
+        }
+        lines.append("  flags: \(flags)")
+        if let help {
+            lines.append("  help: \"\(help)\"")
+        }
+        if !constants.isEmpty {
+            lines.append("  constants:")
+            lines.append(contentsOf: constants.flatMap(\.debugLines))
+        }
+        return lines.joined(separator: "\n")
+    }
+}
+
+fileprivate extension AVOption.Constant {
+    var debugLines: [String] {
+        var line = "    - \(value): \"\(name)\""
+        if !flags.isEmpty {
+            line += " \(flags)"
+        }
+        if isDefault {
+            line += " (default)"
+        }
+        var lines = [line]
+        if let help {
+            lines.append("      help: \"\(help)\"")
+        }
+        return lines
     }
 }
 
