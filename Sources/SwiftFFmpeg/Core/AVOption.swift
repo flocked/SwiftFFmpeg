@@ -268,6 +268,9 @@ extension AVOption: CustomStringConvertible {
             let defaultConstants = constants.filter(\.isDefault)
             if !defaultConstants.isEmpty {
                 let names = defaultConstants.map { "\"\($0.name)\"" }.joined(separator: ", ")
+                if type == .flags {
+                    return "\(defaultValue) [\(names)]"
+                }
                return "\(defaultValue) (\(names))"
             } else {
                 return "\(defaultValue)"
