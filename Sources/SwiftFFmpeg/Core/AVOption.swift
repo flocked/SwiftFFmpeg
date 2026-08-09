@@ -10,7 +10,6 @@ import Foundation
 
 // MARK: - AVOption
 
-
 public struct AVOption {
     /// The name of the option.
     public let name: String
@@ -30,32 +29,48 @@ public struct AVOption {
     public let unit: String?
     /// The type of the option.
     public let type: Kind
-    
+
+    /// The named constant values associated with this option.
     public internal(set) var constants: [Constant] = []
-    
+
     func withConstants(_ options: [Self]) -> Self {
         var option = self
-        option.constants = options.map({ Constant($0) })
+        let defaultValue = option.defaultIntegerValue
+        let isFlag = option.type == .flags
+        option.constants = options.map {
+            Constant($0, defaultValue, isFlag)
+        }
         return option
     }
-    
+
+    /// The named constant value associated with an option.
     public struct Constant: CustomStringConvertible {
+        /// The symbolic name used to set the option to this value.
         public let name: String
+        /// The integer value represented by the constant.
         public let value: Int64
+        /// The short English help text for the constant.
         public let help: String?
-        public let unit: String?
+        /// A Boolean value indicating whether this constant is the parent option's default value.
+        public let isDefault: Bool
+
         public let flags: Flag
-        
+
         public var description: String {
-            "(\"\(name)\", \(value))"
+            "(\"\(name)\", \(value)\(isDefault ? " (default)" : "")"
         }
-        
-        init(_ option: AVOption) {
-            self.name = option.name
-            self.value = option.defaultValue as? Int64 ?? 0
-            self.help = option.help
-            self.flags = option.flags
-            self.unit = option.unit
+
+        init(_ option: AVOption, _ defaultValue: Int64?, _ isFlag: Bool) {
+            name = option.name
+            let _value = option.defaultValue as? Int64 ?? 0
+            value = _value
+            help = option.help
+            flags = option.flags
+            if isFlag {
+                isDefault = defaultValue.map { _value == 0 ? $0 == 0 : ($0 & _value) == _value } ?? false
+            } else {
+                isDefault = defaultValue == _value
+            }
         }
     }
 
@@ -80,13 +95,6 @@ public struct AVOption {
                 self.min = nil
                 self.max = nil
                 self.defaultValue = UInt32(exactly: native.default_val.i64).map(FlagValue.init(rawValue:))
-            /*
-             if let rawValue = Int32(exactly: native.default_val.i64), rawValue >= 0 {
-                 self.defaultValue = AVOption.Flag(rawValue: rawValue)
-             } else {
-                 self.defaultValue = AVOption.Flag(rawValue: 0)
-             }
-              */
             case .int:
                 self.min = Int32(clamping: native.min)
                 self.max = Int32(clamping: native.max)
@@ -219,7 +227,7 @@ extension CFFmpeg.AVOptionArrayDef {
         values.append(String(decoding: current, as: UTF8.self))
         return values
     }
-    
+
     func values<V: LosslessStringConvertible>(as _: V.Type = V.self) -> [V]? {
         values?.compactMap(V.init)
     }
@@ -231,11 +239,17 @@ extension AVOption: CustomStringConvertible {
         if let unit = unit {
             strings.append("unit: \"\(unit)\"")
         }
-        if let defaultValue = defaultValue {
+        if let defaultValue {
             if let string = defaultValue as? String {
                 strings.append("default: \"\(string)\"")
             } else {
-                strings.append("default: \(defaultValue)")
+                let defaultConstants = constants.filter(\.isDefault)
+                if !defaultConstants.isEmpty {
+                    let names = defaultConstants.map { "\"\($0.name)\"" }.joined(separator: ", ")
+                    strings.append("default: \(defaultValue) (\(names))")
+                } else {
+                    strings.append("default: \(defaultValue)")
+                }
             }
         }
         if let min = min {
@@ -244,12 +258,12 @@ extension AVOption: CustomStringConvertible {
         if let max = max {
             strings.append("max: \(max)")
         }
-        
+
         if !constants.isEmpty {
-          //  strings.append("constants: [\(constants.map(\.description).joined(separator: ", "))]")
+            //  strings.append("constants: [\(constants.map(\.description).joined(separator: ", "))]")
             strings.append("constants: \(constants)")
         }
-        
+
         strings.append("flags: \(flags)")
         //  strings.append("offset: \(offset)")
         if let help = help {
@@ -272,16 +286,16 @@ public extension AVOption {
         public var isArray: Bool {
             rawValue & Self.arrayFlag != 0
         }
-        
+
         /// The element type represented by the option.
         public var element: Element {
             Element(rawValue: rawValue & ~Self.arrayFlag)!
         }
-        
+
         var native: CFFmpeg.AVOptionType {
             .init(rawValue: rawValue)
         }
-        
+
         /// A flag value.
         public static let flags = Self(.flags)
         /// A floating-point value.
@@ -322,12 +336,12 @@ public extension AVOption {
         public static let bool = Self(.bool)
         /// A channel layout.
         public static let channelLayout = Self(.channelLayout)
-        
+
         /// Returns an array option type containing elements of the specified type.
         public static func array(_ element: Element) -> Self {
             .init(element, isArray: true)
         }
-        
+
         init(native: CFFmpeg.AVOptionType) {
             self.rawValue = native.rawValue
         }
@@ -446,7 +460,7 @@ public extension AVOption {
             self.rawValue = rawValue
         }
     }
-    
+
     struct FlagValue: RawRepresentable, OptionSet {
         public let rawValue: UInt32
         public init(rawValue: UInt32) {
@@ -513,14 +527,38 @@ public protocol AVOptionSupport {
 extension Array where Element == AVOption {
     func withConstants() -> [AVOption] {
         let options = self
-        let constOptions = options.filter({ $0.type == .const}).grouped(by: \.unit)
-       return options.filter({ $0.type != .const }).map({
-           if let unit = $0.unit {
-               return  $0.withConstants(constOptions[unit] ?? [])
-           } else {
-               return $0
-           }
-        })
+        let constOptions = options.filter { $0.type == .const }.grouped(by: \.unit)
+        return options.filter { $0.type != .const }.map {
+            if let unit = $0.unit {
+                return $0.withConstants(constOptions[unit] ?? [])
+            } else {
+                return $0
+            }
+        }
+    }
+}
+
+private extension AVOption {
+    var defaultIntegerValue: Int64? {
+        guard let defaultValue else { return nil }
+        switch defaultValue {
+        case let value as Int:
+            return Int64(value)
+        case let value as Int32:
+            return Int64(value)
+        case let value as Int64:
+            return value
+        case let value as UInt:
+            return value <= UInt(Int64.max) ? Int64(value) : nil
+        case let value as UInt32:
+            return Int64(value)
+        case let value as UInt64:
+            return value <= UInt64(Int64.max) ? Int64(value) : nil
+        case let value as FlagValue:
+            return Int64(value.rawValue)
+        default:
+            return nil
+        }
     }
 }
 
@@ -529,7 +567,7 @@ public extension AVOptionSupport {
     var supportedOptions: [AVOption] {
         rawOptions.withConstants()
     }
-    
+
     var rawOptions: [AVOption] {
         withUnsafeObjectPointer { ptr in
             var options: [AVOption] = []
@@ -561,12 +599,12 @@ public extension AVOptionSupport {
             guard let ranges else {
                 throw AVError.invalidValue
             }
-            return ((0..<Int(ranges.pointee.nb_ranges)).compactMap { index in
+            return ((0 ..< Int(ranges.pointee.nb_ranges)).compactMap { index in
                 ranges.pointee.range[index].map { AVOptionRange(native: $0.pointee) }
             }, Int(ranges.pointee.nb_components))
         }
     }
-    
+
     /**
      Returns whether the specified option is currently set to its default value.
 
@@ -583,7 +621,7 @@ public extension AVOptionSupport {
             return result != 0
         }
     }
-    
+
     /**
      Sets multiple options from a dictionary of option names and values.
 
@@ -604,7 +642,7 @@ public extension AVOptionSupport {
             return dict?.avDict ?? [:]
         }
     }
-    
+
     func option(forKey key: String, unit: String? = nil, requiredFlags: AVOption.Flag = [], searchFlags: AVOption.SearchFlag = .children) -> AVOption? {
         withUnsafeObjectPointer { ptr in
             key.withCString { key in
@@ -636,7 +674,7 @@ public extension AVOptionSupport {
             return String(cString: value)
         }
     }
-    
+
     /**
      Returns the string values for the specified option.
 
@@ -651,7 +689,7 @@ public extension AVOptionSupport {
         defer { values.forEach { av_free($0) } }
         return values.compactMap { $0?.string }
     }
-    
+
     /**
      Returns the unsigned 32-bit integer value for the specified option.
 
@@ -664,7 +702,7 @@ public extension AVOptionSupport {
     func uint(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> UInt32 {
         try integer(forKey: key, searchFlags: searchFlags)
     }
-    
+
     /**
      Returns the unsigned 32-bit integer values for the specified option.
 
@@ -677,7 +715,7 @@ public extension AVOptionSupport {
     func uintValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [UInt32] {
         try array(for: key, type: .array(.uint), initial: 0, searchFlags: searchFlags)
     }
-    
+
     /**
      Returns the unsigned 64-bit integer value for the specified option.
 
@@ -690,7 +728,7 @@ public extension AVOptionSupport {
     func uint64(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> UInt64 {
         try integer(forKey: key, searchFlags: searchFlags)
     }
-    
+
     /**
      Returns the unsigned 64-bit integer values for the specified option.
 
@@ -703,7 +741,7 @@ public extension AVOptionSupport {
     func uint64Values(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [UInt64] {
         try array(for: key, type: .array(.uint64), initial: 0, searchFlags: searchFlags)
     }
-    
+
     /**
      Returns the signed 32-bit integer value for the specified option.
 
@@ -716,7 +754,7 @@ public extension AVOptionSupport {
     func int32(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> Int32 {
         try integer(forKey: key, searchFlags: searchFlags)
     }
-    
+
     /**
      Returns the signed 32-bit integer values for the specified option.
 
@@ -729,7 +767,7 @@ public extension AVOptionSupport {
     func int32Values(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [Int32] {
         try array(for: key, type: .array(.int), initial: 0, searchFlags: searchFlags)
     }
-    
+
     /**
      Returns the signed 64-bit integer value for the specified option.
 
@@ -742,7 +780,7 @@ public extension AVOptionSupport {
     func int64(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> Int64 {
         try integer(forKey: key, searchFlags: searchFlags)
     }
-    
+
     /**
      Returns the signed 64-bit integer values for the specified option.
 
@@ -763,7 +801,7 @@ public extension AVOptionSupport {
             return T(value)
         }
     }
-    
+
     /**
      Returns the flag value for the specified option.
 
@@ -776,7 +814,7 @@ public extension AVOptionSupport {
     func flags(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> AVOption.FlagValue {
         try .init(rawValue: integer(forKey: key, searchFlags: searchFlags))
     }
-    
+
     /**
      Returns the flag values for the specified option.
 
@@ -806,7 +844,7 @@ public extension AVOptionSupport {
             return value
         }
     }
-    
+
     /**
      Returns the double-precision floating-point values for the specified option.
 
@@ -819,7 +857,7 @@ public extension AVOptionSupport {
     func doubleValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [Double] {
         try array(for: key, type: .array(.double), initial: 0, searchFlags: searchFlags)
     }
-    
+
     /**
      Returns the single-precision floating-point value for the specified option.
 
@@ -832,7 +870,7 @@ public extension AVOptionSupport {
     func float(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> Float {
         try Float(double(forKey: key, searchFlags: searchFlags))
     }
-    
+
     /**
      Returns the single-precision floating-point values for the specified option.
 
@@ -845,7 +883,7 @@ public extension AVOptionSupport {
     func floatValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [Float] {
         try array(for: key, type: .array(.float), initial: 0, searchFlags: searchFlags)
     }
-    
+
     /**
      Returns the Boolean value for the specified option.
 
@@ -858,7 +896,7 @@ public extension AVOptionSupport {
     func bool(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> Bool {
         try integer(forKey: key, searchFlags: searchFlags, as: Int64.self) != 0
     }
-    
+
     /**
      Returns the Boolean values for the specified option.
 
@@ -888,7 +926,7 @@ public extension AVOptionSupport {
             return value
         }
     }
-    
+
     /**
      Returns the rational values for the specified option.
 
@@ -919,7 +957,7 @@ public extension AVOptionSupport {
             return AVImageSize(width: Int(width), height: Int(height))
         }
     }
-    
+
     /**
      Returns the image sizes for the specified option.
 
@@ -952,7 +990,7 @@ public extension AVOptionSupport {
             return value
         }
     }
-    
+
     /**
      Returns the pixel formats for the specified option.
 
@@ -982,7 +1020,7 @@ public extension AVOptionSupport {
             return AVSampleFormat(native: value)
         }
     }
-    
+
     /**
      Returns the sample formats for the specified option.
 
@@ -1012,7 +1050,7 @@ public extension AVOptionSupport {
             return value
         }
     }
-    
+
     /**
      Returns the video rates for the specified option.
 
@@ -1042,7 +1080,7 @@ public extension AVOptionSupport {
             return value
         }
     }
-    
+
     /**
      Returns the channel layouts for the specified option.
 
@@ -1055,7 +1093,7 @@ public extension AVOptionSupport {
     func channelLayoutValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [AVChannelLayout] {
         try array(for: key, type: .array(.channelLayout), searchFlags: searchFlags)
     }
-    
+
     /**
      Returns the dictionary value for the specified option.
 
@@ -1073,7 +1111,7 @@ public extension AVOptionSupport {
             return dict?.avDict ?? [:]
         }
     }
-    
+
     /**
      Returns the dictionary values for the specified option.
 
@@ -1088,7 +1126,7 @@ public extension AVOptionSupport {
         defer { dictionaries.indices.forEach { av_dict_free(&dictionaries[$0]) } }
         return dictionaries.map { $0?.avDict ?? [:] }
     }
-    
+
     /**
      Returns the duration for the specified option.
 
@@ -1101,7 +1139,7 @@ public extension AVOptionSupport {
     func duration(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> Int64 {
         try integer(forKey: key, searchFlags: searchFlags, as: Int64.self)
     }
-    
+
     /**
      Returns the durations for the specified option.
 
@@ -1114,7 +1152,7 @@ public extension AVOptionSupport {
     func durationValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [Int64] {
         try array(for: key, type: .array(.duration), initial: 0, searchFlags: searchFlags)
     }
-    
+
     /**
      Returns the binary data for the specified option.
 
@@ -1136,7 +1174,7 @@ public extension AVOptionSupport {
             return data
         }
     }
-    
+
     private func array<T>(as _: T.Type = T.self, for key: String, type: AVOption.Kind, initial: T, storageElementsPerValue: Int = 1, searchFlags: AVOption.SearchFlag) throws -> [T] {
         let totalCount = try totalCount(for: key, searchFlags: searchFlags)
         var values = Array(repeating: initial, count: Int(totalCount) * storageElementsPerValue)
@@ -1147,7 +1185,7 @@ public extension AVOptionSupport {
         }
         return values
     }
-    
+
     private func array<T>(as _: T.Type = T.self, for key: String, type: AVOption.Kind, storageElementsPerValue: Int = 1, searchFlags: AVOption.SearchFlag) throws -> [T] {
         let totalCount = try totalCount(for: key, searchFlags: searchFlags)
         let count = Int(totalCount) * storageElementsPerValue
@@ -1158,7 +1196,7 @@ public extension AVOptionSupport {
             initializedCount = count
         }
     }
-    
+
     private func totalCount(for key: String, searchFlags: AVOption.SearchFlag) throws -> UInt32 {
         try withUnsafeObjectPointer { ptr in
             var count: UInt32 = 0
@@ -1194,7 +1232,7 @@ public extension AVOptionSupport {
             try av_opt_set(ptr, key, value, searchFlags.rawValue).throwIfFail()
         }
     }
-    
+
     /**
      Sets the string values for the specified option.
 
@@ -1210,7 +1248,7 @@ public extension AVOptionSupport {
         defer { cStrings.forEach { free($0) } }
         try set(cStrings, for: key, startIndex: startIndex, type: .array(.string), searchFlags: searchFlags)
     }
-    
+
     /**
      Sets the Boolean value for the specified option.
 
@@ -1223,7 +1261,7 @@ public extension AVOptionSupport {
     func set(_ value: Bool, forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(Int32(value ? 1 : 0), forKey: key, searchFlags: searchFlags)
     }
-    
+
     /**
      Sets the Boolean values for the specified option.
 
@@ -1237,7 +1275,7 @@ public extension AVOptionSupport {
     func set(_ values: [Bool], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(values.map { Int32($0 ? 1 : 0) }, for: key, startIndex: startIndex, type: .array(.bool), searchFlags: searchFlags)
     }
-    
+
     /**
      Sets the integer value for the specified option.
 
@@ -1255,7 +1293,7 @@ public extension AVOptionSupport {
             try av_opt_set_int(ptr, key, value, searchFlags.rawValue).throwIfFail()
         }
     }
-    
+
     /**
      Sets the unsigned 32-bit integer values for the specified option.
 
@@ -1269,7 +1307,7 @@ public extension AVOptionSupport {
     func set(_ values: [UInt32], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(values, for: key, startIndex: startIndex, type: .array(.uint), searchFlags: searchFlags)
     }
-    
+
     /**
      Sets the unsigned 64-bit integer values for the specified option.
 
@@ -1283,7 +1321,7 @@ public extension AVOptionSupport {
     func set(_ values: [UInt64], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(values, for: key, startIndex: startIndex, type: .array(.uint64), searchFlags: searchFlags)
     }
-    
+
     /**
      Sets the signed 32-bit integer values for the specified option.
 
@@ -1297,7 +1335,7 @@ public extension AVOptionSupport {
     func set(_ values: [Int32], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(values, for: key, startIndex: startIndex, type: .array(.int), searchFlags: searchFlags)
     }
-    
+
     /**
      Sets the signed 64-bit integer values for the specified option.
 
@@ -1311,7 +1349,7 @@ public extension AVOptionSupport {
     func set(_ values: [Int64], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(values, for: key, startIndex: startIndex, type: .array(.int64), searchFlags: searchFlags)
     }
-    
+
     /**
      Sets the flag value for the specified option.
 
@@ -1324,7 +1362,7 @@ public extension AVOptionSupport {
     func set(_ value: AVOption.FlagValue, forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(value.rawValue, forKey: key, searchFlags: searchFlags)
     }
-    
+
     /**
      Sets the flag values for the specified option.
 
@@ -1353,7 +1391,7 @@ public extension AVOptionSupport {
             try av_opt_set_double(ptr, key, value, searchFlags.rawValue).throwIfFail()
         }
     }
-    
+
     /**
      Sets the double-precision floating-point values for the specified option.
 
@@ -1367,7 +1405,7 @@ public extension AVOptionSupport {
     func set(_ values: [Double], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(values, for: key, startIndex: startIndex, type: .array(.double), searchFlags: searchFlags)
     }
-    
+
     /**
      Sets the single-precision floating-point value for the specified option.
 
@@ -1380,7 +1418,7 @@ public extension AVOptionSupport {
     func set(_ value: Float, forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(Double(value), forKey: key, searchFlags: searchFlags)
     }
-    
+
     /**
      Sets the single-precision floating-point values for the specified option.
 
@@ -1409,7 +1447,7 @@ public extension AVOptionSupport {
             try av_opt_set_q(ptr, key, value, searchFlags.rawValue).throwIfFail()
         }
     }
-    
+
     /**
      Sets the rational values for the specified option.
 
@@ -1423,7 +1461,7 @@ public extension AVOptionSupport {
     func set(_ values: [AVRational], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(values, for: key, startIndex: startIndex, type: .array(.rational), searchFlags: searchFlags)
     }
-    
+
     /**
      Sets the color value for the specified option.
 
@@ -1440,7 +1478,7 @@ public extension AVOptionSupport {
             }
         }
     }
-    
+
     /**
      Sets the color values for the specified option.
 
@@ -1455,13 +1493,12 @@ public extension AVOptionSupport {
         try set(values.flatMap(\.rgbaBytes), for: key, startIndex: startIndex, type: .array(.color), storageCountPerElement: 4, searchFlags: searchFlags)
     }
 
-    
     private func set(_ value: UnsafeBufferPointer<UInt8>, forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
         try withUnsafeObjectPointer { ptr in
             try av_opt_set_bin(ptr, key, value.baseAddress, Int32(value.count), searchFlags.rawValue).throwIfFail()
         }
     }
-    
+
     /**
      Sets the binary data for the specified option.
 
@@ -1496,7 +1533,7 @@ public extension AVOptionSupport {
             try av_opt_set_image_size(ptr, key, Int32(value.width), Int32(value.height), searchFlags.rawValue).throwIfFail()
         }
     }
-    
+
     /**
      Sets the image sizes for the specified option.
 
@@ -1525,7 +1562,7 @@ public extension AVOptionSupport {
             try av_opt_set_pixel_fmt(ptr, key, value, searchFlags.rawValue).throwIfFail()
         }
     }
-    
+
     /**
      Sets the pixel formats for the specified option.
 
@@ -1554,7 +1591,7 @@ public extension AVOptionSupport {
             try av_opt_set_sample_fmt(ptr, key, value.native, searchFlags.rawValue).throwIfFail()
         }
     }
-    
+
     /**
      Sets the sample formats for the specified option.
 
@@ -1583,7 +1620,7 @@ public extension AVOptionSupport {
             try av_opt_set_video_rate(ptr, key, value, searchFlags.rawValue).throwIfFail()
         }
     }
-    
+
     /**
      Sets the video rates for the specified option.
 
@@ -1614,7 +1651,7 @@ public extension AVOptionSupport {
             }
         }
     }
-    
+
     /**
      Sets the channel layouts for the specified option.
 
@@ -1662,7 +1699,7 @@ public extension AVOptionSupport {
             try av_opt_set_dict_val(ptr, key, dict, searchFlags.rawValue).throwIfFail()
         }
     }
-    
+
     /**
      Sets the dictionaries for the specified option.
 
@@ -1678,7 +1715,7 @@ public extension AVOptionSupport {
         defer { dictionaries.indices.forEach { av_dict_free(&dictionaries[$0]) } }
         try set(dictionaries, for: key, startIndex: startIndex, type: .array(.dict), searchFlags: searchFlags)
     }
-    
+
     /**
      Sets the duration values for the specified option.
 
@@ -1692,7 +1729,7 @@ public extension AVOptionSupport {
     func set(durations values: [Int64], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(values, for: key, startIndex: startIndex, type: .array(.duration), searchFlags: searchFlags)
     }
-    
+
     private func set<Element>(_ values: [Element], for key: String, startIndex: UInt32, type: AVOption.Kind, storageCountPerElement: Int = 1, searchFlags: AVOption.SearchFlag) throws {
         try values.withUnsafeBufferPointer { buffer in
             try withUnsafeObjectPointer { ptr in
