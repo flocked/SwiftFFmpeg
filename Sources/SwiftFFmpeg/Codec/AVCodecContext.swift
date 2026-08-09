@@ -149,13 +149,13 @@ public final class AVCodecContext {
 
      Extra data may contain information such as Huffman tables, global headers, or codec-specific configuration and must include sufficient input-buffer padding when supplied by the caller.
      */
-    public var extradata: UnsafeMutablePointer<UInt8>? {
+    public var extraData: UnsafeMutablePointer<UInt8>? {
         get { native.pointee.extradata }
         set { native.pointee.extradata = newValue }
     }
 
     /// The size of the codec-specific extra data, in bytes.
-    public var extradataSize: Int {
+    public var extraDataSize: Int {
         get { Int(native.pointee.extradata_size) }
         set { native.pointee.extradata_size = Int32(newValue) }
     }

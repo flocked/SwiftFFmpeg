@@ -35,7 +35,9 @@ public enum AVLog {
     }
     
     /**
-     Sets the callback handler for FFmpeg log messages and their associated levels.
+     Sets a custom callback handler for FFmpeg log messages and their associated levels.
+     
+     If you provide a custom handler, you are responsible for printing messages if needed.
 
      Pass `nil` to restore the default logging callback.
      */
@@ -53,11 +55,6 @@ public enum AVLog {
     }
     
     private static var handler: (@Sendable (_ level: Level, _ message: String) -> Void)?
-    
-    public static var flags: Flag {
-        get { .init(rawValue: av_log_get_flags()) }
-        set { av_log_set_flags(newValue.rawValue) }
-    }
 }
 
 // MARK: - AVLog.Level
@@ -106,25 +103,5 @@ public extension AVLog {
         public init(rawValue: Int32) {
             self = Self.allCases.last(where: { $0.rawValue <= rawValue }) ?? .quiet
         }
-    }
-    
-    struct Flag: OptionSet, Sendable {
-        public let rawValue: Int32
-
-        public init(rawValue: Int32) {
-            self.rawValue = rawValue
-        }
-
-        /// Skips repeated log messages.
-        public static let skipRepeated = Self(rawValue: AV_LOG_SKIP_REPEATED)
-
-        /// Includes the log severity in messages originating from codecs.
-        public static let printLevel = Self(rawValue: AV_LOG_PRINT_LEVEL)
-
-        /// Includes the system time in log output.
-        public static let printTime = Self(rawValue: AV_LOG_PRINT_TIME)
-
-        /// Includes the system date and time in log output.
-        public static let printDateTime = Self(rawValue: AV_LOG_PRINT_DATETIME)
     }
 }

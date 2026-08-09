@@ -6,6 +6,8 @@
 //
 
 import CFFmpeg
+import Foundation
+import UniformTypeIdentifiers
 
 // MARK: - AVInputFormat
 
@@ -147,6 +149,29 @@ public struct AVOutputFormat {
         self.init(native: ptr)
     }
     
+    public init?(fileExtension: String) {
+        self.init(fileName: "file.\(fileExtension)")
+    }
+    
+    public init?(fileName: String) {
+        guard let ptr = av_guess_format(nil, fileName, nil) else {
+            return nil
+        }
+        self.init(native: ptr)
+    }
+    
+    public init?(url: URL) {
+        self.init(fileName: url.pathOrURLString)
+    }
+    
+    public init?(contentType: UTType) {
+        let fileName = contentType.preferredFilenameExtension.map { "file.\($0)" }
+        guard let mime = contentType.preferredMIMEType, let ptr = av_guess_format(nil, fileName, mime) else {
+            return nil
+        }
+        self.init(native: ptr)
+    }
+    
     /// The short name of the format.
     public var name: String {
         names[safe: 0] ?? "unknown"
@@ -163,7 +188,7 @@ public struct AVOutputFormat {
     }
     
     /// The filename extensions supported by the format.
-    public var extensions: [String] {
+    public var filenameExtensions: [String] {
         native.pointee.extensions?.string.components(separatedBy: ",") ?? []
     }
     
