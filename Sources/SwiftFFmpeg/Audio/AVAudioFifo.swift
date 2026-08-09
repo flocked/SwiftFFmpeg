@@ -99,9 +99,7 @@ public final class AVAudioFifo {
      */
     @discardableResult
     public func write(_ frame: AVFrame) throws -> Int {
-        var data: [UnsafeMutableRawPointer?] = frame.extendedData.map { pointer in
-            pointer.map { UnsafeMutableRawPointer($0) }
-        }
+        var data = try dataPointers(for: frame)
 
         let written = data.withUnsafeMutableBufferPointer { data in
             av_audio_fifo_write(
@@ -123,6 +121,8 @@ public final class AVAudioFifo {
     /**
      Reads audio samples from the FIFO into a new audio frame.
 
+     If the FIFO contains fewer samples than requested, the returned frame contains the available samples.
+
      - Parameters:
        - sampleCount: The number of samples to read.
        - sampleRate: The sample rate to assign to the returned frame.
@@ -135,18 +135,13 @@ public final class AVAudioFifo {
         sampleRate: Int,
         channelLayout: AVChannelLayout
     ) throws -> AVFrame {
-        let frame = AVFrame()
+        let frame = try makeFrame(
+            sampleCount: sampleCount,
+            sampleRate: sampleRate,
+            channelLayout: channelLayout
+        )
 
-        frame.sampleFormat = sampleFormat
-        frame.sampleRate = sampleRate
-        frame.channelLayout = channelLayout
-        frame.sampleCount = sampleCount
-
-        try frame.allocBuffer()
-
-        var data: [UnsafeMutableRawPointer?] = frame.extendedData.map { pointer in
-            pointer.map { UnsafeMutableRawPointer($0) }
-        }
+        var data = try dataPointers(for: frame)
 
         let read = data.withUnsafeMutableBufferPointer { data in
             av_audio_fifo_read(
@@ -157,11 +152,157 @@ public final class AVAudioFifo {
         }
 
         try read.throwIfFail()
+        frame.sampleCount = Int(read)
 
-        guard read == sampleCount else {
+        return frame
+    }
+
+    /**
+     Reads exactly the requested number of audio samples from the FIFO into a new audio frame.
+
+     - Parameters:
+       - sampleCount: The number of samples to read.
+       - sampleRate: The sample rate to assign to the returned frame.
+       - channelLayout: The channel layout to assign to the returned frame.
+     - Returns: An audio frame containing the samples read from the FIFO.
+     - Throws: An `AVError` if the FIFO contains fewer than the requested number of samples.
+     */
+    public func readExactly(
+        sampleCount: Int,
+        sampleRate: Int,
+        channelLayout: AVChannelLayout
+    ) throws -> AVFrame {
+        guard self.sampleCount >= sampleCount else {
             throw AVError.invalidData
         }
 
+        return try read(
+            sampleCount: sampleCount,
+            sampleRate: sampleRate,
+            channelLayout: channelLayout
+        )
+    }
+
+    /**
+     Peeks audio samples from the FIFO into a new audio frame without removing them.
+
+     If the FIFO contains fewer samples than requested, the returned frame contains the available samples.
+
+     - Parameters:
+       - sampleCount: The number of samples to peek.
+       - sampleRate: The sample rate to assign to the returned frame.
+       - channelLayout: The channel layout to assign to the returned frame.
+     - Returns: An audio frame containing the samples peeked from the FIFO.
+     - Throws: An `AVError` if the frame couldn't be allocated or the samples couldn't be peeked.
+     */
+    public func peek(
+        sampleCount: Int,
+        sampleRate: Int,
+        channelLayout: AVChannelLayout
+    ) throws -> AVFrame {
+        try peek(
+            sampleCount: sampleCount,
+            offset: 0,
+            sampleRate: sampleRate,
+            channelLayout: channelLayout
+        )
+    }
+
+    /**
+     Peeks audio samples from the FIFO at the given offset without removing them.
+
+     If the FIFO contains fewer samples than requested after the offset, the returned frame contains the available samples.
+
+     - Parameters:
+       - sampleCount: The number of samples to peek.
+       - offset: The sample offset from the current read position.
+       - sampleRate: The sample rate to assign to the returned frame.
+       - channelLayout: The channel layout to assign to the returned frame.
+     - Returns: An audio frame containing the samples peeked from the FIFO.
+     - Throws: An `AVError` if the frame couldn't be allocated or the samples couldn't be peeked.
+     */
+    public func peek(
+        sampleCount: Int,
+        offset: Int,
+        sampleRate: Int,
+        channelLayout: AVChannelLayout
+    ) throws -> AVFrame {
+        let frame = try makeFrame(
+            sampleCount: sampleCount,
+            sampleRate: sampleRate,
+            channelLayout: channelLayout
+        )
+
+        var data = try dataPointers(for: frame)
+
+        let read = data.withUnsafeMutableBufferPointer { data in
+            av_audio_fifo_peek_at(
+                native,
+                data.baseAddress,
+                Int32(sampleCount),
+                Int32(offset)
+            )
+        }
+
+        try read.throwIfFail()
+        frame.sampleCount = Int(read)
+
         return frame
+    }
+
+    /**
+     Peeks exactly the requested number of audio samples from the FIFO without removing them.
+
+     - Parameters:
+       - sampleCount: The number of samples to peek.
+       - sampleRate: The sample rate to assign to the returned frame.
+       - channelLayout: The channel layout to assign to the returned frame.
+     - Returns: An audio frame containing the samples peeked from the FIFO.
+     - Throws: An `AVError` if the FIFO contains fewer than the requested number of samples.
+     */
+    public func peekExactly(
+        sampleCount: Int,
+        sampleRate: Int,
+        channelLayout: AVChannelLayout
+    ) throws -> AVFrame {
+        guard self.sampleCount >= sampleCount else {
+            throw AVError.invalidData
+        }
+
+        return try peek(
+            sampleCount: sampleCount,
+            sampleRate: sampleRate,
+            channelLayout: channelLayout
+        )
+    }
+
+    private func makeFrame(
+        sampleCount: Int,
+        sampleRate: Int,
+        channelLayout: AVChannelLayout
+    ) throws -> AVFrame {
+        guard channelLayout.channelCount == channelCount else {
+            throw AVError.invalidData
+        }
+
+        let frame = AVFrame()
+        frame.sampleFormat = sampleFormat
+        frame.sampleRate = sampleRate
+        frame.channelLayout = channelLayout
+        frame.sampleCount = sampleCount
+
+        try frame.allocBuffer()
+        return frame
+    }
+
+    private func dataPointers(for frame: AVFrame) throws -> [UnsafeMutableRawPointer?] {
+        guard frame.sampleFormat == sampleFormat,
+              frame.channelLayout.channelCount == channelCount else {
+            throw AVError.invalidData
+        }
+
+        return frame.audioExtendedData.map { pointer in
+            pointer.map { UnsafeMutableRawPointer($0) }
+        }
     }
 }

@@ -55,6 +55,30 @@ public final class SwrContext {
         self.inputSampleFormat = inputSampleFormat
         self.inputChannelLayout = inputChannelLayout
     }
+    
+    /// Creates a resampler configured from the input and output frame settings.
+    public convenience init(from input: AVFrame, to output: AVFrame) throws {
+        self.init()
+        try configure(from: input, to: output)
+    }
+    
+    
+    /**
+     Configures or reconfigures the resampler from the input and output frame settings.
+
+     This resets the resampler context even if configuration fails. Flush delayed samples before calling this on a context that has already converted audio.
+     */
+    public func configure(from input: AVFrame, to output: AVFrame) throws {
+        try swr_config_frame(native, output.native, input.native).throwIfFail()
+
+        inputSampleRate = input.sampleRate
+        inputSampleFormat = input.sampleFormat
+        inputChannelLayout = input.channelLayout
+
+        outputSampleRate = output.sampleRate
+        outputSampleFormat = output.sampleFormat
+        outputChannelLayout = output.channelLayout
+    }
 
     deinit {
         swr_free(&native)
@@ -158,7 +182,7 @@ public final class SwrContext {
 
     /// Convert audio.
     ///
-    /// `dst` and `dstCount` can be set to 0 to flush the last few samples out at the end.
+    /// Pass `nil` input and an input sample count of `0` to flush delayed samples.
     ///
     /// If more input is provided than output space, then the input will be buffered.
     /// You can avoid this buffering by using `getOutSamples(_:)` to retrieve an upper bound
@@ -173,45 +197,113 @@ public final class SwrContext {
     /// - Returns: number of samples output per channel
     /// - Throws: AVError
     @discardableResult
-    public func convert(dst: UnsafeMutablePointer<UnsafeMutablePointer<UInt8>?>, dstCount: Int, src: UnsafePointer<UnsafePointer<UInt8>?>, srcCount: Int) throws -> Int {
+    public func convert(dst: UnsafeMutablePointer<UnsafeMutablePointer<UInt8>?>, dstCount: Int, src: UnsafePointer<UnsafePointer<UInt8>?>?, srcCount: Int) throws -> Int {
         try swr_convert(native, dst, Int32(dstCount), src, Int32(srcCount)).throwIfFail()
     }
 }
 
 extension SwrContext {
+    /// Converts an audio frame and returns a newly allocated output frame.
     public func convert(_ frame: AVFrame) throws -> AVFrame {
-        guard let sampleRate = outputSampleRate, let channelLayout = outputChannelLayout, let sampleFormat = outputSampleFormat, let inputSampleRate = inputSampleRate else {
+        guard let inputSampleRate,
+              let outputSampleRate else {
             throw AVError.invalidData
         }
-        return try convert(frame, to: sampleFormat, sampleRate: sampleRate, channelLayout: channelLayout, inputSampleRate: inputSampleRate)
-    }
-    
 
-    private func convert(_ frame: AVFrame, to sampleFormat: AVSampleFormat, sampleRate: Int, channelLayout: AVChannelLayout, inputSampleRate: Int) throws -> AVFrame {
-        let dst = AVFrame()
-        dst.sampleFormat = sampleFormat
-        dst.sampleRate = sampleRate
-        dst.channelLayout = channelLayout
-
-        let dstCount = Int(
+        let sampleCount = Int(
             AVMath.rescale(
                 swr_get_delay(native, Int64(inputSampleRate)) + Int64(frame.sampleCount),
-                Int64(sampleRate),
+                Int64(outputSampleRate),
                 Int64(inputSampleRate),
-                rounding: .up))
-        dst.sampleCount = dstCount
-        try dst.allocBuffer()
-        let srcData: [UnsafePointer<UInt8>?] = frame.extendedData.map { pointer in
+                rounding: .up
+            )
+        )
+
+        let destination = try makeOutputFrame(sampleCount: sampleCount)
+        try convert(frame, to: destination)
+        return destination
+    }
+
+    /**
+     Converts an audio frame into an existing output frame.
+
+     The output frame must use the destination sample format, sample rate and channel layout, and its
+     `sampleCount` is used as the available output capacity before being updated to the converted sample count.
+     */
+    public func convert(_ frame: AVFrame, to outputFrame: AVFrame) throws {
+        guard let outputSampleRate,
+              let outputChannelLayout,
+              let outputSampleFormat,
+              outputFrame.sampleRate == outputSampleRate,
+              outputFrame.sampleFormat == outputSampleFormat,
+              outputFrame.channelLayout == outputChannelLayout,
+              outputFrame.sampleCount > 0 else {
+            throw AVError.invalidData
+        }
+
+        let sourceData: [UnsafePointer<UInt8>?] = frame.audioExtendedData.map { pointer in
             pointer.map { UnsafePointer<UInt8>($0) }
         }
-        let converted = try srcData.withUnsafeBufferPointer { srcData in
-            guard let dstData = dst.extendedData.baseAddress,
-                  let srcData = srcData.baseAddress
-            else { throw AVError.invalidData }
-            return try convert(dst: dstData, dstCount: dstCount, src: srcData, srcCount: frame.sampleCount)
+
+        outputFrame.sampleCount = try sourceData.withUnsafeBufferPointer { sourceData in
+            guard let dst = outputFrame.audioExtendedData.baseAddress,
+                  let src = sourceData.baseAddress else {
+                throw AVError.invalidData
+            }
+
+            return try convert(
+                dst: dst,
+                dstCount: outputFrame.sampleCount,
+                src: src,
+                srcCount: frame.sampleCount
+            )
         }
-        dst.sampleCount = converted
-        return dst
+    }
+    
+    public func flush() throws -> AVFrame? {
+        let sampleCount: Int = try swr_get_out_samples(native, 0).throwIfFail()
+
+        guard sampleCount > 0 else {
+            return nil
+        }
+
+        let frame = try makeOutputFrame(sampleCount: sampleCount)
+
+        guard let dst = frame.audioExtendedData.baseAddress else {
+            throw AVError.invalidData
+        }
+
+        let converted: Int = try swr_convert(
+            native,
+            dst,
+            Int32(sampleCount),
+            nil,
+            0
+        ).throwIfFail()
+
+        guard converted > 0 else {
+            return nil
+        }
+
+        frame.sampleCount = Int(converted)
+        return frame
+    }
+    
+    private func makeOutputFrame(sampleCount: Int) throws -> AVFrame {
+        guard let outputSampleRate,
+              let outputChannelLayout,
+              let outputSampleFormat else {
+            throw AVError.invalidData
+        }
+
+        let frame = AVFrame()
+        frame.sampleRate = outputSampleRate
+        frame.sampleFormat = outputSampleFormat
+        frame.channelLayout = outputChannelLayout
+        frame.sampleCount = sampleCount
+
+        try frame.allocBuffer()
+        return frame
     }
 }
 

@@ -89,6 +89,24 @@ public final class SwsContext {
       65536
     )
   }
+    
+    public func scale(from source: AVFrame, to destination: AVFrame) throws {
+        try sws_scale_frame(native, destination.native, source.native).throwIfFail()
+    }
+
+    public func scale(_ source: AVFrame) throws -> AVFrame {
+        let destination = AVFrame()
+        try sws_scale_frame(native, destination.native, source.native).throwIfFail()
+        return destination
+    }
+
+    public func setup(from source: AVFrame, to destination: AVFrame) throws {
+        try sws_frame_setup(native, destination.native, source.native).throwIfFail()
+    }
+
+    public static func isNoop(from source: AVFrame, to destination: AVFrame) -> Bool {
+        sws_is_noop(destination.native, source.native) > 0
+    }
 
   /// Scale the image slice in `src` and put the resulting scaled slice in the image in `dst`.
   ///

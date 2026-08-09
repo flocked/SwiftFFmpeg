@@ -104,6 +104,17 @@ public final class AVFrame {
         set { native.pointee.extended_data = newValue.baseAddress }
     }
 
+    /// The audio data plane pointers, using the frame's channel count.
+    var audioExtendedData: UnsafeMutableBufferPointer<UnsafeMutablePointer<UInt8>?> {
+        get {
+            UnsafeMutableBufferPointer(
+                start: native.pointee.extended_data,
+                count: channelLayout.channelCount
+            )
+        }
+        set { native.pointee.extended_data = newValue.baseAddress }
+    }
+
     /// Presentation timestamp in timebase units (time when frame should be shown to user).
     public var pts: Int64 {
         get { native.pointee.pts }
