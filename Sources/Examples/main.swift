@@ -38,7 +38,8 @@ if CommandLine.argc < 2 {
                           This program generates a series of audio frames, resamples them to a specified
                           output format and rate and saves them to an output file named output_file.
      bsf                  API example about how to use bitstream filter.
-     split_stream         API example about how to split stream from a container format.
+      split_stream         API example about how to split stream from a container format.
+      thumbnail            create one or more PNG thumbnails from a video.
     """)
   exit(1)
 }
@@ -75,8 +76,10 @@ case "resampling_audio":
   try resampling_audio()
 case "bsf":
   try bsf()
-case "split_stream":
-  try split_stream()
-default:
-  ()
-}
+	case "split_stream":
+	  try split_stream()
+	case "thumbnail":
+	  try thumbnail()
+	default:
+	  ()
+	}

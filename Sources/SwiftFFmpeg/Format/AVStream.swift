@@ -44,9 +44,9 @@ typealias CAVStream = CFFmpeg.AVStream
 
 /// Stream structure.
 public final class AVStream {
-    let native: UnsafeMutablePointer<CAVStream>
+    let native: UnsafeMutablePointer<CFFmpeg.AVStream>
     
-    init(native: UnsafeMutablePointer<CAVStream>) {
+    init(native: UnsafeMutablePointer<CFFmpeg.AVStream>) {
         self.native = native
     }
     
@@ -225,3 +225,67 @@ extension AVFormatContext {
         streams.filter { $0.mediaType == mediaType && $0.matches(locale: locale) }
     }
 }
+
+/*
+public class AVStreamGroup {
+    let native: UnsafeMutablePointer<CFFmpeg.AVStreamGroup>
+    
+    init(native: UnsafeMutablePointer<CFFmpeg.AVStreamGroup>) {
+        self.native = native
+    }
+    
+    public var id: Int64 {
+        native.pointee.id
+    }
+    
+    public var metadata: [String: String] {
+        get { native.pointee.metadata?.avDict ?? [:] }
+    }
+    
+    /// Stream index in `AVFormatContext`.
+    public var index: Int {
+        Int(native.pointee.index)
+    }
+    
+    public var type: GroupType {
+        .init(rawValue: native.pointee.type.rawValue)!
+    }
+    
+    public var streams: [AVStream] {
+        native.pointee.streams?.buffer(count: native.pointee.nb_streams).map { AVStream(native: $0!) } ?? []
+    }
+    
+    public var disposition: AVStream.Disposition {
+        AVStream.Disposition(rawValue: native.pointee.disposition)
+    }
+    
+    public enum GroupType: UInt32 {
+        case npne
+        
+        /*
+         enum AVStreamGroupParamsType {
+             AV_STREAM_GROUP_PARAMS_NONE,
+             AV_STREAM_GROUP_PARAMS_IAMF_AUDIO_ELEMENT,
+             AV_STREAM_GROUP_PARAMS_IAMF_MIX_PRESENTATION,
+             AV_STREAM_GROUP_PARAMS_TILE_GRID,
+             AV_STREAM_GROUP_PARAMS_LCEVC,
+             AV_STREAM_GROUP_PARAMS_TREF,
+             AV_STREAM_GROUP_PARAMS_DOLBY_VISION,
+         };
+         */
+    }
+    
+    func sdsdsd() {
+        native.pointee.params.iamf_audio_element
+       
+    }
+}
+
+extension AVStreamGroup: AVClassSupport {
+  public static let `class` = AVClass(native: av_stream_group_get_class())
+
+  public func withUnsafeObjectPointer<T>(_ body: (UnsafeMutableRawPointer) throws -> T) rethrows -> T {
+    try body(UnsafeMutableRawPointer(native))
+  }
+}
+*/

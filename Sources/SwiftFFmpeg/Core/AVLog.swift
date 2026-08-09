@@ -53,60 +53,78 @@ public enum AVLog {
     }
     
     private static var handler: (@Sendable (_ level: Level, _ message: String) -> Void)?
+    
+    public static var flags: Flag {
+        get { .init(rawValue: av_log_get_flags()) }
+        set { av_log_set_flags(newValue.rawValue) }
+    }
 }
 
 // MARK: - AVLog.Level
 
 public extension AVLog {
+    
     /// Log level
-    struct Level: OptionSet, Hashable, CustomStringConvertible, CustomDebugStringConvertible {
+    enum Level: Int32, CaseIterable, CustomStringConvertible, Hashable, Sendable {
         /// Print no output.
-        public static let quiet = Level(rawValue: AV_LOG_QUIET)
+        case quiet = -8
         /// Something went really wrong and we will crash now.
-        public static let panic = Level(rawValue: AV_LOG_PANIC)
-        /// Something went wrong and recovery is not possible.
-        /// For example, no header was found for a format which depends
-        /// on headers or an illegal combination of parameters is used.
-        public static let fatal = Level(rawValue: AV_LOG_FATAL)
-        /// Something went wrong and cannot losslessly be recovered.
-        /// However, not all future data is affected.
-        public static let error = Level(rawValue: AV_LOG_ERROR)
-        /// Something somehow does not look correct. This may or may not
-        /// lead to problems. An example would be the use of '-vstrict -2'.
-        public static let warning = Level(rawValue: AV_LOG_WARNING)
+        case panic = 0
+        /**
+         Something went wrong and recovery is not possible.
+         
+         For example, no header was found for a format which depends on headers or an illegal combination of parameters is used.
+         */
+        case fatal = 8
+        /// Something went wrong and cannot losslessly be recovered. However, not all future data is affected.
+        case error = 16
+        /// Something somehow does not look correct. This may or may not lead to problems. An example would be the use of '-vstrict -2'.
+        case warning = 24
         /// Standard information.
-        public static let info = Level(rawValue: AV_LOG_INFO)
+        case info = 32
         /// Detailed information.
-        public static let verbose = Level(rawValue: AV_LOG_VERBOSE)
+        case verbose = 40
         /// Stuff which is only useful for libav* developers.
-        public static let debug = Level(rawValue: AV_LOG_DEBUG)
+        case debug = 48
         /// Extremely verbose debugging, useful for libav* development.
-        public static let trace = Level(rawValue: AV_LOG_TRACE)
-
+        case trace = 56
+        
+        public var description: String {
+            switch self {
+            case .quiet: "quiet"
+            case .panic: "panic"
+            case .fatal: "fatal"
+            case .error: "error"
+            case .warning: "warning"
+            case .info: "info"
+            case .verbose: "verbose"
+            case .debug: "debug"
+            case .trace: "trace"
+            }
+        }
+        
+        public init(rawValue: Int32) {
+            self = Self.allCases.last(where: { $0.rawValue <= rawValue }) ?? .quiet
+        }
+    }
+    
+    struct Flag: OptionSet, Sendable {
         public let rawValue: Int32
 
         public init(rawValue: Int32) {
             self.rawValue = rawValue
         }
-        
-        public var description: String {
-            "[\(elements().map { Self.names[$0]?.swift ?? "\($0.rawValue)" }.joined(separator: ", "))]"
-        }
 
-        public var debugDescription: String {
-            "[\(elements().map { Self.names[$0]?.native ?? "\($0.rawValue)" }.joined(separator: ", "))]"
-        }
-        
-        private static let names: [Self: (swift: String, native: String)] = [
-            .quiet: ("quiet", "AV_LOG_QUIET"),
-            .panic: ("panic", "AV_LOG_PANIC"),
-            .fatal: ("fatal", "AV_LOG_FATAL"),
-            .error: ("error", "AV_LOG_ERROR"),
-            .warning: ("warning", "AV_LOG_WARNING"),
-            .info: ("info", "AV_LOG_INFO"),
-            .verbose: ("verbose", "AV_LOG_VERBOSE"),
-            .debug: ("debug", "AV_LOG_DEBUG"),
-            .trace: ("trace", "AV_LOG_TRACE"),
-        ]
+        /// Skips repeated log messages.
+        public static let skipRepeated = Self(rawValue: AV_LOG_SKIP_REPEATED)
+
+        /// Includes the log severity in messages originating from codecs.
+        public static let printLevel = Self(rawValue: AV_LOG_PRINT_LEVEL)
+
+        /// Includes the system time in log output.
+        public static let printTime = Self(rawValue: AV_LOG_PRINT_TIME)
+
+        /// Includes the system date and time in log output.
+        public static let printDateTime = Self(rawValue: AV_LOG_PRINT_DATETIME)
     }
 }

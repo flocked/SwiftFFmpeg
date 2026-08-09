@@ -249,11 +249,9 @@ extension AVOption: CustomStringConvertible {
         if let minMax = minMaxDescription {
             strings.append(minMax)
         }
-
         if !namedValues.isEmpty {
             strings.append("namedValues: \(namedValues)")
         }
-
         if !flags.isEmpty {
             strings.append("flags: \(flags)")
         }
@@ -295,10 +293,6 @@ extension AVOption: CustomStringConvertible {
 
 extension AVOption: CustomDebugStringConvertible {
     public var debugDescription: String {
-        var line = "\(name.quoted()), \(type)"
-        if let help {
-            line = line + " \(help.quoted())"
-        }
         var lines = ["\(name.quoted()) (\(type))"]
         if let unit {
             lines.append("  unit: \(unit.quoted())")
@@ -311,7 +305,7 @@ extension AVOption: CustomDebugStringConvertible {
         }
         lines.append("  flags: \(flags)")
         if let help {
-          //  lines.append("  help: \(help.quoted())")
+            lines.append("  help: \(help.quoted())")
         }
         if !namedValues.isEmpty {
             lines.append("  namedValues:")
@@ -332,10 +326,9 @@ private extension AVOption.NamedValue {
         }
         var lines = [line]
         if let help {
-            line += " \(help.quoted())"
             lines.append("      help: \(help.quoted())")
         }
-        return [line]
+        return lines
     }
 }
 

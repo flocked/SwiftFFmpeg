@@ -115,8 +115,8 @@ public final class AVFormatContext {
 
      This value is available when demuxing and indicates how libavformat determined the duration.
      */
-    public var durationEstimationMethod: AVFormatContext.DurationEstimationMethod {
-        AVFormatContext.DurationEstimationMethod(rawValue: native.pointee.duration_estimation_method)
+    public var durationEstimationMethod: DurationEstimationMethod {
+        .init(native: native.pointee.duration_estimation_method)
     }
 
     /**
@@ -164,10 +164,11 @@ public final class AVFormatContext {
      Some muxers can write chapters in the trailer when no chapters are present while writing the header and chapters are added before writing the trailer.
      */
     public var chapters: [AVChapter] {
-        get { native.pointee.chapters.buffer(count: native.pointee.nb_chapters).map({ AVChapter(native: $0!) }) }
+        get { native.pointee.chapters.buffer(count: native.pointee.nb_chapters).map { AVChapter(native: $0!) } }
         set {
             let cchapters = UnsafeMutablePointer<UnsafeMutablePointer<CAVChapter>?>.allocate(
-                capacity: newValue.count)
+                capacity: newValue.count
+            )
             for (index, chapter) in newValue.enumerated() {
                 let cchapter = UnsafeMutablePointer<CAVChapter>.allocate(capacity: 1)
                 cchapter.initialize(to: chapter.native)
@@ -208,7 +209,7 @@ public final class AVFormatContext {
     public func dumpFormat(at url: String? = nil, isOutput: Bool = false) {
         av_dump_format(native, 0, url ?? self.url, isOutput ? 1 : 0)
     }
-    
+
     /**
      Prints detailed information about the input or output format.
 
@@ -224,21 +225,25 @@ public final class AVFormatContext {
 // MARK: - AVFormatContext.DurationEstimationMethod
 
 public extension AVFormatContext {
-struct DurationEstimationMethod: Equatable {
-    /// Duration accurately estimated from PTSes
-    public static let fromPTS = AVFormatContext.DurationEstimationMethod(rawValue: AVFMT_DURATION_FROM_PTS)
+    struct DurationEstimationMethod: Equatable {
+        /// Duration accurately estimated from PTSes
+        public static let fromPTS = Self(native: AVFMT_DURATION_FROM_PTS)
 
-    /// Duration estimated from a stream with a known duration
-    public static let fromStream = AVFormatContext.DurationEstimationMethod(rawValue: AVFMT_DURATION_FROM_STREAM)
+        /// Duration estimated from a stream with a known duration
+        public static let fromStream = Self(native: AVFMT_DURATION_FROM_STREAM)
 
-    /// Duration estimated from bitrate (less accurate)
-    public static let fromBitrate = AVFormatContext.DurationEstimationMethod(rawValue: AVFMT_DURATION_FROM_BITRATE)
+        /// Duration estimated from bitrate (less accurate)
+        public static let fromBitrate = Self(native: AVFMT_DURATION_FROM_BITRATE)
 
-    public let rawValue: CFFmpeg.AVDurationEstimationMethod
-    public init(rawValue: CFFmpeg.AVDurationEstimationMethod) {
-        self.rawValue = rawValue
+        public let rawValue: UInt32
+        public init(native: CFFmpeg.AVDurationEstimationMethod) {
+            self.rawValue = native.rawValue
+        }
+        
+        public init(rawValue: UInt32) {
+            self.rawValue = rawValue
+        }
     }
-}
 }
 
 // MARK: - AVFormatContext.Flag
@@ -333,7 +338,7 @@ public extension AVFormatContext {
     var duration: Int64 {
         native.pointee.duration
     }
-    
+
     /// The start time in seconds, or `nil` if unknown.
     var startTimeSeconds: Double? {
         guard startTime != AVTimestamp.noPTS else { return nil }
@@ -369,7 +374,7 @@ public extension AVFormatContext {
         try avformat_open_input(&native, url, format?.native, &pm).throwIfFail()
         pm?.dumpUnrecognizedOptions()
     }
-    
+
     func openInput(at url: URL, format: AVInputFormat? = nil, options: [String: String]? = nil) throws {
         try openInput(at: url.pathOrURLString, format: format, options: options)
     }
@@ -393,7 +398,7 @@ public extension AVFormatContext {
             try avformat_find_stream_info(native, nil).throwIfFail()
             return
         }
-        
+
         var dictionaries = [OpaquePointer?](repeating: nil, count: streams.count)
 
         for (index, options) in options.prefix(dictionaries.count).enumerated() {
@@ -481,10 +486,10 @@ public extension AVFormatContext {
     func seekFrame(to timestamp: Int64, streamIndex: Int = -1, flags: SeekFlag = []) throws {
         try av_seek_frame(native, Int32(streamIndex), timestamp, flags.rawValue).throwIfFail()
     }
-    
+
     /// Seeks to the keyframe at the given timestamp in seconds.
     func seekFrame(toSeconds seconds: Double, streamIndex: Int = -1, flags: SeekFlag = []) throws {
-        let timestamp = streamIndex >= 0 ? Int64(seconds / streams[streamIndex].timebase.toDouble) :  Int64(seconds * Double(AVTimestamp.timebase))
+        let timestamp = streamIndex >= 0 ? Int64(seconds / streams[streamIndex].timebase.toDouble) : Int64(seconds * Double(AVTimestamp.timebase))
         try seekFrame(to: timestamp, streamIndex: streamIndex, flags: flags)
     }
 
@@ -559,7 +564,7 @@ public extension AVFormatContext {
     func openOutput(at url: String, flags: AVIOContext.Flag) throws {
         ioContext = try AVIOContext(url: url, flags: flags)
     }
-    
+
     func openOutput(at url: URL, flags: AVIOContext.Flag) throws {
         try openOutput(at: url.pathOrURLString, flags: flags)
     }
