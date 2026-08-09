@@ -246,7 +246,7 @@ public final class AVCodecContext {
         try avcodec_receive_frame(native, frame.native).throwIfFail()
     }
     
-    func receiveFrameIfAvailable(_ frame: AVFrame) throws -> Bool {
+    public func receiveFrameIfAvailable(_ frame: AVFrame) throws -> Bool {
         let result = avcodec_receive_frame(native, frame.native)
         if result == swift_AVERROR(EAGAIN) || result == swift_AVERROR_EOF {
             return false
@@ -255,7 +255,7 @@ public final class AVCodecContext {
         return true
     }
     
-    func receiveFrames(handler: (AVFrame) throws ->()) throws {
+    public func receiveFrames(handler: (AVFrame) throws ->()) throws {
         let frame = AVFrame()
         while try receiveFrameIfAvailable(frame) {
             defer { frame.unref() }
@@ -285,7 +285,7 @@ public final class AVCodecContext {
         try avcodec_receive_packet(native, packet.native).throwIfFail()
     }
     
-    func receivePacketIfAvailable(_ packet: AVPacket) throws -> Bool {
+    public func receivePacketIfAvailable(_ packet: AVPacket) throws -> Bool {
         let result = avcodec_receive_packet(native, packet.native)
         if result == swift_AVERROR(EAGAIN) || result == swift_AVERROR_EOF {
             return false
@@ -294,7 +294,7 @@ public final class AVCodecContext {
         return true
     }
     
-    func receivePackets(handler: (AVPacket) throws ->()) throws {
+    public func receivePackets(handler: (AVPacket) throws ->()) throws {
         let packet = AVPacket()
         while try receivePacketIfAvailable(packet) {
             defer { packet.unref() }
