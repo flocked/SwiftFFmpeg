@@ -245,6 +245,23 @@ public final class AVCodecContext {
     public func receiveFrame(_ frame: AVFrame) throws {
         try avcodec_receive_frame(native, frame.native).throwIfFail()
     }
+    
+    func receiveFrameIfAvailable(_ frame: AVFrame) throws -> Bool {
+        let result = avcodec_receive_frame(native, frame.native)
+        if result == swift_AVERROR(EAGAIN) || result == swift_AVERROR_EOF {
+            return false
+        }
+        try result.throwIfFail()
+        return true
+    }
+    
+    func receiveFrames(handler: (AVFrame) throws ->()) throws {
+        let frame = AVFrame()
+        while try receiveFrameIfAvailable(frame) {
+            defer { frame.unref() }
+            try handler(frame)
+        }
+    }
 
     /**
      Sends a raw video or audio frame to the encoder.
@@ -266,6 +283,23 @@ public final class AVCodecContext {
      */
     public func receivePacket(_ packet: AVPacket) throws {
         try avcodec_receive_packet(native, packet.native).throwIfFail()
+    }
+    
+    func receivePacketIfAvailable(_ packet: AVPacket) throws -> Bool {
+        let result = avcodec_receive_packet(native, packet.native)
+        if result == swift_AVERROR(EAGAIN) || result == swift_AVERROR_EOF {
+            return false
+        }
+        try result.throwIfFail()
+        return true
+    }
+    
+    func receivePackets(handler: (AVPacket) throws ->()) throws {
+        let packet = AVPacket()
+        while try receivePacketIfAvailable(packet) {
+            defer { packet.unref() }
+            try handler(packet)
+        }
     }
 
     /// Resets the internal codec state and flushes buffered data.
