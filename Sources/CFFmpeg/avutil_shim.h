@@ -16,6 +16,7 @@
 #include <libavutil/md5.h>
 #include <libavutil/mastering_display_metadata.h>
 #include <libavutil/parseutils.h>
+#include <libavutil/audio_fifo.h>
 
 static const int64_t swift_AV_NOPTS_VALUE = AV_NOPTS_VALUE;
 
