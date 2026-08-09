@@ -174,3 +174,13 @@ extension Sequence {
         try Dictionary(grouping: self, by: keyForValue)
     }
 }
+
+extension Sequence {
+    func sorted<Value>(by compare: (Element) throws -> Value, _ order: SortOrder = .forward) rethrows -> [Element] where Value: Comparable {
+        try sorted { order == .forward ? (try compare($0)) < (try compare($1)) : (try compare($0)) > (try compare($1)) }
+    }
+    
+    func sorted<Value>(by keyPath: KeyPath<Element, Value>, _ order: SortOrder = .forward) -> [Element] where Value: Comparable {
+        sorted(by: { $0[keyPath: keyPath]}, order)
+    }
+}

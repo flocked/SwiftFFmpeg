@@ -286,7 +286,6 @@ extension AVOption: CustomStringConvertible {
     }
 }
 
-/*
 extension AVOption: CustomDebugStringConvertible {
     public var debugDescription: String {
         var lines = ["\"\(name)\", (\(type))"]
@@ -308,93 +307,6 @@ extension AVOption: CustomDebugStringConvertible {
             lines.append(contentsOf: constants.flatMap(\.debugLines))
         }
         return lines.joined(separator: "\n")
-    }
-}
-*/
-
-extension AVOption: CustomDebugStringConvertible {
-    public var debugDescription: String {
-        var lines = ["\"\(name)\" (\(type))"]
-
-        if let unit {
-            lines.append("  unit: \"\(unit)\"")
-        }
-
-        if let defaultValue {
-            let defaultConstants = constants.filter(\.isDefault)
-            if !defaultConstants.isEmpty {
-                let names = defaultConstants
-                    .map { "\"\($0.name)\"" }
-                    .joined(separator: ", ")
-                lines.append("  default: \(defaultValue) (\(names))")
-            } else if let string = defaultValue as? String {
-                lines.append("  default: \"\(string)\"")
-            } else {
-                lines.append("  default: \(defaultValue)")
-            }
-        }
-
-        if let min, let max {
-            lines.append("  range: \(min)...\(max)")
-        } else if let min {
-            lines.append("  min: \(min)")
-        } else if let max {
-            lines.append("  max: \(max)")
-        }
-
-        lines.append("  flags: \(flags)")
-
-        if let help {
-            lines.append("  help: \"\(help)\"")
-        }
-
-        if !constants.isEmpty {
-            lines.append("  constants:")
-            lines.append(contentsOf: constantDebugLines)
-        }
-
-        return lines.joined(separator: "\n")
-    }
-
-    private var constantDebugLines: [String] {
-        let grouped = Dictionary(grouping: constants, by: \.value)
-
-        return grouped.keys.sorted().flatMap { value -> [String] in
-            let constants = grouped[value] ?? []
-            let names = constants
-                .map { "\"\($0.name)\"" }
-                .joined(separator: ", ")
-
-            let flags = constants.map(\.flags).reduce(AVOption.Flag()) { result, flags in
-                result.union(flags)
-            }
-
-            var line = "    - \(value): \(names)"
-
-            if !flags.isEmpty {
-                line += " \(flags)"
-            }
-
-            if constants.contains(where: \.isDefault) {
-                line += " (default)"
-            }
-
-            var lines = [line]
-
-            let helpLines = constants.compactMap { constant -> String? in
-                guard let help = constant.help else {
-                    return nil
-                }
-                return "      \(constant.name): \"\(help)\""
-            }
-
-            if !helpLines.isEmpty {
-                lines.append("      help:")
-                lines.append(contentsOf: helpLines)
-            }
-
-            return lines
-        }
     }
 }
 
