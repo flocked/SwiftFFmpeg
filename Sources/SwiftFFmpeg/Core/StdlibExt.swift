@@ -185,6 +185,16 @@ extension Sequence {
     }
 }
 
+extension StringProtocol {
+    func quoted() -> String {
+        "\"\(self)\""
+    }
+    
+    func backticked() -> String {
+        "`\(self)`"
+    }
+}
+
 extension String {
     var nonEmpty: Self? {
         isEmpty ? nil : self

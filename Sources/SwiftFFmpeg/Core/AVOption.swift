@@ -235,9 +235,9 @@ extension CFFmpeg.AVOptionArrayDef {
 
 extension AVOption: CustomStringConvertible {
     public var description: String {
-        var strings = ["\"\(name)\"", "type: \(type)"]
+        var strings = ["\(name.quoted())", "type: \(type)"]
         if let unit = unit {
-            strings.append("unit: \"\(unit)\"")
+            strings.append("unit: \(unit.quoted())")
         }
         if let defaultDescription {
             strings.append("default: " + defaultDescription)
@@ -247,14 +247,15 @@ extension AVOption: CustomStringConvertible {
         }
 
         if !constants.isEmpty {
-            //  strings.append("constants: [\(constants.map(\.description).joined(separator: ", "))]")
             strings.append("constants: \(constants)")
         }
 
-        strings.append("flags: \(flags)")
+        if !flags.isEmpty {
+            strings.append("flags: \(flags)")
+        }
         //  strings.append("offset: \(offset)")
         if let help = help {
-            strings.append("help: \"\(help)\"")
+            strings.append("help: \(help.quoted())")
         }
         return "(\(strings.joined(separator: ", ")))"
     }
@@ -262,7 +263,7 @@ extension AVOption: CustomStringConvertible {
     fileprivate var defaultDescription: String? {
         guard let defaultValue = defaultValue else { return nil }
         if let string = defaultValue as? String {
-           return "\"\(string)\""
+            return "\(string.quoted())"
         } else {
             let defaultConstants = constants.filter(\.isDefault)
             if !defaultConstants.isEmpty {
@@ -288,9 +289,9 @@ extension AVOption: CustomStringConvertible {
 
 extension AVOption: CustomDebugStringConvertible {
     public var debugDescription: String {
-        var lines = ["\"\(name)\", (\(type))"]
+        var lines = ["\(name.quoted()) (\(type))"]
         if let unit {
-            lines.append("  unit: \"\(unit)\"")
+            lines.append("  unit: \(unit.quoted())")
         }
         if let defaultDescription {
             lines.append("  default: \(defaultDescription)")
@@ -300,7 +301,7 @@ extension AVOption: CustomDebugStringConvertible {
         }
         lines.append("  flags: \(flags)")
         if let help {
-            lines.append("  help: \"\(help)\"")
+            lines.append("  help: \(help.quoted())")
         }
         if !constants.isEmpty {
             lines.append("  constants:")
@@ -312,7 +313,7 @@ extension AVOption: CustomDebugStringConvertible {
 
 fileprivate extension AVOption.Constant {
     func debugLines(parentFlags: AVOption.Flag) -> [String] {
-        var line = "    - \(value): \"\(name)\""
+        var line = "    - \(value): \(name.quoted())"
         if flags != parentFlags, !flags.isEmpty {
             line += " \(flags)"
         }
@@ -321,7 +322,7 @@ fileprivate extension AVOption.Constant {
         }
         var lines = [line]
         if let help {
-            lines.append("      help: \"\(help)\"")
+            lines.append("      help: \(help.quoted())")
         }
         return lines
     }
