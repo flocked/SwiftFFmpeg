@@ -304,17 +304,16 @@ extension AVOption: CustomDebugStringConvertible {
         }
         if !constants.isEmpty {
             lines.append("  constants:")
-            let includeFlags = constants.contains(where: {  $0.flags != flags })
-            lines.append(contentsOf: constants.flatMap({ $0.debugLines(includeFlags: includeFlags) }))
+            lines.append(contentsOf: constants.flatMap({ $0.debugLines(parentFlags: flags) }))
         }
         return lines.joined(separator: "\n")
     }
 }
 
 fileprivate extension AVOption.Constant {
-    func debugLines(includeFlags: Bool) -> [String] {
+    func debugLines(parentFlags: AVOption.Flag) -> [String] {
         var line = "    - \(value): \"\(name)\""
-        if includeFlags, !flags.isEmpty {
+        if flags != parentFlags, !flags.isEmpty {
             line += " \(flags)"
         }
         if isDefault {
