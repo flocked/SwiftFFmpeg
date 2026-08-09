@@ -94,53 +94,53 @@ public struct AVCodec {
     }
 
     /// Returns an array of the framerates supported by the codec.
-    public var supportedFramerates: [AVRational]? {
+    public var supportedFramerates: [AVRational] {
         var configs: UnsafeRawPointer?
         var count: Int32 = 0
         avcodec_get_supported_config(nil, native, AV_CODEC_CONFIG_FRAME_RATE, 0, &configs, &count)
         return configs?.withMemoryRebound(to: AVRational.self, capacity: Int(count)) { ptr in
             Array(UnsafeBufferPointer(start: ptr, count: Int(count)))
-        }
+        } ?? []
     }
 
     /// Returns an array of the pixel formats supported by the codec.
-    public var supportedPixelFormats: [AVPixelFormat]? {
+    public var supportedPixelFormats: [AVPixelFormat] {
         var configs: UnsafeRawPointer?
         var count: Int32 = 0
         avcodec_get_supported_config(nil, native, AV_CODEC_CONFIG_PIX_FORMAT, 0, &configs, &count)
         return configs?.withMemoryRebound(to: AVPixelFormat.self, capacity: Int(count)) { ptr in
             Array(UnsafeBufferPointer(start: ptr, count: Int(count)))
-        }
+        } ?? []
     }
 
     /// Returns an array of the audio samplerates supported by the codec.
-    public var supportedSampleRates: [Int]? {
+    public var supportedSampleRates: [Int] {
         var configs: UnsafeRawPointer?
         var count: Int32 = 0
         avcodec_get_supported_config(nil, native, AV_CODEC_CONFIG_SAMPLE_RATE, 0, &configs, &count)
         return configs?.withMemoryRebound(to: Int32.self, capacity: Int(count)) { ptr in
             Array(UnsafeBufferPointer(start: ptr, count: Int(count))).map(Int.init(_:))
-        }
+        } ?? []
     }
 
     /// Returns an array of the sample formats supported by the codec.
-    public var supportedSampleFormats: [AVSampleFormat]? {
+    public var supportedSampleFormats: [AVSampleFormat] {
         var configs: UnsafeRawPointer?
         var count: Int32 = 0
         avcodec_get_supported_config(nil, native, AV_CODEC_CONFIG_SAMPLE_FORMAT, 0, &configs, &count)
         return configs?.withMemoryRebound(to: Int32.self, capacity: Int(count)) { ptr in
             Array(UnsafeBufferPointer(start: ptr, count: Int(count))).compactMap(AVSampleFormat.init(rawValue:))
-        }
+        } ?? []
     }
 
     /// Returns an array of the channel layouts supported by the codec.
-    public var supportedChannelLayouts: [AVChannelLayout]? {
+    public var supportedChannelLayouts: [AVChannelLayout] {
         var configs: UnsafeRawPointer?
         var count: Int32 = 0
         avcodec_get_supported_config(nil, native, AV_CODEC_CONFIG_CHANNEL_LAYOUT, 0, &configs, &count)
         return configs?.withMemoryRebound(to: AVChannelLayout.self, capacity: Int(count)) { ptr in
             Array(UnsafeBufferPointer(start: ptr, count: Int(count)))
-        }
+        } ?? []
     }
 
     /// Maximum value for lowres supported by the decoder.
