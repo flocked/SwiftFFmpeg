@@ -76,8 +76,8 @@ public struct AVOption {
 
     init(native: CFFmpeg.AVOption) {
         self.name = native.name.string
-        self.help = native.help?.string
-        self.unit = native.unit?.string
+        self.help = native.help?.string.nonEmpty
+        self.unit = native.unit?.string.nonEmpty
         self.offset = Int(native.offset)
         self.flags = Flag(rawValue: native.flags)
         self.type = Kind(native: native.type)
@@ -304,16 +304,17 @@ extension AVOption: CustomDebugStringConvertible {
         }
         if !constants.isEmpty {
             lines.append("  constants:")
-            lines.append(contentsOf: constants.flatMap(\.debugLines))
+            let includeFlags = constants.contains(where: {  $0.flags != flags })
+            lines.append(contentsOf: constants.flatMap({ $0.debugLines(includeFlags: includeFlags) }))
         }
         return lines.joined(separator: "\n")
     }
 }
 
 fileprivate extension AVOption.Constant {
-    var debugLines: [String] {
+    func debugLines(includeFlags: Bool) -> [String] {
         var line = "    - \(value): \"\(name)\""
-        if !flags.isEmpty {
+        if includeFlags, !flags.isEmpty {
             line += " \(flags)"
         }
         if isDefault {

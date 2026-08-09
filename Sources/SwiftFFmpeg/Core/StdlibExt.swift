@@ -184,3 +184,9 @@ extension Sequence {
         sorted(by: { $0[keyPath: keyPath]}, order)
     }
 }
+
+extension String {
+    var nonEmpty: Self? {
+        isEmpty ? nil : self
+    }
+}
