@@ -168,3 +168,9 @@ extension URL {
         isFileURL ? path : absoluteString
     }
 }
+
+extension Sequence {
+    func grouped<Key>(by keyForValue: (Element) throws -> Key) rethrows -> [Key: [Element]] {
+        try Dictionary(grouping: self, by: keyForValue)
+    }
+}

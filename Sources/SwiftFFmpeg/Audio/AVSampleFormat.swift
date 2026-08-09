@@ -54,6 +54,14 @@ public enum AVSampleFormat: Int32, Hashable, Sendable {
   var native: CFFmpeg.AVSampleFormat {
     CFFmpeg.AVSampleFormat(rawValue)
   }
+    
+    var nonNil: Self? {
+        self != .none ? self : nil
+    }
+    
+    var isNil: Bool {
+        self == .none
+    }
 
   init(native: CFFmpeg.AVSampleFormat) {
     guard let format = AVSampleFormat(rawValue: native.rawValue) else {

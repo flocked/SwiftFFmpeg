@@ -76,25 +76,24 @@ public final class AVStream {
         set { native.pointee.time_base = newValue }
     }
     
-    /// pts of the first frame of the stream in presentation order, in stream timebase.
-    public var startTime: Int64 {
-        native.pointee.start_time
+    /// The presentation timestamp of the first frame, or `nil` if unknown.
+    public var startTime: Int64? {
+        native.pointee.start_time != AVTimestamp.noPTS ? native.pointee.start_time : nil
     }
-    
-    /// The presentation time of the first frame in seconds, or `nil` if it is unknown.
+
+    /// The presentation time of the first frame in seconds, or `nil` if unknown.
     public var startTimeSeconds: TimeInterval? {
-        guard startTime != AVTimestamp.noPTS else { return nil }
-        return Double(startTime) * timebase.toDouble
+        startTime.map { Double($0) * timebase.toDouble }
     }
     
-    public var duration: Int64 {
-        native.pointee.duration
+    /// The stream duration, or `nil` if it is unknown.
+    public var duration: Int64? {
+        native.pointee.duration != AVTimestamp.noPTS ? native.pointee.duration : nil
     }
     
     /// The stream duration in seconds, or `nil` if it is unknown.
     public var durationSeconds: TimeInterval? {
-        guard duration != AVTimestamp.noPTS else { return nil }
-        return Double(duration) * timebase.toDouble
+        duration.map { Double($0) * timebase.toDouble }
     }
     
     /// Number of frames in this stream if known or 0.
@@ -181,16 +180,18 @@ public final class AVStream {
     }
     
     /// The disposition flags that describe the stream's intended use and characteristics, such as default, forced, caption, or attached picture flags.
-    public var disposition: AVStreamDisposition {
-        get { AVStreamDisposition(rawValue: native.pointee.disposition) }
+    public var disposition: Disposition {
+        get { Disposition(rawValue: native.pointee.disposition) }
         set { native.pointee.disposition = newValue.rawValue }
     }
     
-    /// The stream language metadata, usually an ISO 639 language code such as `eng`, or `nil` if unavailable.
+    /// The stream language metadata, usually an ISO 639 language code such as `eng`.
     public var language: String? { metadata["language"] }
-    /// The stream title metadata, or `nil` if unavailable.
+    
+    /// The stream title metadata.
     public var title: String? { metadata["title"] }
-    /// The stream handler name metadata, or `nil` if unavailable.
+    
+    /// The stream handler name metadata.
     public var handlerName: String? { metadata["handler_name"] }
 }
 

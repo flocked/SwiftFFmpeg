@@ -25,6 +25,14 @@ public struct AVCodecID: RawRepresentable, CustomStringConvertible, Hashable {
         self.init(rawValue: native.rawValue)
     }
     
+    var nonNil: Self? {
+        self != .none ? self : nil
+    }
+    
+    var isNil: Bool {
+        self == .none
+    }
+    
     var native: CFFmpeg.AVCodecID {
         .init(rawValue: rawValue)
     }

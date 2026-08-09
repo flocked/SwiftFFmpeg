@@ -9,12 +9,10 @@ import CFFmpeg
 
 // MARK: - AVInputFormat
 
-typealias CAVInputFormat = CFFmpeg.AVInputFormat
-
 public struct AVInputFormat {
-    var native: UnsafePointer<CAVInputFormat>
+    var native: UnsafePointer<CFFmpeg.AVInputFormat>
 
-    init(native: UnsafePointer<CAVInputFormat>) {
+    init(native: UnsafePointer<CFFmpeg.AVInputFormat>) {
         self.native = native
     }
     
@@ -75,7 +73,7 @@ public struct AVInputFormat {
 // MARK: - AVInputFormat.Flag
 
 public extension AVInputFormat {
-    struct Flag: OptionSet, Hashable {
+    struct Flag: OptionSet, Hashable, CustomStringConvertible, CustomDebugStringConvertible {
         /// Demuxer will use avio_open, no opened file should be provided by the caller.
         public static let noFile = Flag(rawValue: AVFMT_NOFILE)
         /// Needs '%d' in filename.
@@ -94,40 +92,34 @@ public extension AVInputFormat {
         public static let noByteSeek = Flag(rawValue: AVFMT_NO_BYTE_SEEK)
         /// Seeking is based on PTS.
         public static let seekToPTS = Flag(rawValue: AVFMT_SEEK_TO_PTS)
-
+        
         public let rawValue: Int32
-
+        
         public init(rawValue: Int32) {
             self.rawValue = rawValue
         }
+        
+        public var description: String {
+            "[\(elements().map { Self.names[$0]?.swift ?? "\($0.rawValue)" }.joined(separator: ", "))]"
+        }
+        
+        public var debugDescription: String {
+            "[\(elements().map { Self.names[$0]?.native ?? "\($0.rawValue)" }.joined(separator: ", "))]"
+        }
+        
+        private static let names: [Self: (swift: String, native: String)] = [
+            .noFile: ("noFile", "AVFMT_NOFILE"),
+            .needNumber: ("needNumber", "AVFMT_NEEDNUMBER"),
+            .showIDs: ("showIDs", "AVFMT_SHOW_IDS"),
+            .genericIndex: ("genericIndex", "AVFMT_GENERIC_INDEX"),
+            .tsDiscont: ("tsDiscont", "AVFMT_TS_DISCONT"),
+            .noBinSearch: ("noBinSearch", "AVFMT_NOBINSEARCH"),
+            .noGenSearch: ("noGenSearch", "AVFMT_NOGENSEARCH"),
+            .noByteSeek: ("noByteSeek", "AVFMT_NO_BYTE_SEEK"),
+            .seekToPTS: ("seekToPTS", "AVFMT_SEEK_TO_PTS"),
+        ]
     }
 }
-
-// MARK: - AVInputFormat.Flag + CustomStringConvertible
-
-extension AVInputFormat.Flag: CustomStringConvertible, CustomDebugStringConvertible {
-    public var description: String {
-        "[\(elements().map { Self.names[$0]?.swift ?? "\($0.rawValue)" }.joined(separator: ", "))]"
-    }
-
-    public var debugDescription: String {
-        "[\(elements().map { Self.names[$0]?.native ?? "\($0.rawValue)" }.joined(separator: ", "))]"
-    }
-
-    private static let names: [Self: (swift: String, native: String)] = [
-        .noFile: ("noFile", "AVFMT_NOFILE"),
-        .needNumber: ("needNumber", "AVFMT_NEEDNUMBER"),
-        .showIDs: ("showIDs", "AVFMT_SHOW_IDS"),
-        .genericIndex: ("genericIndex", "AVFMT_GENERIC_INDEX"),
-        .tsDiscont: ("tsDiscont", "AVFMT_TS_DISCONT"),
-        .noBinSearch: ("noBinSearch", "AVFMT_NOBINSEARCH"),
-        .noGenSearch: ("noGenSearch", "AVFMT_NOGENSEARCH"),
-        .noByteSeek: ("noByteSeek", "AVFMT_NO_BYTE_SEEK"),
-        .seekToPTS: ("seekToPTS", "AVFMT_SEEK_TO_PTS"),
-    ]
-}
-
-// MARK: - AVInputFormat + AVOptionSupport
 
 extension AVInputFormat: AVOptionSupport {
     public func withUnsafeObjectPointer<T>(_ body: (UnsafeMutableRawPointer) throws -> T) rethrows -> T {
@@ -182,20 +174,17 @@ public struct AVOutputFormat {
     
     /// The default audio codec of the format.
     public var audioCodec: AVCodecID? {
-        let coddec = AVCodecID(native: native.pointee.audio_codec)
-        return coddec != .none ? coddec : nil
+        AVCodecID(native: native.pointee.audio_codec).nonNil
     }
     
     /// The default video codec of the format.
     public var videoCodec: AVCodecID? {
-        let coddec = AVCodecID(native: native.pointee.video_codec)
-        return coddec != .none ? coddec : nil
+        AVCodecID(native: native.pointee.video_codec).nonNil
     }
     
     /// The default subtitle codec of the format.
     public var subtitleCodec: AVCodecID? {
-        let coddec = AVCodecID(native: native.pointee.subtitle_codec)
-        return coddec != .none ? coddec : nil
+        AVCodecID(native: native.pointee.subtitle_codec).nonNil
     }
     
     /// The flags of the output format.

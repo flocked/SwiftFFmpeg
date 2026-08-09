@@ -121,7 +121,6 @@ public final class SwsContext {
 }
 
 extension SwsContext {
-  ///
   public struct Flag: OptionSet, Hashable {
     /// Select fast bilinear scaling algorithm.
     public static let fastBilinear = Flag(rawValue: Int32(SWS_FAST_BILINEAR.rawValue))

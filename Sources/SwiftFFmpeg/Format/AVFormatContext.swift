@@ -115,8 +115,8 @@ public final class AVFormatContext {
 
      This value is available when demuxing and indicates how libavformat determined the duration.
      */
-    public var durationEstimationMethod: AVDurationEstimationMethod {
-        AVDurationEstimationMethod(rawValue: native.pointee.duration_estimation_method)
+    public var durationEstimationMethod: AVFormatContext.DurationEstimationMethod {
+        AVFormatContext.DurationEstimationMethod(rawValue: native.pointee.duration_estimation_method)
     }
 
     /**
@@ -221,22 +221,24 @@ public final class AVFormatContext {
     }
 }
 
-// MARK: - AVDurationEstimationMethod
+// MARK: - AVFormatContext.DurationEstimationMethod
 
-public struct AVDurationEstimationMethod: Equatable {
+public extension AVFormatContext {
+struct DurationEstimationMethod: Equatable {
     /// Duration accurately estimated from PTSes
-    public static let fromPTS = AVDurationEstimationMethod(rawValue: AVFMT_DURATION_FROM_PTS)
+    public static let fromPTS = AVFormatContext.DurationEstimationMethod(rawValue: AVFMT_DURATION_FROM_PTS)
 
     /// Duration estimated from a stream with a known duration
-    public static let fromStream = AVDurationEstimationMethod(rawValue: AVFMT_DURATION_FROM_STREAM)
+    public static let fromStream = AVFormatContext.DurationEstimationMethod(rawValue: AVFMT_DURATION_FROM_STREAM)
 
     /// Duration estimated from bitrate (less accurate)
-    public static let fromBitrate = AVDurationEstimationMethod(rawValue: AVFMT_DURATION_FROM_BITRATE)
+    public static let fromBitrate = AVFormatContext.DurationEstimationMethod(rawValue: AVFMT_DURATION_FROM_BITRATE)
 
     public let rawValue: CFFmpeg.AVDurationEstimationMethod
     public init(rawValue: CFFmpeg.AVDurationEstimationMethod) {
         self.rawValue = rawValue
     }
+}
 }
 
 // MARK: - AVFormatContext.Flag

@@ -10,6 +10,7 @@ import Foundation
 
 // MARK: - AVOption
 
+
 public struct AVOption {
     /// The name of the option.
     public let name: String
@@ -29,6 +30,34 @@ public struct AVOption {
     public let unit: String?
     /// The type of the option.
     public let type: Kind
+    
+    public internal(set) var constants: [Constant] = []
+    
+    func withConstants(_ options: [Self]) -> Self {
+        var option = self
+        option.constants = options.map({ Constant($0) })
+        return option
+    }
+    
+    public struct Constant: CustomStringConvertible {
+        public let name: String
+        public let value: Int64
+        public let help: String?
+        public let unit: String?
+        public let flags: Flag
+        
+        public var description: String {
+            "(\"\(name)\", \(value))"
+        }
+        
+        init(_ option: AVOption) {
+            self.name = option.name
+            self.value = option.defaultValue as? Int64 ?? 0
+            self.help = option.help
+            self.flags = option.flags
+            self.unit = option.unit
+        }
+    }
 
     init(native: CFFmpeg.AVOption) {
         self.name = native.name.string
@@ -215,6 +244,12 @@ extension AVOption: CustomStringConvertible {
         if let max = max {
             strings.append("max: \(max)")
         }
+        
+        if !constants.isEmpty {
+          //  strings.append("constants: [\(constants.map(\.description).joined(separator: ", "))]")
+            strings.append("constants: \(constants)")
+        }
+        
         strings.append("flags: \(flags)")
         //  strings.append("offset: \(offset)")
         if let help = help {
@@ -394,14 +429,15 @@ public extension AVOption {
         public static let subtitle = Flag(rawValue: AV_OPT_FLAG_SUBTITLE_PARAM)
         /// The option is intended for exporting values to the caller.
         public static let export = Flag(rawValue: AV_OPT_FLAG_EXPORT)
-        /// The option may not be set through the `AVOption` API, only read.
-        /// This flag only makes sense when `export` is also set.
+        /// The option can only be read.
         public static let readonly = Flag(rawValue: AV_OPT_FLAG_READONLY)
         /// A generic parameter which can be set by the user for bit stream filtering.
         public static let bsf = Flag(rawValue: AV_OPT_FLAG_BSF_PARAM)
+        /// A generic parameter which can be set by the user at runtime.
+        public static let runtime = Flag(rawValue: AV_OPT_FLAG_RUNTIME_PARAM)
         /// A generic parameter which can be set by the user for filtering.
         public static let filtering = Flag(rawValue: AV_OPT_FLAG_FILTERING_PARAM)
-        /// Set if option is deprecated, users should refer to `AVOption.help` text for more information.
+        /// The option is deprecated, sers should refer to `AVOption` ``AVOption/help``.
         public static let deprecated = Flag(rawValue: AV_OPT_FLAG_DEPRECATED)
 
         public let rawValue: Int32
@@ -437,6 +473,7 @@ extension AVOption.Flag: CustomStringConvertible, CustomDebugStringConvertible {
         .export: ("export", "AV_OPT_FLAG_EXPORT"),
         .readonly: ("readonly", "AV_OPT_FLAG_READONLY"),
         .bsf: ("bsf", "AV_OPT_FLAG_BSF_PARAM"),
+        .runtime: ("runtime", "AV_OPT_FLAG_RUNTIME_PARAM"),
         .filtering: ("filtering", "AV_OPT_FLAG_FILTERING_PARAM"),
         .deprecated: ("deprecated", "AV_OPT_FLAG_DEPRECATED"),
     ]
@@ -476,6 +513,18 @@ public protocol AVOptionSupport {
 public extension AVOptionSupport {
     /// Returns an array of the options supported by the type.
     var supportedOptions: [AVOption] {
+        let options = rawOptions
+        let constOptions = options.filter({ $0.type == .const}).grouped(by: \.unit)
+       return options.filter({ $0.type != .const }).map({
+           if let unit = $0.unit {
+               return  $0.withConstants(constOptions[unit] ?? [])
+           } else {
+               return $0
+           }
+        })
+    }
+    
+    var rawOptions: [AVOption] {
         withUnsafeObjectPointer { ptr in
             var options: [AVOption] = []
             var prev: UnsafePointer<CFFmpeg.AVOption>?

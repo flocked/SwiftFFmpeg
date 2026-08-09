@@ -9,11 +9,6 @@ import CFFmpeg
 
 typealias CAVProgram = CFFmpeg.AVProgram
 
-public enum AVProgramMetaKey: String {
-    case serviceProvider = "service_provider"
-    case serviceName = "service_name"
-}
-
 public final class AVProgram {
     var native: UnsafeMutablePointer<CAVProgram>!
 
@@ -68,6 +63,13 @@ public final class AVProgram {
             list.append(streamIndex)
         }
         return list
+    }
+}
+
+public extension AVProgram {
+    enum MetadataKey: String {
+        case serviceProvider = "service_provider"
+        case serviceName = "service_name"
     }
 }
 

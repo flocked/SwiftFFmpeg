@@ -55,32 +55,46 @@ public final class AVCodecContext {
     public var mediaType: AVMediaType {
         AVMediaType(native: native.pointee.codec_type)
     }
+    
+    /// The codec profile, or `nil` if the profile is unknown.
+    public var profile: AVProfile? {
+        get {
+            guard native.pointee.profile != AV_PROFILE_UNKNOWN else {
+                return nil
+            }
+            return AVProfile(rawValue: native.pointee.profile)
+        }
+        set { native.pointee.profile = newValue?.rawValue ?? AV_PROFILE_UNKNOWN }
+    }
+    
+    /// The name of the codec profile, or `nil` if it is unknown.
+    public var profileName: String? {
+        guard let codec = native.pointee.codec,
+              native.pointee.profile != AV_PROFILE_UNKNOWN else {
+            return nil
+        }
+        return av_get_profile_name(codec, native.pointee.profile)?.string
+    }
 
+    /// The codec associated with the context.
     public var codec: AVCodec? {
         get { native.pointee.codec.map(AVCodec.init(native:)) }
         set { native.pointee.codec = UnsafePointer(newValue?.native) }
     }
 
-    /// The codec's id.
+    /// The identifier of the codec.
     public var codecId: AVCodecID {
         get { AVCodecID(native: native.pointee.codec_id) }
         set { native.pointee.codec_id = newValue.native }
     }
 
-    /// fourcc (LSB first, so "ABCD" -> ('D'<<24) + ('C'<<16) + ('B'<<8) + 'A').
-    ///
-    /// This is used to work around some encoder bugs.
-    /// A demuxer should set this to what is stored in the field used to identify the codec.
-    /// If there are multiple such fields in a container then the demuxer should choose the one
-    /// which maximizes the information about the used codec.
-    /// If the codec tag field in a container is larger than 32 bits then the demuxer should
-    /// remap the longer ID to 32 bits with a table or other structure. Alternatively a new
-    /// extra_codec_tag + size could be added but for this a clear advantage must be demonstrated
-    /// first.
-    ///
-    /// - encoding: Set by user, if not then the default based on `codecId` will be used.
-    /// - decoding: Set by user, will be converted to uppercase by libavcodec during init.
-    /// The codec tag, or `nil` if no tag is specified.
+    /**
+     The codec tag, or `nil` if no tag is specified.
+
+     The tag is stored least-significant byte first and may contain container- or encoder-specific codec identification information.
+
+     When encoding, it may be set by the caller; when decoding, it may be used by libavcodec for codec-specific compatibility handling.
+     */
     public var codecTag: UInt32? {
         get { native.pointee.codec_tag != 0 ? native.pointee.codec_tag : nil }
         set { native.pointee.codec_tag = newValue ?? 0 }
@@ -92,144 +106,94 @@ public final class AVCodecContext {
         // set { codecTag = newValue?.fourCC ?? 0 }
     }
 
-    /// Private data of the user, can be used to carry app specific stuff.
-    ///
-    /// - encoding: Set by user.
-    /// - decoding: Set by user.
+    /// The application-specific opaque data associated with the codec context.
     public var opaque: UnsafeMutableRawPointer? {
         get { opaqueBox?.value.opaque }
         set { opaqueBox = CodecContextBox((opaque: newValue, getFormat: opaqueBox?.value.getFormat)) }
     }
 
-    /// The average bitrate of the codec.
-    ///
-    /// - encoding: Set by user, unused for constant quantizer encoding.
-    /// - decoding: Set by user, may be overwritten by libavcodec if this info is available in the stream.
+    /**
+     The average bit rate of the codec, in bits per second.
+
+     When encoding, this value is unused for constant-quantizer encoding; when decoding, libavcodec may replace it with information from the bitstream.
+     */
     public var bitRate: Int64 {
         get { native.pointee.bit_rate }
         set { native.pointee.bit_rate = newValue }
     }
 
-    /// Number of bits the bitstream is allowed to diverge from the reference.
-    /// The reference can be CBR (for CBR pass1) or VBR (for pass2).
-    ///
-    /// - encoding: Set by user, unused for constant quantizer encoding.
-    /// - decoding: Unused.
+    /**
+     The number of bits by which the encoded bitstream may deviate from the target bit rate.
+
+     This value is used during encoding and is ignored for constant-quantizer encoding.
+     */
     public var bitRateTolerance: Int {
         get { Int(native.pointee.bit_rate_tolerance) }
         set { native.pointee.bit_rate_tolerance = Int32(newValue) }
     }
 
-    /// `AVCodecContext.Flag`
-    ///
-    /// - encoding: Set by user.
-    /// - decoding: Set by user.
+    /// The primary codec flags.
     public var flags: Flag {
         get { Flag(rawValue: UInt32(native.pointee.flags)) }
         set { native.pointee.flags = Int32(newValue.rawValue) }
     }
 
-    /// `AVCodecContext.Flag2`
-    ///
-    /// - encoding: Set by user.
-    /// - decoding: Set by user.
+    /// The secondary codec flags.
     public var flags2: Flag2 {
         get { Flag2(rawValue: native.pointee.flags2) }
         set { native.pointee.flags2 = newValue.rawValue }
     }
 
-    /// Some codecs need / can use extradata like Huffman tables.
-    ///
-    /// - MJPEG: Huffman tables
-    /// - rv10: additional flags
-    /// - MPEG-4: global headers (they can be in the bitstream or here)
-    ///
-    /// The allocated memory should be `AVConstant.inputBufferPaddingSize` bytes larger
-    /// than `extradataSize` to avoid problems if it is read with the bitstream reader.
-    /// The bytewise contents of extradata must not depend on the architecture or CPU endianness.
-    /// Must be allocated with the `AVIO.malloc(size:)` family of functions.
-    ///
-    /// - encoding: Set/allocated/freed by libavcodec.
-    /// - decoding: Set/allocated/freed by user.
+    /**
+     The codec-specific extra data.
+
+     Extra data may contain information such as Huffman tables, global headers, or codec-specific configuration and must include sufficient input-buffer padding when supplied by the caller.
+     */
     public var extradata: UnsafeMutablePointer<UInt8>? {
         get { native.pointee.extradata }
         set { native.pointee.extradata = newValue }
     }
 
-    /// The size of the extradata content in bytes.
+    /// The size of the codec-specific extra data, in bytes.
     public var extradataSize: Int {
         get { Int(native.pointee.extradata_size) }
         set { native.pointee.extradata_size = Int32(newValue) }
     }
 
-    /// This is the fundamental unit of time (in seconds) in terms of which frame timestamps
-    /// are represented. For fixed-fps content, timebase should be 1/framerate and timestamp
-    /// increments should be identically 1.
-    /// This often, but not always is the inverse of the frame rate or field rate for video.
-    /// 1/timebase is not the average frame rate if the frame rate is not constant.
-    ///
-    /// Like containers, elementary streams also can store timestamps, 1/timebase
-    /// is the unit in which these timestamps are specified.
-    /// As example of such codec timebase see ISO/IEC 14496-2:2001(E)
-    /// vop_time_increment_resolution and fixed_vop_rate
-    /// (fixed_vop_rate == 0 implies that it is different from the framerate)
-    ///
-    /// - encoding: Must be set by user.
-    /// - decoding: The use of this field for decoding is deprecated. Use framerate instead.
+    /**
+     The time base used to represent codec timestamps.
+
+     For constant-frame-rate encoding, this is typically the inverse of the frame rate; use of this value for decoding is deprecated in favor of `frameRate`.
+     */
     public var timebase: AVRational {
         get { native.pointee.time_base }
         set { native.pointee.time_base = newValue }
     }
 
-    /// Frame counter, set by libavcodec.
-    ///
-    /// - encoding: Total number of frames passed to the encoder so far.
-    /// - decoding: Total number of frames returned from the decoder so far.
+    /**
+     The number of frames processed by the codec.
+
+     For encoding, this is the number of frames submitted to the encoder; for decoding, it is the number of frames returned by the decoder.
+     */
     public var frameNumber: Int {
         Int(native.pointee.frame_num)
     }
 
-    /// A reference to the `AVHWFramesContext` describing the input (for encoding)
-    /// or output (decoding) frames. The reference is set by the caller and
-    /// afterwards owned (and freed) by libavcodec - it should never be read by
-    /// the caller after being set.
-    ///
-    /// - encoding: For hardware encoders configured to use a hwaccel pixel
-    ///   format, this field should be set by the caller to a reference
-    ///   to the `AVHWFramesContext` describing input frames.
-    ///   `AVHWFramesContext.pixelFormat` must be equal to `AVCodecContext.pixelFormat`.
-    ///
-    ///   This field should be set before `openCodec(_:options:)` is called.
-    ///
-    /// - decoding: This field should be set by the caller from the `getFormat`
-    ///   callback. The previous reference (if any) will always be
-    ///   unreffed by libavcodec before the `getFormat` call.
-    ///
-    ///   If the default `get_buffer2()` is used with a hwaccel pixel format,
-    ///   then this `AVHWFramesContext` will be used for allocating the frame buffers.
+    /**
+     The hardware frames context used for encoder input or decoder output.
+
+     Set this value before opening the codec when required for hardware acceleration; after assignment, libavcodec owns the retained buffer reference.
+     */
     public var hwFramesContext: AVHWFramesContext? {
         get { native.pointee.hw_frames_ctx.map(AVHWFramesContext.init(nativeBuffer:)) }
         set { native.pointee.hw_frames_ctx = av_buffer_ref(newValue?.nativeBuffer) }
     }
 
-    /// A reference to the `AVHWDeviceContext` describing the device which will
-    /// be used by a hardware encoder/decoder. The reference is set by the caller
-    /// and afterwards owned (and freed) by libavcodec.
-    ///
-    /// This should be used if either the codec device does not require
-    /// hardware frames or any that are used are to be allocated internally by
-    /// libavcodec. If the user wishes to supply any of the frames used as
-    /// encoder input or decoder output then `hwFramesContext` should be used
-    /// instead. When `hwFramesContext` is set in `getFormat` for a decoder, this
-    /// field will be ignored while decoding the associated stream segment, but
-    /// may again be used on a following one after another `getFormat` call.
-    ///
-    /// For both encoders and decoders this field should be set before
-    /// `openCodec(_:options:)` is called and must not be written to thereafter.
-    ///
-    /// Note that some decoders may require this field to be set initially in
-    /// order to support `hwFramesContext` at all - in that case, all frames
-    /// contexts used must be created on the same device.
+    /**
+     The hardware device context used by the encoder or decoder.
+
+     Set this value before opening the codec and don't modify it afterward; use `hwFramesContext` when frames are supplied or received through a specific hardware frames context.
+     */
     public var hwDeviceContext: AVHWDeviceContext? {
         get { native.pointee.hw_device_ctx.map(AVHWDeviceContext.init(native:)) }
         set { native.pointee.hw_device_ctx = av_buffer_ref(newValue?.native) }
@@ -240,21 +204,19 @@ public final class AVCodecContext {
         avcodec_is_open(native) > 0
     }
 
-    /// Fill the codec context based on the values from the supplied codec parameters.
-    ///
-    /// - Parameter params: codec parameters
+    /// Copies codec parameters into the codec context.
     public func setParameters(_ params: AVCodecParameters) {
         avcodec_parameters_to_context(native, params.native).abortIfFail()
     }
 
-    /// Initialize the `AVCodecContext`.
-    ///
-    /// - Parameters:
-    ///   - codec: The codec to open this context for. If a non-NULL codec has been previously
-    ///     passed to `init(codec:)` or for this context, then this parameter _MUST_ be either `nil`
-    ///     or equal to the previously passed codec.
-    ///   - options: A dictionary filled with `AVCodecContext` and codec-private options.
-    /// - Throws: AVError
+    /**
+     Opens the codec context with the specified codec and options.
+
+     - Parameters:
+       - codec: The codec to open, or `nil` to use the codec already associated with the context.
+       - options: The codec and codec-private options to apply when opening the context.
+     - Throws: An `AVError` if the codec can't be opened.
+     */
     public func openCodec(_ codec: AVCodec? = nil, options: [String: String]? = nil) throws {
         var pm = options?.avDict
         defer { av_dict_free(&pm) }
@@ -262,80 +224,51 @@ public final class AVCodecContext {
         pm?.dumpUnrecognizedOptions()
     }
 
-    /// Supply raw packet data as input to a decoder.
-    ///
-    /// - Parameter packet: The input `AVPacket`. Usually, this will be a single video frame,
-    ///   or several complete audio frames.
-    ///   It can be `nil` (or an `AVPacket` with data set to `nil` and size set to 0);
-    ///   in this case, it is considered a flush packet, which signals the end of the stream.
-    ///   Sending the first flush packet will return success. Subsequent ones are unnecessary
-    ///   and will throw `AVError.eof`. If the decoder still has frames buffered, it will
-    ///   return them after sending a flush packet.
-    /// - Throws:
-    ///     - `AVError.tryAgain` if input is not accepted in the current state - user must read output
-    ///       with `receiveFrame`. (once all output is read, the packet should be resent, and the call
-    ///       will not fail with `AVError.tryAgain`).
-    ///     - `AVError.eof` if the decoder has been flushed, and no new packets can be sent to it.
-    ///       (also returned if more than 1 flush packet is sent)
-    ///     - `AVError.invalidArgument` if codec not opened, it is an encoder, or requires flush
-    ///     - `AVError.outOfMemory` if failed to add packet to internal queue, or similar.
-    ///     - legitimate decoding errors
+    /**
+     Sends encoded packet data to the decoder.
+
+     The packet is fully consumed by the decoder and may produce multiple frames. Pass `nil` to signal the end of the stream and flush buffered frames.
+
+     - Parameter packet: The encoded packet to decode, or `nil` to flush the decoder.
+     - Throws: An `AVError` if the packet can't be accepted or decoded.
+     */
     public func sendPacket(_ packet: AVPacket?) throws {
         try avcodec_send_packet(native, packet?.native).throwIfFail()
     }
 
-    /// Return decoded output data from a decoder.
-    ///
-    /// - Parameter frame: This will be set to a reference-counted video or audio frame (depending on
-    ///   the decoder type) allocated by the decoder.
-    /// - Throws:
-    ///     - `AVError.tryAgain` if output is not available in this state - user must try to send new input.
-    ///     - `AVError.eof` if the decoder has been fully flushed, and there will be no more output frames.
-    ///     - `AVError.invalidArgument` if codec not opened, or it is an encoder.
-    ///     - legitimate decoding errors
+    /**
+     Receives a decoded frame from the decoder.
+
+     - Parameter frame: The frame that receives the decoded video or audio data.
+     - Throws: An `AVError`, including `.tryAgain` when more input is required or `.eof` when decoding is complete.
+     */
     public func receiveFrame(_ frame: AVFrame) throws {
         try avcodec_receive_frame(native, frame.native).throwIfFail()
     }
 
-    /// Supply a raw video or audio frame to the encoder.
-    ///
-    /// - Parameter frame: `AVFrame` containing the raw audio or video frame to be encoded.
-    ///   It can be `nil`, in which case it is considered a flush packet. This signals the end of the stream.
-    ///   If the encoder still has packets buffered, it will return them after this call.
-    ///   Once flushing mode has been entered, additional flush packets are ignored, and sending frames
-    ///   will return `AVError.eof`.
-    /// - Throws:
-    ///     - `AVError.tryAgain` if input is not accepted in the current state - user must read output
-    ///       with `receivePacket`. (once all output is read, the packet should be resent, and the call
-    ///       will not fail with `AVError.tryAgain`).
-    ///     - `AVError.eof` if the encoder has been flushed, and no new frames can be sent to it.
-    ///     - `AVError.invalidArgument` if codec not opened, refcounted_frames not set, it is a decoder,
-    ///       or requires flush.
-    ///     - `AVError.outOfMemory` if failed to add packet to internal queue, or similar.
-    ///     - legitimate decoding errors
+    /**
+     Sends a raw video or audio frame to the encoder.
+
+     Pass `nil` to signal end of input and flush buffered packets from the encoder.
+
+     - Parameter frame: The frame to encode, or `nil` to flush the encoder.
+     - Throws: An `AVError` if the frame can't be accepted or encoded.
+     */
     public func sendFrame(_ frame: AVFrame?) throws {
         try avcodec_send_frame(native, frame?.native).throwIfFail()
     }
 
-    /// Read encoded data from the encoder.
-    ///
-    /// - Parameter packet: This will be set to a reference-counted packet allocated by the encoder.
-    /// - Throws:
-    ///     - `AVError.tryAgain` if output is not available in the current state - user must try to send input.
-    ///     - `AVError.eof` if the encoder has been fully flushed, and there will be no more output packets.
-    ///     - `AVError.invalidArgument` if codec not opened, or it is an encoder.
-    ///     - legitimate decoding errors
+    /**
+     Receives an encoded packet from the encoder.
+
+     - Parameter packet: The packet that receives the encoded data.
+     - Throws: An `AVError`, including `.tryAgain` when more input is required or `.eof` when encoding is complete.
+     */
     public func receivePacket(_ packet: AVPacket) throws {
         try avcodec_receive_packet(native, packet.native).throwIfFail()
     }
 
-    /// Reset the internal decoder state / flush internal buffers. Should be called
-    /// e.g. when seeking or when switching to a different stream.
-    ///
-    /// - Note: when refcounted frames are not used (i.e. avctx->refcounted_frames is 0),
-    ///   this invalidates the frames previously returned from the decoder. When
-    ///   refcounted frames are used, the decoder just releases any references it might
-    ///   keep internally, but the caller's reference remains valid.
+    /// Resets the internal codec state and flushes buffered data.
     public func flush() {
         avcodec_flush_buffers(native)
     }
@@ -344,137 +277,127 @@ public final class AVCodecContext {
 // MARK: - AVCodecContext.Flag
 
 public extension AVCodecContext {
-    /// Encoding support
-    ///
-    /// These flags can be passed in `AVCodecContext.flags` before initialization.
-    struct Flag: OptionSet, Hashable {
-        /// Allow decoders to produce frames with data planes that are not aligned
-        /// to CPU requirements (e.g. due to cropping).
+    /// Flags that control codec behavior.
+    struct Flag: OptionSet, Hashable, CustomStringConvertible, CustomDebugStringConvertible {
+        /// Allows decoders to produce frames with data planes that aren't aligned to CPU requirements.
         public static let unaligned = Flag(rawValue: UInt32(AV_CODEC_FLAG_UNALIGNED))
-        /// Use fixed qscale.
+        /// Uses a fixed quantizer scale.
         public static let qscale = Flag(rawValue: UInt32(AV_CODEC_FLAG_QSCALE))
-        /// 4 MV per MB allowed / advanced prediction for H.263.
+        /// Enables four motion vectors per macroblock or advanced prediction for H.263.
         public static let p4mv = Flag(rawValue: UInt32(AV_CODEC_FLAG_4MV))
-        /// Output even those frames that might be corrupted.
+        /// Outputs frames that may be corrupted.
         public static let outputCorrupted = Flag(rawValue: UInt32(AV_CODEC_FLAG_OUTPUT_CORRUPT))
-        /// Use qpel MC.
+        /// Enables quarter-pixel motion compensation.
         public static let qpel = Flag(rawValue: UInt32(AV_CODEC_FLAG_QPEL))
-        /// Use internal 2pass ratecontrol in first pass mode.
+        /// Enables the first pass of internal two-pass rate control.
         public static let pass1 = Flag(rawValue: UInt32(AV_CODEC_FLAG_PASS1))
-        /// Use internal 2pass ratecontrol in second pass mode.
+        /// Enables the second pass of internal two-pass rate control.
         public static let pass2 = Flag(rawValue: UInt32(AV_CODEC_FLAG_PASS2))
-        /// loop filter.
+        /// Enables loop filtering.
         public static let loopFilter = Flag(rawValue: UInt32(AV_CODEC_FLAG_LOOP_FILTER))
-        /// Only decode/encode grayscale.
+        /// Restricts encoding or decoding to grayscale.
         public static let gray = Flag(rawValue: UInt32(AV_CODEC_FLAG_GRAY))
-        /// error[?] variables will be set during encoding.
+        /// Enables calculation of PSNR-related error values during encoding.
         public static let psnr = Flag(rawValue: UInt32(AV_CODEC_FLAG_PSNR))
-        /// Use interlaced DCT.
+        /// Enables interlaced discrete cosine transforms.
         public static let interlacedDCT = Flag(rawValue: UInt32(AV_CODEC_FLAG_INTERLACED_DCT))
-        /// Force low delay.
+        /// Forces low-delay operation.
         public static let lowDelay = Flag(rawValue: UInt32(AV_CODEC_FLAG_LOW_DELAY))
-        /// Place global headers in extradata instead of every keyframe.
+        /// Places global headers in extra data instead of in every keyframe.
         public static let globalHeader = Flag(rawValue: UInt32(AV_CODEC_FLAG_GLOBAL_HEADER))
-        /// Use only bitexact stuff (except (I)DCT).
+        /// Enables bit-exact processing except for inverse and forward discrete cosine transforms.
         public static let bitexact = Flag(rawValue: UInt32(AV_CODEC_FLAG_BITEXACT))
-        /// H.263 advanced intra coding / MPEG-4 AC prediction
+        /// Enables H.263 advanced intra coding or MPEG-4 AC prediction.
         public static let acPred = Flag(rawValue: UInt32(AV_CODEC_FLAG_AC_PRED))
-        /// interlaced motion estimation
+        /// Enables interlaced motion estimation.
         public static let interlacedME = Flag(rawValue: UInt32(AV_CODEC_FLAG_INTERLACED_ME))
+        /// Uses closed groups of pictures.
         public static let closedGOP = Flag(rawValue: AV_CODEC_FLAG_CLOSED_GOP)
-
+        
         public let rawValue: UInt32
-
+        
         public init(rawValue: UInt32) {
             self.rawValue = rawValue
         }
+        
+        public var description: String {
+            "[\(elements().map { Self.names[$0]?.swift ?? "\($0.rawValue)" }.joined(separator: ", "))]"
+        }
+        
+        public var debugDescription: String {
+            "[\(elements().map { Self.names[$0]?.native ?? "\($0.rawValue)" }.joined(separator: ", "))]"
+        }
+        
+        private static let names: [Self: (swift: String, native: String)] = [
+            .unaligned: ("unaligned", "AV_CODEC_FLAG_UNALIGNED"),
+            .qscale: ("qscale", "AV_CODEC_FLAG_QSCALE"),
+            .p4mv: ("p4mv", "AV_CODEC_FLAG_4MV"),
+            .outputCorrupted: ("outputCorrupted", "AV_CODEC_FLAG_OUTPUT_CORRUPT"),
+            .qpel: ("qpel", "AV_CODEC_FLAG_QPEL"),
+            .pass1: ("pass1", "AV_CODEC_FLAG_PASS1"),
+            .pass2: ("pass2", "AV_CODEC_FLAG_PASS2"),
+            .loopFilter: ("loopFilter", "AV_CODEC_FLAG_LOOP_FILTER"),
+            .gray: ("gray", "AV_CODEC_FLAG_GRAY"),
+            .psnr: ("psnr", "AV_CODEC_FLAG_PSNR"),
+            .interlacedDCT: ("interlacedDCT", "AV_CODEC_FLAG_INTERLACED_DCT"),
+            .lowDelay: ("lowDelay", "AV_CODEC_FLAG_LOW_DELAY"),
+            .globalHeader: ("globalHeader", "AV_CODEC_FLAG_GLOBAL_HEADER"),
+            .bitexact: ("bitexact", "AV_CODEC_FLAG_BITEXACT"),
+            .acPred: ("acPred", "AV_CODEC_FLAG_AC_PRED"),
+            .interlacedME: ("interlacedME", "AV_CODEC_FLAG_INTERLACED_ME"),
+            .closedGOP: ("closedGOP", "AV_CODEC_FLAG_CLOSED_GOP"),
+        ]
     }
 }
-
-extension AVCodecContext.Flag: CustomStringConvertible, CustomDebugStringConvertible {
-    public var description: String {
-        "[\(elements().map { Self.names[$0]?.swift ?? "\($0.rawValue)" }.joined(separator: ", "))]"
-    }
-
-    public var debugDescription: String {
-        "[\(elements().map { Self.names[$0]?.native ?? "\($0.rawValue)" }.joined(separator: ", "))]"
-    }
-
-    private static let names: [Self: (swift: String, native: String)] = [
-        .unaligned: ("unaligned", "AV_CODEC_FLAG_UNALIGNED"),
-        .qscale: ("qscale", "AV_CODEC_FLAG_QSCALE"),
-        .p4mv: ("p4mv", "AV_CODEC_FLAG_4MV"),
-        .outputCorrupted: ("outputCorrupted", "AV_CODEC_FLAG_OUTPUT_CORRUPT"),
-        .qpel: ("qpel", "AV_CODEC_FLAG_QPEL"),
-        .pass1: ("pass1", "AV_CODEC_FLAG_PASS1"),
-        .pass2: ("pass2", "AV_CODEC_FLAG_PASS2"),
-        .loopFilter: ("loopFilter", "AV_CODEC_FLAG_LOOP_FILTER"),
-        .gray: ("gray", "AV_CODEC_FLAG_GRAY"),
-        .psnr: ("psnr", "AV_CODEC_FLAG_PSNR"),
-        .interlacedDCT: ("interlacedDCT", "AV_CODEC_FLAG_INTERLACED_DCT"),
-        .lowDelay: ("lowDelay", "AV_CODEC_FLAG_LOW_DELAY"),
-        .globalHeader: ("globalHeader", "AV_CODEC_FLAG_GLOBAL_HEADER"),
-        .bitexact: ("bitexact", "AV_CODEC_FLAG_BITEXACT"),
-        .acPred: ("acPred", "AV_CODEC_FLAG_AC_PRED"),
-        .interlacedME: ("interlacedME", "AV_CODEC_FLAG_INTERLACED_ME"),
-        .closedGOP: ("closedGOP", "AV_CODEC_FLAG_CLOSED_GOP"),
-    ]
-}
-
-// MARK: - AVCodecContext.Flag2
 
 public extension AVCodecContext {
-    /// Encoding support
-    ///
-    /// These flags can be passed in `AVCodecContext.flags2` before initialization.
-    struct Flag2: OptionSet, Hashable {
-        /// Allow non spec compliant speedup tricks.
+    /// Additional flags that control codec behavior.
+    struct Flag2: OptionSet, Hashable, CustomStringConvertible, CustomDebugStringConvertible {
+        /// Allows non-spec-compliant optimizations that improve performance.
         public static let fast = Flag2(rawValue: AV_CODEC_FLAG2_FAST)
-        /// Skip bitstream encoding.
+        /// Skips bitstream output during encoding.
         public static let noOutput = Flag2(rawValue: AV_CODEC_FLAG2_NO_OUTPUT)
-        /// Place global headers at every keyframe instead of in extradata.
+        /// Places global headers in every keyframe instead of in extra data.
         public static let localHeader = Flag2(rawValue: AV_CODEC_FLAG2_LOCAL_HEADER)
-        /// Input bitstream might be truncated at a packet boundaries instead of only at frame boundaries.
+        /// Allows the input bitstream to be truncated at packet boundaries instead of only at frame boundaries.
         public static let chunks = Flag2(rawValue: AV_CODEC_FLAG2_CHUNKS)
-        /// Discard cropping information from SPS.
+        /// Ignores cropping information from the sequence parameter set.
         public static let ignoreCrop = Flag2(rawValue: AV_CODEC_FLAG2_IGNORE_CROP)
-        /// Show all frames before the first keyframe.
+        /// Outputs all frames before the first keyframe.
         public static let showAll = Flag2(rawValue: AV_CODEC_FLAG2_SHOW_ALL)
-        /// Export motion vectors through frame side data.
+        /// Exports motion vectors as frame side data.
         public static let exportMVS = Flag2(rawValue: AV_CODEC_FLAG2_EXPORT_MVS)
-        /// Do not skip samples and export skip information as frame side data.
+        /// Exports skip information as frame side data instead of skipping samples.
         public static let skipManual = Flag2(rawValue: AV_CODEC_FLAG2_SKIP_MANUAL)
-        /// Do not reset ASS ReadOrder field on flush (subtitles decoding).
+        /// Preserves the ASS `ReadOrder` field when flushing subtitle decoders.
         public static let roFlushNoop = Flag2(rawValue: AV_CODEC_FLAG2_RO_FLUSH_NOOP)
-
+        
         public let rawValue: Int32
-
+        
         public init(rawValue: Int32) {
             self.rawValue = rawValue
         }
+        
+        public var description: String {
+            "[\(elements().map { Self.names[$0]?.swift ?? "\($0.rawValue)" }.joined(separator: ", "))]"
+        }
+        
+        public var debugDescription: String {
+            "[\(elements().map { Self.names[$0]?.native ?? "\($0.rawValue)" }.joined(separator: ", "))]"
+        }
+        
+        private static let names: [Self: (swift: String, native: String)] = [
+            .fast: ("fast", "AV_CODEC_FLAG2_FAST"),
+            .noOutput: ("noOutput", "AV_CODEC_FLAG2_NO_OUTPUT"),
+            .localHeader: ("localHeader", "AV_CODEC_FLAG2_LOCAL_HEADER"),
+            .chunks: ("chunks", "AV_CODEC_FLAG2_CHUNKS"),
+            .ignoreCrop: ("ignoreCrop", "AV_CODEC_FLAG2_IGNORE_CROP"),
+            .showAll: ("showAll", "AV_CODEC_FLAG2_SHOW_ALL"),
+            .exportMVS: ("exportMVS", "AV_CODEC_FLAG2_EXPORT_MVS"),
+            .skipManual: ("skipManual", "AV_CODEC_FLAG2_SKIP_MANUAL"),
+            .roFlushNoop: ("roFlushNoop", "AV_CODEC_FLAG2_RO_FLUSH_NOOP"),
+        ]
     }
-}
-
-extension AVCodecContext.Flag2: CustomStringConvertible, CustomDebugStringConvertible {
-    public var description: String {
-        "[\(elements().map { Self.names[$0]?.swift ?? "\($0.rawValue)" }.joined(separator: ", "))]"
-    }
-
-    public var debugDescription: String {
-        "[\(elements().map { Self.names[$0]?.native ?? "\($0.rawValue)" }.joined(separator: ", "))]"
-    }
-
-    private static let names: [Self: (swift: String, native: String)] = [
-        .fast: ("fast", "AV_CODEC_FLAG2_FAST"),
-        .noOutput: ("noOutput", "AV_CODEC_FLAG2_NO_OUTPUT"),
-        .localHeader: ("localHeader", "AV_CODEC_FLAG2_LOCAL_HEADER"),
-        .chunks: ("chunks", "AV_CODEC_FLAG2_CHUNKS"),
-        .ignoreCrop: ("ignoreCrop", "AV_CODEC_FLAG2_IGNORE_CROP"),
-        .showAll: ("showAll", "AV_CODEC_FLAG2_SHOW_ALL"),
-        .exportMVS: ("exportMVS", "AV_CODEC_FLAG2_EXPORT_MVS"),
-        .skipManual: ("skipManual", "AV_CODEC_FLAG2_SKIP_MANUAL"),
-        .roFlushNoop: ("roFlushNoop", "AV_CODEC_FLAG2_RO_FLUSH_NOOP"),
-    ]
 }
 
 // MARK: - Video
@@ -678,8 +601,8 @@ public extension AVCodecContext {
     ///
     /// - encoding: Set by user, otherwise the default is used.
     /// - decoding: Set by user, otherwise the default is used.
-    var threadType: FFThreadType {
-        get { FFThreadType(rawValue: native.pointee.thread_type) }
+    var threadType: AVCodecContext.ThreadType {
+        get { AVCodecContext.ThreadType(rawValue: native.pointee.thread_type) }
         set { native.pointee.thread_type = newValue.rawValue }
     }
 
@@ -695,8 +618,8 @@ public extension AVCodecContext {
     /// Which multithreading methods are in use by the codec.
     /// - encoding: Set by libavcodec.
     /// - decoding: Set by libavcodec.
-    var activeThreadType: FFThreadType {
-        FFThreadType(rawValue: native.pointee.active_thread_type)
+    var activeThreadType: AVCodecContext.ThreadType {
+        AVCodecContext.ThreadType(rawValue: native.pointee.active_thread_type)
     }
 }
 
@@ -708,15 +631,17 @@ extension AVCodecContext: AVClassSupport {
     }
 }
 
-public struct FFThreadType: Equatable, OptionSet {
+public extension AVCodecContext {
+struct ThreadType: Equatable, OptionSet {
     /// Decode more than one frame at once
-    public static let frame = FFThreadType(rawValue: FF_THREAD_FRAME)
+    public static let frame = AVCodecContext.ThreadType(rawValue: FF_THREAD_FRAME)
     /// Decode more than one part of a single frame at once
-    public static let slice = FFThreadType(rawValue: FF_THREAD_SLICE)
+    public static let slice = AVCodecContext.ThreadType(rawValue: FF_THREAD_SLICE)
 
     public let rawValue: Int32
 
     public init(rawValue: Int32) {
         self.rawValue = rawValue
     }
+}
 }

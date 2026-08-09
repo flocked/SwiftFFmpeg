@@ -308,25 +308,27 @@ extension AVFilterContext: AVClassSupport {
   }
 }
 
-// MARK: - AVBufferSourceFlag
+// MARK: - AVFilterContext.BufferSourceFlag
 
-public struct AVBufferSourceFlag: OptionSet, Hashable {
+public extension AVFilterContext {
+struct BufferSourceFlag: OptionSet, Hashable {
   /// Do not check for format changes.
-  public static let noCheckFormat = AVBufferSourceFlag(
+  public static let noCheckFormat = AVFilterContext.BufferSourceFlag(
     rawValue: Int32(AV_BUFFERSRC_FLAG_NO_CHECK_FORMAT))
   // Immediately push the frame to the output.
-  public static let push = AVBufferSourceFlag(rawValue: Int32(AV_BUFFERSRC_FLAG_PUSH))
+  public static let push = AVFilterContext.BufferSourceFlag(rawValue: Int32(AV_BUFFERSRC_FLAG_PUSH))
   /// Keep a reference to the frame.
   /// If the frame if reference-counted, create a new reference; otherwise copy the frame data.
-  public static let keepReference = AVBufferSourceFlag(
+  public static let keepReference = AVFilterContext.BufferSourceFlag(
     rawValue: Int32(AV_BUFFERSRC_FLAG_KEEP_REF))
 
   public let rawValue: Int32
 
   public init(rawValue: Int32) { self.rawValue = rawValue }
 }
+}
 
-extension AVBufferSourceFlag: CustomStringConvertible, CustomDebugStringConvertible {
+extension AVFilterContext.BufferSourceFlag: CustomStringConvertible, CustomDebugStringConvertible {
   public var description: String {
     "[\(elements().map { Self.names[$0]?.swift ?? "\($0.rawValue)" }.joined(separator: ", "))]"
   }
@@ -356,31 +358,33 @@ extension AVFilterContext {
   ///
   /// - Parameters:
   ///   - frame: a frame, or `nil` to mark EOF
-  ///   - flags: a combination of `AVBufferSourceFlag` flags
+  ///   - flags: a combination of `AVFilterContext.BufferSourceFlag` flags
   /// - Throws: AVError
-  public func addFrame(_ frame: AVFrame?, flags: AVBufferSourceFlag = .init(rawValue: 0)) throws {
+  public func addFrame(_ frame: AVFrame?, flags: AVFilterContext.BufferSourceFlag = .init(rawValue: 0)) throws {
     try av_buffersrc_add_frame_flags(native, frame?.native, flags.rawValue).throwIfFail()
   }
 }
 
-// MARK: - AVBufferSinkFlag
+// MARK: - AVFilterContext.BufferSinkFlag
 
-public struct AVBufferSinkFlag: OptionSet, Hashable {
+public extension AVFilterContext {
+struct BufferSinkFlag: OptionSet, Hashable {
   /// Tell av_buffersink_get_buffer_ref() to read video/samples buffer
   /// reference, but not remove it from the buffer. This is useful if you
   /// need only to read a video/samples buffer, without to fetch it.
-  public static let peek = AVBufferSinkFlag(rawValue: Int32(AV_BUFFERSINK_FLAG_PEEK))
+  public static let peek = AVFilterContext.BufferSinkFlag(rawValue: Int32(AV_BUFFERSINK_FLAG_PEEK))
   /// Tell av_buffersink_get_buffer_ref() not to request a frame from its input.
   /// If a frame is already buffered, it is read (and removed from the buffer),
   /// but if no frame is present, return AVERROR(EAGAIN).
-  public static let noRequest = AVBufferSinkFlag(rawValue: Int32(AV_BUFFERSINK_FLAG_NO_REQUEST))
+  public static let noRequest = AVFilterContext.BufferSinkFlag(rawValue: Int32(AV_BUFFERSINK_FLAG_NO_REQUEST))
 
   public let rawValue: Int32
 
   public init(rawValue: Int32) { self.rawValue = rawValue }
 }
+}
 
-extension AVBufferSinkFlag: CustomStringConvertible, CustomDebugStringConvertible {
+extension AVFilterContext.BufferSinkFlag: CustomStringConvertible, CustomDebugStringConvertible {
   public var description: String {
     "[\(elements().map { Self.names[$0]?.swift ?? "\($0.rawValue)" }.joined(separator: ", "))]"
   }
@@ -460,13 +464,13 @@ extension AVFilterContext {
   /// - Parameters:
   ///   - frame: pointer to an allocated frame that will be filled with data.
   ///     The data must be freed using `av_frame_unref() / av_frame_free()`.
-  ///   - flags: a combination of `AVBufferSinkFlag` flags
+  ///   - flags: a combination of `AVFilterContext.BufferSinkFlag` flags
   /// - Throws:
   ///     - `AVError.tryAgain` if no frames are available at this point;
   ///       more input frames must be added to the filtergraph to get more output.
   ///     - `AVError.eof` if there will be no more output frames on this sink.
   ///     - A different `AVError` in other failure cases.
-  public func getFrame(_ frame: AVFrame, flags: AVBufferSinkFlag = .init(rawValue: 0)) throws {
+  public func getFrame(_ frame: AVFrame, flags: AVFilterContext.BufferSinkFlag = .init(rawValue: 0)) throws {
     try av_buffersink_get_frame_flags(native, frame.native, flags.rawValue).throwIfFail()
   }
 }

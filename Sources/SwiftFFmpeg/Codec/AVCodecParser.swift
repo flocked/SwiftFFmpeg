@@ -16,7 +16,7 @@ public struct AVCodecParser {
 
     /// Several codec IDs are permitted
     public var codecIds: [AVCodecID] {
-        [native.pointee.codec_ids.0, native.pointee.codec_ids.1, native.pointee.codec_ids.2, native.pointee.codec_ids.3,].map { AVCodecID(native: $0) }.filter { $0 != .none }
+        [native.pointee.codec_ids.0, native.pointee.codec_ids.1, native.pointee.codec_ids.2, native.pointee.codec_ids.3,].compactMap { AVCodecID(native: $0).nonNil }
     }
 
     /// Get all registered codec parsers.
@@ -27,29 +27,6 @@ public struct AVCodecParser {
             list.append(AVCodecParser(native: ptr.mutable))
         }
         return list
-    }
-}
-
-/// Describes whether a picture is coded as a frame or as one field.
-public enum AVPictureStructure: UInt32 {
-    /// The picture structure is unknown.
-    case unknown
-    /// The picture is coded as a top field.
-    case topField
-    /// The picture is coded as a bottom field.
-    case bottomField
-    /// The picture is coded as a frame.
-    case frame
-
-    init(native: CFFmpeg.AVPictureStructure) {
-        guard let structure = Self(rawValue: native.rawValue) else {
-            fatalError("Unknown picture structure: \(native)")
-        }
-        self = structure
-    }
-
-    var native: CFFmpeg.AVPictureStructure {
-        CFFmpeg.AVPictureStructure(rawValue)
     }
 }
 

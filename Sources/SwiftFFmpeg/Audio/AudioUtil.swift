@@ -34,10 +34,6 @@ public extension AVChannelLayout {
     var channelCount: Int {
         Int(nb_channels)
     }
-    
-    func sdsds() {
-        
-    }
 
     /// Get the index of a given channel in a channel layout.
     /// In case multiple channels are found, only the first match will be returned.

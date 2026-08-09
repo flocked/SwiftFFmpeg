@@ -38,6 +38,14 @@ extension AVPixelFormat: @retroactive CustomStringConvertible, @retroactive Hash
         name
     }
     
+    var nonNil: Self? {
+        self != .none ? self : nil
+    }
+    
+    var isNil: Bool {
+        self == .none
+    }
+    
     public static var all: [AVPixelFormat] {
         var formats: [AVPixelFormat] = []
         var descriptor: UnsafePointer<CFFmpeg.AVPixFmtDescriptor>?

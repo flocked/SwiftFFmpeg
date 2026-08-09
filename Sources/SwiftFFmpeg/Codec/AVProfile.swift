@@ -35,6 +35,11 @@ public struct AVNamedProfile: Hashable, CustomStringConvertible {
         self.profile = AVProfile(rawValue: native.profile)
         self.name = native.name.string
     }
+    
+    init(name: String, profile: AVProfile) {
+        self.name = name
+        self.profile = profile
+    }
 
     public var description: String {
         name
