@@ -33,6 +33,22 @@ extension AVRational: @retroactive @unchecked Sendable, @retroactive Equatable {
     public init(_ num: Int32, _ den: Int32) {
         self = Self(num: num, den: den)
     }
+    
+    public init?(string: String, max: Int32 = Int32.max) {
+        var rational = AVRational()
+        guard av_parse_ratio(&rational, string, max, 0, nil) >= 0 else {
+            return nil
+        }
+        self = rational
+    }
+
+    public init?(videoRate string: String) {
+        var rational = AVRational()
+        guard av_parse_video_rate(&rational, string) >= 0 else {
+            return nil
+        }
+        self = rational
+    }
 
     /// Invert a rational. `1 / q`
     public var inverted: Self {

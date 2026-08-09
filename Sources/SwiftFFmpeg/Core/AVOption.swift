@@ -30,45 +30,8 @@ public struct AVOption {
     /// The type of the option.
     public let type: Kind
 
-    /// The named constant values associated with this option.
-    public internal(set) var constants: [Constant] = []
-
-    func withConstants(_ options: [Self]) -> Self {
-        var option = self
-        let defaultValue = option.defaultIntegerValue
-        let isFlag = option.type == .flags
-        option.constants = options.map {
-            Constant($0, defaultValue, isFlag)
-        }
-        return option
-    }
-
-    /// The named constant value associated with an option.
-    public struct Constant: CustomStringConvertible {
-        /// The symbolic name used to set the option to this value.
-        public let name: String
-        /// The integer value represented by the constant.
-        public let value: Int64
-        /// The short English help text for the constant.
-        public let help: String?
-        /// A Boolean value indicating whether this constant is the parent option's default value.
-        public let isDefault: Bool
-        /// The flags describing where this constant is applicable.
-        public let flags: Flag
-
-        public var description: String {
-            "(\"\(name)\", \(value)\(isDefault ? " (default)" : "")"
-        }
-
-        init(_ option: AVOption, _ defaultValue: Int64?, _ isFlag: Bool) {
-            name = option.name
-            let _value = option.defaultValue as? Int64 ?? 0
-            value = _value
-            help = option.help
-            flags = option.flags
-            isDefault = defaultValue == _value
-        }
-    }
+    /// The named values that can be used symbolically when setting this option.
+    public internal(set) var namedValues: [NamedValue] = []
 
     init(native: CFFmpeg.AVOption) {
         self.name = native.name.string
@@ -90,7 +53,7 @@ public struct AVOption {
             case .flags:
                 self.min = nil
                 self.max = nil
-                self.defaultValue = UInt32(exactly: native.default_val.i64).map(FlagValue.init(rawValue:))
+                self.defaultValue = UInt32(exactly: native.default_val.i64)
             case .int:
                 self.min = Int32(clamping: native.min)
                 self.max = Int32(clamping: native.max)
@@ -179,9 +142,11 @@ public struct AVOption {
             case .channelLayout:
                 self.defaultValue = array.values?.map(AVChannelLayout.init(name:))
             case .flags:
-                self.defaultValue = nil
-            case .rational, .videoRate:
-                self.defaultValue = nil
+                self.defaultValue = array.values(as: UInt32.self)
+            case .videoRate:
+                self.defaultValue = array.values?.compactMap({ AVRational(videoRate: $0) })
+            case .rational:
+                self.defaultValue = array.values?.compactMap({ AVRational(string: $0) })
             case .pixelFormat:
                 self.defaultValue = array.values?.compactMap(AVPixelFormat.init(name:))
             case .sampleFormat:
@@ -193,7 +158,50 @@ public struct AVOption {
     }
 }
 
-extension CFFmpeg.AVOptionArrayDef {
+extension AVOption {
+    /// The named value associated with an option.
+    public struct NamedValue: CustomStringConvertible {
+        /// The symbolic name used to set the option to this value.
+        public let name: String
+        /// The integer value represented by the value.
+        public let value: Int64
+        /// The short English help text for the value.
+        public let help: String?
+        /// A Boolean value indicating whether this value is the parent option's default value.
+        public let isDefault: Bool
+        /// The flags describing where this value is applicable.
+        public let flags: Flag
+
+        public var description: String {
+            "(\"\(name)\", \(value)\(isDefault ? ", default" : ""))"
+        }
+
+        init(_ option: AVOption, _ defaultValue: Int64?) {
+            name = option.name
+            let _value = option.defaultValue as? Int64 ?? 0
+            value = _value
+            help = option.help
+            flags = option.flags
+            isDefault = defaultValue == _value
+        }
+    }
+    
+    /// The named values that best represent this option's default value.
+    public var defaultNamedValues: [NamedValue] {
+        guard let value = defaultIntegerValue else { return [] }
+        let exactMatches = namedValues.filter { $0.value == value }
+        if !exactMatches.isEmpty {
+            return exactMatches
+        }
+        guard type == .flags, value != 0 else { return [] }
+        return namedValues.filter {
+            $0.value.isPowerOfTwo && (value & $0.value) == $0.value
+        }
+    }
+
+}
+
+fileprivate extension CFFmpeg.AVOptionArrayDef {
     var values: [String]? {
         guard let def else { return nil }
         let bytes = Array(def.string.utf8)
@@ -242,8 +250,8 @@ extension AVOption: CustomStringConvertible {
             strings.append(minMax)
         }
 
-        if !constants.isEmpty {
-            strings.append("constants: \(constants)")
+        if !namedValues.isEmpty {
+            strings.append("namedValues: \(namedValues)")
         }
 
         if !flags.isEmpty {
@@ -257,18 +265,15 @@ extension AVOption: CustomStringConvertible {
     }
 
     fileprivate var defaultDescription: String? {
-        guard var defaultValue = defaultValue else { return nil }
+        guard let defaultValue = defaultValue else { return nil }
         if let string = defaultValue as? String {
             return "\(string.quoted())"
         } else {
-            if let flag = defaultValue as? FlagValue {
-                defaultValue = flag.rawValue
-            }
-            let constants = defaultConstants
-            guard !constants.isEmpty else {
+            let namedValues = defaultNamedValues
+            guard !namedValues.isEmpty else {
                 return "\(defaultValue)"
             }
-            let names = constants.map { "\($0.name.quoted())" }.joined(separator: ", ")
+            let names = namedValues.map { "\($0.name.quoted())" }.joined(separator: ", ")
             if type == .flags {
                 return "\(defaultValue) [\(names)]"
             }
@@ -285,18 +290,6 @@ extension AVOption: CustomStringConvertible {
             return "max: \(max)"
         }
         return nil
-    }
-
-    public var defaultConstants: [Constant] {
-        guard let value = defaultIntegerValue else { return [] }
-        let exactMatches = constants.filter { $0.value == value }
-        if !exactMatches.isEmpty {
-            return exactMatches
-        }
-        guard type == .flags, value != 0 else { return [] }
-        return constants.filter {
-            $0.value.isPowerOfTwo && (value & $0.value) == $0.value
-        }
     }
 }
 
@@ -316,15 +309,15 @@ extension AVOption: CustomDebugStringConvertible {
         if let help {
             lines.append("  help: \(help.quoted())")
         }
-        if !constants.isEmpty {
-            lines.append("  constants:")
-            lines.append(contentsOf: constants.flatMap { $0.debugLines(parentFlags: flags) })
+        if !namedValues.isEmpty {
+            lines.append("  namedValues:")
+            lines.append(contentsOf: namedValues.flatMap { $0.debugLines(parentFlags: flags) })
         }
         return lines.joined(separator: "\n")
     }
 }
 
-private extension AVOption.Constant {
+private extension AVOption.NamedValue {
     func debugLines(parentFlags: AVOption.Flag) -> [String] {
         var line = "    - \(value): \(name.quoted())"
         if flags != parentFlags, !flags.isEmpty {
@@ -471,7 +464,7 @@ public extension AVOption {
             /// A textual representation of the Swift type used for the element.
             public var description: String {
                 switch self {
-                case .flags: "AVOption.FlagValue"
+                case .flags: "UInt32 (flags)"
                 case .int: "Int32"
                 case .int64: "Int64"
                 case .double: "Double"
@@ -481,7 +474,7 @@ public extension AVOption {
                 case .binary: "[UInt8]"
                 case .dict: "[String: String]"
                 case .uint64: "UInt64"
-                case .const: "Constant"
+                case .const: "NamedValue"
                 case .imageSize: "AVImageSize"
                 case .pixelFormat: "AVPixelFormat"
                 case .sampleFormat: "AVSampleFormat"
@@ -529,12 +522,6 @@ public extension AVOption {
         }
     }
 
-    struct FlagValue: RawRepresentable, OptionSet {
-        public let rawValue: UInt32
-        public init(rawValue: UInt32) {
-            self.rawValue = rawValue
-        }
-    }
 }
 
 extension AVOption.Flag: CustomStringConvertible, CustomDebugStringConvertible {
@@ -584,29 +571,27 @@ public extension AVOption {
     }
 }
 
-// MARK: - AVOptionSupport
-
-/// A type that exposes an FFmpeg object pointer for ``AVOption`` access.
-public protocol AVOptionSupport {
-    /// Calls the given closure with the underlying FFmpeg object pointer.
-    func withUnsafeObjectPointer<T>(_ body: (UnsafeMutableRawPointer) throws -> T) rethrows -> T
-}
-
 extension Array where Element == AVOption {
-    func withConstants() -> [AVOption] {
-        let options = self
-        let constOptions = options.filter { $0.type == .const }.grouped(by: \.unit)
-        return options.filter { $0.type != .const }.map {
-            if let unit = $0.unit {
-                return $0.withConstants(constOptions[unit] ?? [])
-            } else {
-                return $0
-            }
+    func withNamedValues() -> [AVOption] {
+        let namedValuesByUnit = filter { $0.type == .const && $0.unit != nil }
+            .grouped { $0.unit! }
+        return filter { $0.type != .const }.map { option in
+            guard let unit = option.unit else { return option }
+            return option.withNamedValues(namedValuesByUnit[unit] ?? [])
         }
     }
 }
 
 private extension AVOption {
+    func withNamedValues(_ options: [Self]) -> Self {
+        var option = self
+        let defaultValue = option.defaultIntegerValue
+        option.namedValues = options.map {
+            NamedValue($0, defaultValue)
+        }
+        return option
+    }
+    
     var defaultIntegerValue: Int64? {
         guard let defaultValue else { return nil }
         switch defaultValue {
@@ -622,18 +607,24 @@ private extension AVOption {
             return Int64(value)
         case let value as UInt64:
             return value <= UInt64(Int64.max) ? Int64(value) : nil
-        case let value as FlagValue:
-            return Int64(value.rawValue)
         default:
             return nil
         }
     }
 }
 
+// MARK: - AVOptionSupport
+
+/// A type that exposes an FFmpeg object pointer for ``AVOption`` access.
+public protocol AVOptionSupport {
+    /// Calls the given closure with the underlying FFmpeg object pointer.
+    func withUnsafeObjectPointer<T>(_ body: (UnsafeMutableRawPointer) throws -> T) rethrows -> T
+}
+
 public extension AVOptionSupport {
     /// Returns an array of the options supported by the type.
     var supportedOptions: [AVOption] {
-        rawOptions.withConstants()
+        rawOptions.withNamedValues()
     }
 
     var rawOptions: [AVOption] {
@@ -879,8 +870,8 @@ public extension AVOptionSupport {
      - Returns: The flag value of the option.
      - Throws: An error if the option cannot be found or its value cannot be retrieved.
      */
-    func flags(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> AVOption.FlagValue {
-        try .init(rawValue: integer(forKey: key, searchFlags: searchFlags))
+    func flags(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> UInt32 {
+        try integer(forKey: key, searchFlags: searchFlags)
     }
 
     /**
@@ -892,8 +883,8 @@ public extension AVOptionSupport {
      - Returns: The flag values of the option.
      - Throws: An error if the option cannot be found or its values cannot be retrieved.
      */
-    func flagsValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [AVOption.FlagValue] {
-        try array(as: UInt32.self, for: key, type: .array(.flags), initial: 0, searchFlags: searchFlags).map { .init(rawValue: $0) }
+    func flagsValues(forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws -> [UInt32] {
+        try array(for: key, type: .array(.flags), initial: 0, searchFlags: searchFlags)
     }
 
     /**
@@ -1377,6 +1368,20 @@ public extension AVOptionSupport {
     }
 
     /**
+     Sets the flag values for the specified option.
+
+     - Parameters:
+       - flags: The flag values to set.
+       - key: The name of the option.
+       - startIndex: The index of the first array element to set.
+       - searchFlags: The flags that control how the option is searched.
+     - Throws: An error if the option cannot be found or its values cannot be set.
+     */
+    func set(flags: [UInt32], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
+        try set(flags, for: key, startIndex: startIndex, type: .array(.flags), searchFlags: searchFlags)
+    }
+
+    /**
      Sets the unsigned 64-bit integer values for the specified option.
 
      - Parameters:
@@ -1416,33 +1421,6 @@ public extension AVOptionSupport {
      */
     func set(_ values: [Int64], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
         try set(values, for: key, startIndex: startIndex, type: .array(.int64), searchFlags: searchFlags)
-    }
-
-    /**
-     Sets the flag value for the specified option.
-
-     - Parameters:
-       - value: The flag value to set.
-       - key: The name of the option.
-       - searchFlags: The flags that control how the option is searched.
-     - Throws: An error if the option cannot be found or its value cannot be set.
-     */
-    func set(_ value: AVOption.FlagValue, forKey key: String, searchFlags: AVOption.SearchFlag = .children) throws {
-        try set(value.rawValue, forKey: key, searchFlags: searchFlags)
-    }
-
-    /**
-     Sets the flag values for the specified option.
-
-     - Parameters:
-       - values: The flag values to set.
-       - key: The name of the option.
-       - startIndex: The index of the first array element to set.
-       - searchFlags: The flags that control how the option is searched.
-     - Throws: An error if the option cannot be found or its values cannot be set.
-     */
-    func set(_ values: [AVOption.FlagValue], forKey key: String, startingAt startIndex: UInt32 = 0, searchFlags: AVOption.SearchFlag = .children) throws {
-        try set(values.map(\.rawValue), for: key, startIndex: startIndex, type: .array(.flags), searchFlags: searchFlags)
     }
 
     /**
