@@ -288,8 +288,7 @@ extension AVOption: CustomStringConvertible {
 
 extension AVOption: CustomDebugStringConvertible {
     public var debugDescription: String {
-        var lines = ["\"\(name)\""]
-        lines.append("  type: \(type)")
+        var lines = ["\"\(name)\", (\(type))"]
         if let unit {
             lines.append("  unit: \"\(unit)\"")
         }
@@ -297,7 +296,7 @@ extension AVOption: CustomDebugStringConvertible {
             lines.append("  default: \(defaultDescription)")
         }
         if let minMax = minMaxDescription {
-            lines.append(" " + minMax)
+            lines.append("  " + minMax)
         }
         lines.append("  flags: \(flags)")
         if let help {
