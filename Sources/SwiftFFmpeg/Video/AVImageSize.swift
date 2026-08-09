@@ -8,7 +8,7 @@
 import CFFmpeg
 
 /// A two-dimensional image size in pixels.
-public struct AVImageSize: CustomStringConvertible {
+public struct AVImageSize: CustomStringConvertible, Hashable {
     /// The image width in pixels.
     public var width: Int
 
