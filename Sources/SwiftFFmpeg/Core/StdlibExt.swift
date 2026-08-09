@@ -200,3 +200,9 @@ extension String {
         isEmpty ? nil : self
     }
 }
+
+extension FixedWidthInteger {
+    var isPowerOfTwo: Bool {
+        self > 0 && (self & (self - 1)) == 0
+    }
+}

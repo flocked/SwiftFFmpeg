@@ -66,11 +66,7 @@ public struct AVOption {
             value = _value
             help = option.help
             flags = option.flags
-            if isFlag {
-                isDefault = defaultValue.map { _value == 0 ? $0 == 0 : ($0 & _value) == _value } ?? false
-            } else {
-                isDefault = defaultValue == _value
-            }
+            isDefault = defaultValue == _value
         }
     }
 
@@ -259,34 +255,48 @@ extension AVOption: CustomStringConvertible {
         }
         return "(\(strings.joined(separator: ", ")))"
     }
-    
+
     fileprivate var defaultDescription: String? {
-        guard let defaultValue = defaultValue else { return nil }
+        guard var defaultValue = defaultValue else { return nil }
         if let string = defaultValue as? String {
             return "\(string.quoted())"
         } else {
-            let defaultConstants = constants.filter(\.isDefault)
-            if !defaultConstants.isEmpty {
-                let names = defaultConstants.map { "\"\($0.name)\"" }.joined(separator: ", ")
-                if type == .flags {
-                    return "\(defaultValue) [\(names)]"
-                }
-               return "\(defaultValue) (\(names))"
-            } else {
+            if let flag = defaultValue as? FlagValue {
+                defaultValue = flag.rawValue
+            }
+            let constants = defaultConstants
+            guard !constants.isEmpty else {
                 return "\(defaultValue)"
             }
+            let names = constants.map { "\($0.name.quoted())" }.joined(separator: ", ")
+            if type == .flags {
+                return "\(defaultValue) [\(names)]"
+            }
+            return "\(defaultValue) (\(names))"
         }
     }
-    
+
     fileprivate var minMaxDescription: String? {
         if let min, let max {
-           return "range: \(min)...\(max)"
+            return "range: \(min)...\(max)"
         } else if let min {
-       return "min: \(min)"
+            return "min: \(min)"
         } else if let max {
-          return "max: \(max)"
+            return "max: \(max)"
         }
         return nil
+    }
+
+    public var defaultConstants: [Constant] {
+        guard let value = defaultIntegerValue else { return [] }
+        let exactMatches = constants.filter { $0.value == value }
+        if !exactMatches.isEmpty {
+            return exactMatches
+        }
+        guard type == .flags, value != 0 else { return [] }
+        return constants.filter {
+            $0.value.isPowerOfTwo && (value & $0.value) == $0.value
+        }
     }
 }
 
@@ -308,13 +318,13 @@ extension AVOption: CustomDebugStringConvertible {
         }
         if !constants.isEmpty {
             lines.append("  constants:")
-            lines.append(contentsOf: constants.flatMap({ $0.debugLines(parentFlags: flags) }))
+            lines.append(contentsOf: constants.flatMap { $0.debugLines(parentFlags: flags) })
         }
         return lines.joined(separator: "\n")
     }
 }
 
-fileprivate extension AVOption.Constant {
+private extension AVOption.Constant {
     func debugLines(parentFlags: AVOption.Flag) -> [String] {
         var line = "    - \(value): \(name.quoted())"
         if flags != parentFlags, !flags.isEmpty {
