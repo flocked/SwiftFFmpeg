@@ -135,7 +135,39 @@ public final class AVAudioFifo {
         sampleRate: Int,
         channelLayout: AVChannelLayout
     ) throws -> AVFrame {
-        let frame = try makeFrame(
+        let frame = AVFrame()
+        try read(
+            sampleCount: sampleCount,
+            sampleRate: sampleRate,
+            channelLayout: channelLayout,
+            into: frame
+        )
+        return frame
+    }
+
+    /**
+     Reads audio samples from the FIFO into an audio frame.
+
+     If the frame already has compatible writable buffers, they are reused.
+     If the FIFO contains fewer samples than requested, the frame contains the available samples.
+
+     - Parameters:
+       - sampleCount: The number of samples to read.
+       - sampleRate: The sample rate to assign to the frame.
+       - channelLayout: The channel layout to assign to the frame.
+       - frame: The audio frame that receives the samples.
+     - Returns: The number of samples read from the FIFO.
+     - Throws: An `AVError` if the frame couldn't be allocated or the samples couldn't be read.
+     */
+    @discardableResult
+    public func read(
+        sampleCount: Int,
+        sampleRate: Int,
+        channelLayout: AVChannelLayout,
+        into frame: AVFrame
+    ) throws -> Int {
+        try prepareFrame(
+            frame,
             sampleCount: sampleCount,
             sampleRate: sampleRate,
             channelLayout: channelLayout
@@ -154,7 +186,7 @@ public final class AVAudioFifo {
         try read.throwIfFail()
         frame.sampleCount = Int(read)
 
-        return frame
+        return Int(read)
     }
 
     /**
@@ -172,14 +204,41 @@ public final class AVAudioFifo {
         sampleRate: Int,
         channelLayout: AVChannelLayout
     ) throws -> AVFrame {
+        let frame = AVFrame()
+        try readExactly(
+            sampleCount: sampleCount,
+            sampleRate: sampleRate,
+            channelLayout: channelLayout,
+            into: frame
+        )
+        return frame
+    }
+
+    /**
+     Reads exactly the requested number of audio samples from the FIFO into an audio frame.
+
+     - Parameters:
+       - sampleCount: The number of samples to read.
+       - sampleRate: The sample rate to assign to the frame.
+       - channelLayout: The channel layout to assign to the frame.
+       - frame: The audio frame that receives the samples.
+     - Throws: An `AVError` if the FIFO contains fewer than the requested number of samples.
+     */
+    public func readExactly(
+        sampleCount: Int,
+        sampleRate: Int,
+        channelLayout: AVChannelLayout,
+        into frame: AVFrame
+    ) throws {
         guard self.sampleCount >= sampleCount else {
             throw AVError.invalidData
         }
 
-        return try read(
+        try read(
             sampleCount: sampleCount,
             sampleRate: sampleRate,
-            channelLayout: channelLayout
+            channelLayout: channelLayout,
+            into: frame
         )
     }
 
@@ -293,6 +352,33 @@ public final class AVAudioFifo {
 
         try frame.allocBuffer()
         return frame
+    }
+
+    private func prepareFrame(
+        _ frame: AVFrame,
+        sampleCount: Int,
+        sampleRate: Int,
+        channelLayout: AVChannelLayout
+    ) throws {
+        guard channelLayout.channelCount == channelCount else {
+            throw AVError.invalidData
+        }
+
+        if frame.native.pointee.data.0 != nil &&
+            frame.sampleFormat == sampleFormat &&
+            frame.sampleRate == sampleRate &&
+            frame.channelLayout.channelCount == channelCount &&
+            frame.sampleCount == sampleCount {
+            try frame.makeWritable()
+            return
+        }
+
+        frame.unref()
+        frame.sampleFormat = sampleFormat
+        frame.sampleRate = sampleRate
+        frame.channelLayout = channelLayout
+        frame.sampleCount = sampleCount
+        try frame.allocBuffer()
     }
 
     private func dataPointers(for frame: AVFrame) throws -> [UnsafeMutableRawPointer?] {
