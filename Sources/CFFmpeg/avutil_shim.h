@@ -104,4 +104,8 @@ static inline uint32_t swift_FOURCC(char a, char b, char c, char d) {
  return MKTAG(a, b, c, d);
 }
 
+static inline AVRational swift_AVRational(int32_t num, int32_t den) {
+    return (AVRational){ num, den };
+}
+
 #endif /* AVUTIL_SHIM_H */

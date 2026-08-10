@@ -30,10 +30,15 @@ extension AVRational: @retroactive @unchecked Sendable, @retroactive Equatable {
     }
 
     /// Creates a rational from the specified values.
+    public init(num: Int32, den: Int32) {
+        self = swift_AVRational(num, den)
+    }
+
+    /// Creates a rational from the specified values.
     public init(_ num: Int32, _ den: Int32) {
         self = Self(num: num, den: den)
     }
-    
+
     public init?(string: String, max: Int32 = Int32.max) {
         var rational = AVRational()
         guard av_parse_ratio(&rational, string, max, 0, nil) >= 0 else {
@@ -89,21 +94,21 @@ extension AVRational: @retroactive @unchecked Sendable, @retroactive Equatable {
 }
 
 /*
-extension AVRational: @retroactive Hashable {
-    public func hash(into hasher: inout Hasher) {
-        let reduced = reduced()
-        hasher.combine(reduced.num)
-        hasher.combine(reduced.den)
-    }
-    
-    /*
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(den)
-        hasher.combine(num)
-    }
-     */
-}
-*/
+ extension AVRational: @retroactive Hashable {
+     public func hash(into hasher: inout Hasher) {
+         let reduced = reduced()
+         hasher.combine(reduced.num)
+         hasher.combine(reduced.den)
+     }
+
+     /*
+     public func hash(into hasher: inout Hasher) {
+         hasher.combine(den)
+         hasher.combine(num)
+     }
+      */
+ }
+ */
 
 public enum AVMath {
     /// Rescale a integer with specified rounding.
@@ -139,9 +144,9 @@ public enum AVMath {
     }
 }
 
-extension AVMath {
+public extension AVMath {
     /// Rounding methods.
-    public enum AVRounding: UInt32 {
+    enum AVRounding: UInt32 {
         /// Round toward zero.
         case zero = 0
         /// Round away from zero.
@@ -152,7 +157,7 @@ extension AVMath {
         case up = 3
         /// Round to nearest and halfway cases away from zero.
         case nearInf = 5
-        
+
         func ffmpeg(passMinMax: Bool) -> CFFmpeg.AVRounding {
             .init(rawValue: passMinMax ? rawValue | AV_ROUND_PASS_MINMAX.rawValue : rawValue)
         }
